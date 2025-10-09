@@ -1,0 +1,210 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../generated/prisma"
+  previewFeatures = ["relationJoins"]
+  binaryTargets   = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                               String    @id
+  name                             String    @db.Text
+  email                            String    @unique
+  emailVerified                    Boolean   @default(false)
+  image                            String?   @db.Text
+  createdAt                        DateTime  @default(now())
+  updatedAt                        DateTime  @default(now()) @updatedAt
+  role                             String?   @db.Text
+  banned                           Boolean?  @default(false)
+  banReason                        String?   @db.Text
+  banExpires                       DateTime?
+  phone                            String?   @db.Text
+  licenseCamion                    Boolean?  @default(false)
+  licenseEscavatore                Boolean?  @default(false)
+  accounts                         Account[]
+  mezzi_mezzi_created_byTouser     mezzi[]   @relation("mezzi_created_byTouser")
+  mezzi_mezzi_last_update_byTouser mezzi[]   @relation("mezzi_last_update_byTouser")
+  cantieri_cantieri_created_byTouser cantieri[] @relation("cantieri_created_byTouser")
+  cantieri_cantieri_last_update_byTouser cantieri[] @relation("cantieri_last_update_byTouser")
+  user_mezzi                       user_mezzi[]
+  user_cantieri                    user_cantieri[]
+  interazioni                      interazioni[]
+  interazioni_created_byTouser     interazioni[] @relation("interazione_created_byTouser")
+  interazioni_last_update_byTouser interazioni[] @relation("interazione_last_update_byTouser")
+  attivita                         attivita[]
+  attivita_created_byTouser        attivita[] @relation("attivita_created_byTouser")
+  attivita_last_update_byTouser   attivita[] @relation("attivita_last_update_byTouser")
+  sessions                         Session[]
+
+  @@map("user")
+}
+
+model Session {
+  id             String   @id
+  expiresAt      DateTime
+  token          String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ipAddress      String?  @db.Text
+  userAgent      String?  @db.Text
+  userId         String
+  impersonatedBy String?  @db.Text
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "session_userId_fkey")
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @db.Text
+  providerId            String    @db.Text
+  userId                String
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?   @db.Text
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "account_userId_fkey")
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String   @db.Text
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
+
+model mezzi {
+  id                              Int      @id @default(autoincrement())
+  nome                            String   @db.Text
+  descrizione                     String   @db.Text
+  has_license_camion              Boolean  @default(false)
+  has_license_escavatore          Boolean  @default(false)
+  external_id                     String   @unique(map: "external_id") @db.Char(36)
+  created_by                      String
+  created_at                      DateTime @default(now()) @db.DateTime(0)
+  last_update_by                  String
+  last_update_at                  DateTime @default(now()) @db.DateTime(0)
+  user_mezzi_created_byTouser     User     @relation("mezzi_created_byTouser", fields: [created_by], references: [id], onUpdate: Restrict, map: "mezzi_ibfk_1")
+  user_mezzi_last_update_byTouser User     @relation("mezzi_last_update_byTouser", fields: [last_update_by], references: [id], onUpdate: Restrict, map: "mezzi_ibfk_2")
+  user_mezzi                      user_mezzi[]
+  interazioni                     interazioni[]
+
+  @@index([created_by], map: "created_by")
+  @@index([last_update_by], map: "last_update_by")
+}
+
+model cantieri {
+  id                                  Int      @id @default(autoincrement())
+  nome                                String   @db.Text
+  descrizione                         String   @db.Text
+  open                                Boolean  @default(true)
+  closed_at                           DateTime? @db.DateTime(0)
+  external_id                         String   @unique(map: "cantieri_external_id") @db.Char(36)
+  created_by                          String
+  created_at                          DateTime @default(now()) @db.DateTime(0)
+  last_update_by                      String
+  last_update_at                      DateTime @default(now()) @db.DateTime(0)
+  user_cantieri_created_byTouser      User     @relation("cantieri_created_byTouser", fields: [created_by], references: [id], onUpdate: Restrict, map: "cantieri_ibfk_1")
+  user_cantieri_last_update_byTouser  User     @relation("cantieri_last_update_byTouser", fields: [last_update_by], references: [id], onUpdate: Restrict, map: "cantieri_ibfk_2")
+  user_cantieri                       user_cantieri[]
+  interazioni                         interazioni[]
+
+  @@index([created_by], map: "cantieri_created_by")
+  @@index([last_update_by], map: "cantieri_last_update_by")
+}
+
+model user_mezzi {
+  id          Int      @id @default(autoincrement())
+  external_id String   @unique(map: "user_mezzi_external_id") @db.Char(36)
+  user_id     String
+  mezzi_id    Int
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  mezzi       mezzi    @relation(fields: [mezzi_id], references: [id], onDelete: Restrict)
+
+  @@unique([user_id, mezzi_id], map: "user_mezzi_unique")
+  @@index([user_id], map: "user_mezzi_user_id")
+  @@index([mezzi_id], map: "user_mezzi_mezzi_id")
+}
+
+model user_cantieri {
+  id          Int      @id @default(autoincrement())
+  external_id String   @unique(map: "user_cantieri_external_id") @db.Char(36)
+  user_id     String
+  cantieri_id Int
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  cantieri    cantieri @relation(fields: [cantieri_id], references: [id], onDelete: Restrict)
+
+  @@unique([user_id, cantieri_id], map: "user_cantieri_unique")
+  @@index([user_id], map: "user_cantieri_user_id")
+  @@index([cantieri_id], map: "user_cantieri_cantieri_id")
+}
+
+model interazioni {
+  id                              Int      @id @default(autoincrement())
+  ore                             Int
+  minuti                          Int
+  tempo_totale                    BigInt  
+  user_id                         String
+  mezzi_id                        Int?
+  cantieri_id                     Int
+  attivita_id                     Int
+  external_id                     String   @unique(map: "interazione_external_id") @db.Char(36)
+  created_by                      String
+  created_at                      DateTime @default(now()) @db.DateTime(0)
+  last_update_by                  String
+  last_update_at                  DateTime @default(now()) @db.DateTime(0)
+  user                            User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  mezzi                           mezzi?   @relation(fields: [mezzi_id], references: [id], onDelete: Restrict)
+  cantieri                        cantieri @relation(fields: [cantieri_id], references: [id], onDelete: Restrict)
+  attivita                        attivita @relation(fields: [attivita_id], references: [id], onDelete: Restrict)
+  user_interazione_created_byTouser User   @relation("interazione_created_byTouser", fields: [created_by], references: [id], onUpdate: Restrict, map: "interazione_ibfk_1")
+  user_interazione_last_update_byTouser User @relation("interazione_last_update_byTouser", fields: [last_update_by], references: [id], onUpdate: Restrict, map: "interazione_ibfk_2")
+
+  @@index([user_id], map: "interazione_user_id")
+  @@index([mezzi_id], map: "interazione_mezzi_id")
+  @@index([cantieri_id], map: "interazione_cantieri_id")
+  @@index([attivita_id], map: "interazione_attivita_id")
+  @@index([created_by], map: "interazione_created_by")
+  @@index([last_update_by], map: "interazione_last_update_by")
+}
+
+model attivita {
+  id                              Int      @id @default(autoincrement())
+  date                            DateTime @db.Date
+  user_id                         String
+  external_id                     String   @unique(map: "attivita_external_id") @db.Char(36)
+  created_by                      String
+  created_at                      DateTime @default(now()) @db.DateTime(0)
+  last_update_by                  String
+  last_update_at                  DateTime @default(now()) @db.DateTime(0)
+  user                            User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  interazioni                     interazioni[]
+  user_attivita_created_byTouser  User     @relation("attivita_created_byTouser", fields: [created_by], references: [id], onUpdate: Restrict, map: "attivita_ibfk_1")
+  user_attivita_last_update_byTouser User  @relation("attivita_last_update_byTouser", fields: [last_update_by], references: [id], onUpdate: Restrict, map: "attivita_ibfk_2")
+
+  @@index([user_id], map: "attivita_user_id")
+  @@index([date], map: "attivita_date")
+  @@index([created_by], map: "attivita_created_by")
+  @@index([last_update_by], map: "attivita_last_update_by")
+}
+
+
