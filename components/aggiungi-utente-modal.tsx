@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { createUser } from "@/lib/actions/users.actions";
 import { useAction } from "next-safe-action/hooks";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidationErrors } from "@/components/validation-errors";
-import { toast } from "sonner";
+import { createUser } from "@/lib/actions/users.actions";
 
 export default function AggiungiUtenteModal() {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -135,7 +135,11 @@ export default function AggiungiUtenteModal() {
             </div>
             <ValidationErrors result={result} />
             <div className="modal-action">
-              <button type="button" className="btn btn-outline" onClick={handleClose}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={handleClose}
+              >
                 Annulla
               </button>
               <SubmitButton className="btn btn-primary">
@@ -145,7 +149,9 @@ export default function AggiungiUtenteModal() {
           </form>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button tabIndex={-1}>Annulla</button>
+          <button tabIndex={-1} type="submit">
+            Annulla
+          </button>
         </form>
       </dialog>
     </>

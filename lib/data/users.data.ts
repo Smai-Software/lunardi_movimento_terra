@@ -53,4 +53,6 @@ export const getUsersNotBanned = async () => {
   return users;
 };
 
-export type UserNotBanned = NonNullable<Awaited<ReturnType<typeof getUsersNotBanned>>>[number];
+export type UserNotBanned = NonNullable<
+  Awaited<ReturnType<typeof getUsersNotBanned>>
+>[number];

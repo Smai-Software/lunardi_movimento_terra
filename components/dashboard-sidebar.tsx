@@ -1,8 +1,5 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
-import { useSession } from "@/lib/auth-client";
 import {
   CalendarSearch,
   Car,
@@ -13,6 +10,8 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
+import Link from "next/link";
+import { useSession } from "@/lib/auth-client";
 
 export default function DashboardSidebar() {
   const { data: session } = useSession();

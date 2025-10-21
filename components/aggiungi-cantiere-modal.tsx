@@ -5,19 +5,18 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidationErrors } from "@/components/validation-errors";
-import { createMezzo } from "@/lib/actions/mezzi.actions";
+import { createCantiere } from "@/lib/actions/cantieri.actions";
 
-export default function AggiungiMezzoModal() {
+export default function AggiungiCantiereModal() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [nome, setNome] = useState("");
   const [descrizione, setDescrizione] = useState("");
-  const [hasLicenseCamion, setHasLicenseCamion] = useState(false);
-  const [hasLicenseEscavatore, setHasLicenseEscavatore] = useState(false);
+  const [open, setOpen] = useState(true);
 
-  const { execute, result, reset } = useAction(createMezzo, {
+  const { execute, result, reset } = useAction(createCantiere, {
     onSuccess: () => {
       if (result.data?.success) {
-        toast.success("Mezzo creato con successo!");
+        toast.success("Cantiere creato con successo!");
         handleClose();
       }
     },
@@ -31,8 +30,7 @@ export default function AggiungiMezzoModal() {
   const handleClose = () => {
     setNome("");
     setDescrizione("");
-    setHasLicenseCamion(false);
-    setHasLicenseEscavatore(false);
+    setOpen(true);
     reset();
     dialogRef.current?.close();
   };
@@ -40,21 +38,21 @@ export default function AggiungiMezzoModal() {
   return (
     <>
       <button className="btn btn-primary" onClick={openModal} type="button">
-        Aggiungi mezzo
+        Aggiungi cantiere
       </button>
-      <dialog ref={dialogRef} className="modal" id="aggiungi-veicolo-modal">
+      <dialog ref={dialogRef} className="modal" id="aggiungi-cantiere-modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg mb-2">Aggiungi nuovo mezzo</h3>
+          <h3 className="font-bold text-lg mb-2">Aggiungi nuovo cantiere</h3>
           <form action={execute}>
             <div className="mb-4">
               <label
                 className="block font-medium mb-1 text-sm"
-                htmlFor="nome-mezzo"
+                htmlFor="nome-cantiere"
               >
                 Nome
               </label>
               <input
-                id="nome-mezzo"
+                id="nome-cantiere"
                 className="input input-bordered w-full"
                 type="text"
                 name="nome"
@@ -67,12 +65,12 @@ export default function AggiungiMezzoModal() {
             <div className="mb-4">
               <label
                 className="block font-medium mb-1 text-sm"
-                htmlFor="descrizione-mezzo"
+                htmlFor="descrizione-cantiere"
               >
                 Descrizione
               </label>
               <input
-                id="descrizione-mezzo"
+                id="descrizione-cantiere"
                 className="input input-bordered w-full"
                 type="text"
                 name="descrizione"
@@ -85,34 +83,21 @@ export default function AggiungiMezzoModal() {
             <div className="mb-4">
               <label
                 className="block font-medium mb-1 text-sm"
-                htmlFor="patente-camion-mezzo"
+                htmlFor="open-cantiere"
               >
-                Patente camion
+                Stato cantiere
               </label>
-              <input
-                id="patente-camion-mezzo"
-                className="toggle toggle-success"
-                type="checkbox"
-                name="has_license_camion"
-                checked={hasLicenseCamion}
-                onChange={(e) => setHasLicenseCamion(e.target.checked)}
-              />
-            </div>
-            <div className="mb-4">
-              <label
-                className="block font-medium mb-1 text-sm"
-                htmlFor="patente-escavatore-mezzo"
-              >
-                Patente escavatore
-              </label>
-              <input
-                id="patente-escavatore-mezzo"
-                className="toggle toggle-success"
-                type="checkbox"
-                name="has_license_escavatore"
-                checked={hasLicenseEscavatore}
-                onChange={(e) => setHasLicenseEscavatore(e.target.checked)}
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  id="open-cantiere"
+                  className="toggle toggle-success"
+                  type="checkbox"
+                  name="open"
+                  checked={open}
+                  onChange={(e) => setOpen(e.target.checked)}
+                />
+                <span className="text-sm">{open ? "Aperto" : "Chiuso"}</span>
+              </div>
             </div>
             <ValidationErrors result={result} />
             <div className="modal-action">
@@ -124,13 +109,13 @@ export default function AggiungiMezzoModal() {
                 Annulla
               </button>
               <SubmitButton className="btn btn-primary">
-                Crea mezzo
+                Crea cantiere
               </SubmitButton>
             </div>
           </form>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button tabIndex={-1} type="submit">
+          <button type="button" tabIndex={-1}>
             Annulla
           </button>
         </form>

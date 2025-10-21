@@ -1,10 +1,10 @@
 "use client";
 
+import Link from "next/link";
+import { useAction } from "next-safe-action/hooks";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidationErrors } from "@/components/validation-errors";
 import { resetPassword } from "@/lib/actions/users.actions";
-import { useAction } from "next-safe-action/hooks";
-import Link from "next/link";
 
 export default function FormRecoveryPassword() {
   const { execute, result } = useAction(resetPassword);
@@ -33,7 +33,6 @@ export default function FormRecoveryPassword() {
                 placeholder="Email"
                 className="input input-md input-primary w-full"
                 required
-                autoFocus
               />
             </div>
             <SubmitButton className="btn btn-primary my-2">

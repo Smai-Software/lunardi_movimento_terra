@@ -1,11 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { randomUUID } from "node:crypto";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 import prisma from "@/lib/prisma";
 import { actionClientWithAuth } from "@/lib/safe-action";
-import { randomUUID } from "crypto";
 
 // --- CREA CANTIERE ---
 export const createCantiere = actionClientWithAuth
@@ -13,7 +14,7 @@ export const createCantiere = actionClientWithAuth
     zfd.formData({
       nome: zfd.text(z.string().min(1, "Il nome è obbligatorio")),
       descrizione: zfd.text(z.string().min(1, "La descrizione è obbligatoria")),
-      open: zfd.text(z.boolean().optional()),
+      open: zfd.checkbox(),
     }),
   )
   .outputSchema(
@@ -29,7 +30,7 @@ export const createCantiere = actionClientWithAuth
           data: {
             nome,
             descrizione,
-            open: open ?? true,
+            open: open,
             created_at: new Date(),
             last_update_at: new Date(),
             created_by: userId,
@@ -56,7 +57,7 @@ export const updateCantiere = actionClientWithAuth
     zfd.formData({
       nome: zfd.text(z.string().optional()).optional(),
       descrizione: zfd.text(z.string().optional()).optional(),
-      open: zfd.text(z.boolean().optional()).optional(),
+      open: zfd.checkbox(),
     }),
   )
   .outputSchema(
@@ -72,27 +73,18 @@ export const updateCantiere = actionClientWithAuth
       ctx: { userId },
     }) => {
       try {
-        const updateData: any = {
-          last_update_at: new Date(),
-          last_update_by: userId,
-        };
-
-        if (nome !== undefined) updateData.nome = nome;
-        if (descrizione !== undefined) updateData.descrizione = descrizione;
-        if (open !== undefined) {
-          updateData.open = open;
-          if (!open) {
-            updateData.closed_at = new Date();
-          } else {
-            updateData.closed_at = null;
-          }
-        }
-
         await prisma.cantieri.update({
           where: { id },
-          data: updateData,
+          data: {
+            nome,
+            descrizione,
+            open,
+            last_update_at: new Date(),
+            last_update_by: userId,
+          },
         });
-        revalidatePath("/cantieri");
+
+        revalidatePath("/cantieri", "page");
         return { success: true };
       } catch (error) {
         console.log(error);
@@ -117,7 +109,7 @@ export const deleteCantiere = actionClientWithAuth
   .action(async ({ bindArgsParsedInputs: [id] }) => {
     try {
       await prisma.cantieri.delete({ where: { id } });
-      revalidatePath("/cantieri");
+      revalidateTag("cantieri");
       return { success: true };
     } catch (error) {
       console.log(error);

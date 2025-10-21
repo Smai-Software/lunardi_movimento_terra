@@ -1,10 +1,11 @@
-import { getUsers } from "@/lib/data/users.data";
-import UtentiTable, { type Utente } from "@/components/utenti-table";
-import AggiungiUtenteModal from "@/components/aggiungi-utente-modal";
-import React from "react";
-import { auth } from "@/lib/auth";
+import { CheckIcon, XIcon } from "lucide-react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import AggiungiUtenteModal from "@/components/aggiungi-utente-modal";
+import BanUserDialog from "@/components/ban-user-dialog";
+import ModificaUtenteModal from "@/components/modifica-utente-modal";
+import { auth } from "@/lib/auth";
+import { getUsers } from "@/lib/data/users.data";
 
 export default async function UtentiPage() {
   const session = await auth.api.getSession({
@@ -14,19 +15,8 @@ export default async function UtentiPage() {
   if (!session) {
     redirect("/sign-in");
   }
+
   const users = await getUsers();
-  // Mappa utenti per garantire createdAt: string e banned: boolean sempre presente
-  const utenti: Utente[] = users.map((u) => ({
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    createdAt:
-      typeof u.createdAt === "string" ? u.createdAt : u.createdAt.toISOString(),
-    banned: Boolean(u.banned ?? false),
-    licenseCamion: u.licenseCamion,
-    licenseEscavatore: u.licenseEscavatore,
-    phone: u.phone,
-  }));
 
   return (
     <div className="mx-auto px-6 py-8">
@@ -34,7 +24,79 @@ export default async function UtentiPage() {
         <h1 className="text-3xl font-bold">Utenti</h1>
         <AggiungiUtenteModal />
       </div>
-      <UtentiTable utenti={utenti} />
+
+      <div className="overflow-x-auto">
+        <table className="table table-zebra">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Telefono</th>
+              <th>Patente Camion</th>
+              <th>Patente Escavatore</th>
+              <th>Stato</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => {
+              const isCurrentUser = session.user?.id === user.id;
+              const isBanned = Boolean(user.banned);
+
+              return (
+                <tr key={user.id}>
+                  <td>{user.name ?? ""}</td>
+                  <td>{user.email}</td>
+                  <td>{user.phone ?? ""}</td>
+                  <td>
+                    {user.licenseCamion ? (
+                      <CheckIcon className="w-4 h-4" />
+                    ) : (
+                      <XIcon className="w-4 h-4" />
+                    )}
+                  </td>
+                  <td>
+                    {user.licenseEscavatore ? (
+                      <CheckIcon className="w-4 h-4" />
+                    ) : (
+                      <XIcon className="w-4 h-4" />
+                    )}
+                  </td>
+                  <td>
+                    <span
+                      className={`badge ${isBanned ? "badge-error" : "badge-success"}`}
+                    >
+                      {isBanned ? "Bloccato" : "Attivo"}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="flex gap-2">
+                      <ModificaUtenteModal
+                        utente={{
+                          id: user.id,
+                          name: user.name,
+                          phone: user.phone,
+                          licenseCamion: user.licenseCamion,
+                          licenseEscavatore: user.licenseEscavatore,
+                        }}
+                      />
+                      {!isCurrentUser && (
+                        <BanUserDialog
+                          user={{
+                            id: user.id,
+                            name: user.name,
+                            banned: user.banned,
+                          }}
+                        />
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

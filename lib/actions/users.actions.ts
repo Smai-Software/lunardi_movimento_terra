@@ -1,15 +1,15 @@
 "use server";
 
-import { auth, getErrorMessage } from "@/lib/auth";
-import { actionClient, actionClientWithAuth } from "@/lib/safe-action";
+import { randomUUID } from "node:crypto";
 import { APIError } from "better-auth/api";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
+import { auth, getErrorMessage } from "@/lib/auth";
+import { actionClient, actionClientWithAuth } from "@/lib/safe-action";
 import { transporter } from "../email";
 import prisma from "../prisma";
-import { randomUUID } from "crypto";
 
 // --- CREA UTENTE ---
 export const createUser = actionClientWithAuth
@@ -344,9 +344,11 @@ export const unbanUser = actionClientWithAuth
   });
 
 export const updateUser = actionClientWithAuth
+  .bindArgsSchemas<[id: z.ZodString]>([
+    z.string().min(1, "ID utente obbligatorio"),
+  ])
   .inputSchema(
     zfd.formData({
-      userId: zfd.text(z.string().min(1, "ID utente obbligatorio")),
       licenseCamion: zfd.checkbox(),
       licenseEscavatore: zfd.checkbox(),
       phone: zfd.text(z.string().optional()),
@@ -361,11 +363,12 @@ export const updateUser = actionClientWithAuth
   )
   .action(
     async ({
-      parsedInput: { userId, licenseCamion, licenseEscavatore, phone, name },
+      bindArgsParsedInputs: [id],
+      parsedInput: { licenseCamion, licenseEscavatore, phone, name },
     }) => {
       try {
         await prisma.user.update({
-          where: { id: userId },
+          where: { id },
           data: {
             licenseCamion: licenseCamion || false,
             licenseEscavatore: licenseEscavatore || false,
@@ -410,7 +413,7 @@ export const createUserMezzo = actionClientWithAuth
       // Verifica che l'utente e il mezzo esistano
       const user = await prisma.user.findUnique({ where: { id: userId } });
       const mezzo = await prisma.mezzi.findUnique({
-        where: { id: parseInt(mezziId) },
+        where: { id: parseInt(mezziId, 10) },
       });
 
       if (!user) {
@@ -424,7 +427,7 @@ export const createUserMezzo = actionClientWithAuth
       const existingAssociation = await prisma.user_mezzi.findFirst({
         where: {
           user_id: userId,
-          mezzi_id: parseInt(mezziId),
+          mezzi_id: parseInt(mezziId, 10),
         },
       });
 
@@ -438,7 +441,7 @@ export const createUserMezzo = actionClientWithAuth
       await prisma.user_mezzi.create({
         data: {
           user_id: userId,
-          mezzi_id: parseInt(mezziId),
+          mezzi_id: parseInt(mezziId, 10),
           external_id: randomUUID(),
         },
       });
@@ -474,7 +477,7 @@ export const deleteUserMezzo = actionClientWithAuth
       const association = await prisma.user_mezzi.findFirst({
         where: {
           user_id: userId,
-          mezzi_id: parseInt(mezziId),
+          mezzi_id: parseInt(mezziId, 10),
         },
       });
 
@@ -517,7 +520,7 @@ export const createUserCantiere = actionClientWithAuth
       // Verifica che l'utente e il cantiere esistano
       const user = await prisma.user.findUnique({ where: { id: userId } });
       const cantiere = await prisma.cantieri.findUnique({
-        where: { id: parseInt(cantieriId) },
+        where: { id: parseInt(cantieriId, 10) },
       });
 
       if (!user) {
@@ -531,7 +534,7 @@ export const createUserCantiere = actionClientWithAuth
       const existingAssociation = await prisma.user_cantieri.findFirst({
         where: {
           user_id: userId,
-          cantieri_id: parseInt(cantieriId),
+          cantieri_id: parseInt(cantieriId, 10),
         },
       });
 
@@ -545,7 +548,7 @@ export const createUserCantiere = actionClientWithAuth
       await prisma.user_cantieri.create({
         data: {
           user_id: userId,
-          cantieri_id: parseInt(cantieriId),
+          cantieri_id: parseInt(cantieriId, 10),
           external_id: randomUUID(),
         },
       });
@@ -581,7 +584,7 @@ export const deleteUserCantiere = actionClientWithAuth
       const association = await prisma.user_cantieri.findFirst({
         where: {
           user_id: userId,
-          cantieri_id: parseInt(cantieriId),
+          cantieri_id: parseInt(cantieriId, 10),
         },
       });
 

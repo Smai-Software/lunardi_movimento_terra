@@ -50,11 +50,7 @@ export function ValidationErrors(props: ValidationErrorsProps) {
   );
 
   const combinedMessages: string[] = [];
-  if (
-    props.result &&
-    props.result.data &&
-    typeof props.result.data.error === "string"
-  ) {
+  if (props.result?.data && typeof props.result.data.error === "string") {
     combinedMessages.push(props.result.data.error);
   }
   if (

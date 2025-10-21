@@ -1,11 +1,11 @@
 "use client";
 
+import Link from "next/link";
+import { useAction } from "next-safe-action/hooks";
+import { useState } from "react";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidationErrors } from "@/components/validation-errors";
 import { loginUser } from "@/lib/actions/users.actions";
-import { useAction } from "next-safe-action/hooks";
-import Link from "next/link";
-import { useState } from "react";
 
 export default function FormLogin() {
   const [email, setEmail] = useState("");
@@ -33,7 +33,6 @@ export default function FormLogin() {
             name="email"
             className="input input-md input-primary w-full"
             required
-            autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />

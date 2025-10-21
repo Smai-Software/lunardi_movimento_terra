@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
 import { addUtenteMezzo, removeUtenteMezzo } from "@/lib/actions/mezzi.actions";
@@ -29,7 +28,7 @@ export default function UtenteMezzo({
   // Check if user is assigned to this mezzo
   const isAssigned = userMezzi.some(
     (assignment) =>
-      assignment.user_id === user.id && assignment.mezzi_id === mezzoId
+      assignment.user_id === user.id && assignment.mezzi_id === mezzoId,
   );
   const { execute: executeAssign, isExecuting: isAssigning } = useAction(
     addUtenteMezzo.bind(null, mezzoId, user.id),
@@ -44,7 +43,7 @@ export default function UtenteMezzo({
       onError: () => {
         toast.error("Errore durante l'assegnazione");
       },
-    }
+    },
   );
 
   const { execute: executeRemove, isExecuting: isRemoving } = useAction(
@@ -60,7 +59,7 @@ export default function UtenteMezzo({
       onError: () => {
         toast.error("Errore durante la rimozione");
       },
-    }
+    },
   );
 
   const handleCheckboxChange = (checked: boolean) => {

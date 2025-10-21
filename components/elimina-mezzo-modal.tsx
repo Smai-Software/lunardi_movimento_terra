@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useRef } from "react";
 import { useAction } from "next-safe-action/hooks";
+import { useRef } from "react";
+import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidationErrors } from "@/components/validation-errors";
-import { toast } from "sonner";
 import { deleteMezzo } from "@/lib/actions/mezzi.actions";
 
 type EliminaMezzoModalProps = {
@@ -67,7 +67,9 @@ export default function EliminaMezzoModal({ mezzo }: EliminaMezzoModalProps) {
           </form>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button tabIndex={-1}>Annulla</button>
+          <button tabIndex={-1} type="submit">
+            Annulla
+          </button>
         </form>
       </dialog>
     </>

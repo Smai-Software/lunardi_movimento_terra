@@ -1,7 +1,7 @@
-import FormResetPassword from "./form-reset";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import FormResetPassword from "./form-reset";
 
 export default async function ResetPassword() {
   const session = await auth.api.getSession({

@@ -1,8 +1,8 @@
 "use client";
 
 import { createAuthClient } from "better-auth/react";
+
 const { useSession } = createAuthClient();
-import React from "react";
 
 export default function CurrentUsername() {
   const { data: session, isPending, error } = useSession();

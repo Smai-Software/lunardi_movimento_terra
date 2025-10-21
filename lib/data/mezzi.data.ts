@@ -8,7 +8,7 @@ export const getMezzi = async () => {
     include: {
       user_mezzi_created_byTouser: true,
       user_mezzi_last_update_byTouser: true,
-      user_mezzi: true
+      user_mezzi: true,
     },
     orderBy: {
       nome: "asc",

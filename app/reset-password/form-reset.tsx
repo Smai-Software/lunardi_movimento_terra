@@ -1,11 +1,11 @@
 "use client";
 
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useAction } from "next-safe-action/hooks";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidationErrors } from "@/components/validation-errors";
 import { resetPasswordWithToken } from "@/lib/actions/users.actions";
-import { useAction } from "next-safe-action/hooks";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
 export default function FormResetPassword() {
   const searchParams = useSearchParams();

@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { banUser, unbanUser } from "@/lib/actions/users.actions";
 import { useAction } from "next-safe-action/hooks";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidationErrors } from "@/components/validation-errors";
-import { toast } from "sonner";
+import { banUser, unbanUser } from "@/lib/actions/users.actions";
 
 type BanUserDialogProps = {
   user: {
@@ -119,7 +119,9 @@ export default function BanUserDialog({ user }: BanUserDialogProps) {
           </form>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button tabIndex={-1}>Annulla</button>
+          <button tabIndex={-1} type="submit">
+            Annulla
+          </button>
         </form>
       </dialog>
     </>

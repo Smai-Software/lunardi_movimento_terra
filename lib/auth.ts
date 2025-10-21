@@ -1,14 +1,22 @@
-import prisma from "@/lib/prisma";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { admin } from "better-auth/plugins";
-import { transporter } from "./email";
 import { nextCookies } from "better-auth/next-js";
+import { admin } from "better-auth/plugins";
+import prisma from "@/lib/prisma";
+import { transporter } from "./email";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "mysql",
   }),
+  session: {
+    expiresIn: 60 * 60 * 10,
+    updateAge: 60 * 60,
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60,
+    },
+  },
   user: {
     additionalFields: {
       phone: {

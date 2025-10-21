@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useRef, useState } from "react";
 import { useAction } from "next-safe-action/hooks";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidationErrors } from "@/components/validation-errors";
-import { toast } from "sonner";
 import { updateUser } from "@/lib/actions/users.actions";
 
 type ModificaUtenteModalProps = {
@@ -17,7 +17,9 @@ type ModificaUtenteModalProps = {
   };
 };
 
-export default function ModificaUtenteModal({ utente }: ModificaUtenteModalProps) {
+export default function ModificaUtenteModal({
+  utente,
+}: ModificaUtenteModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [name, setName] = useState(utente.name || "");
   const [phone, setPhone] = useState(utente.phone || "");
@@ -29,11 +31,8 @@ export default function ModificaUtenteModal({ utente }: ModificaUtenteModalProps
   );
 
   const { execute, result, reset } = useAction(
-    updateUser,
+    updateUser.bind(null, utente.id),
     {
-      onExecute: () => {
-        // noop
-      },
       onSuccess: () => {
         if (result.data?.success) {
           toast.success("Utente aggiornato con successo!");
@@ -140,7 +139,11 @@ export default function ModificaUtenteModal({ utente }: ModificaUtenteModalProps
             </div>
             <ValidationErrors result={result} />
             <div className="modal-action">
-              <button type="button" className="btn btn-outline" onClick={handleClose}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={handleClose}
+              >
                 Annulla
               </button>
               <SubmitButton className="btn btn-primary">
@@ -150,7 +153,9 @@ export default function ModificaUtenteModal({ utente }: ModificaUtenteModalProps
           </form>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button tabIndex={-1}>Annulla</button>
+          <button tabIndex={-1} type="submit">
+            Annulla
+          </button>
         </form>
       </dialog>
     </>
