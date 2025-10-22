@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
+import { getMezziByUserId } from "@/lib/data/mezzi.data";
 import prisma from "@/lib/prisma";
 import { actionClientWithAuth } from "@/lib/safe-action";
 
@@ -284,6 +285,51 @@ export const addUtenteMezzo = actionClientWithAuth
       return {
         success: false,
         error: "Errore durante l'assegnazione dell'utente al mezzo",
+      };
+    }
+  });
+
+// --- GET MEZZI BY USER ID ---
+export const getMezziForUser = actionClientWithAuth
+  .inputSchema(
+    z.object({
+      userId: z.string().min(1, "ID utente obbligatorio"),
+    }),
+  )
+  .outputSchema(
+    z.object({
+      success: z.boolean(),
+      mezzi: z.array(
+        z.object({
+          id: z.number(),
+          nome: z.string(),
+          descrizione: z.string(),
+          has_license_camion: z.boolean(),
+          has_license_escavatore: z.boolean(),
+        }),
+      ),
+      error: z.string().optional(),
+    }),
+  )
+  .action(async ({ parsedInput: { userId } }) => {
+    try {
+      const mezzi = await getMezziByUserId(userId);
+      return {
+        success: true,
+        mezzi: mezzi.map((m) => ({
+          id: m.id,
+          nome: m.nome,
+          descrizione: m.descrizione,
+          has_license_camion: m.has_license_camion,
+          has_license_escavatore: m.has_license_escavatore,
+        })),
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        mezzi: [],
+        error: "Errore durante il caricamento dei mezzi",
       };
     }
   });

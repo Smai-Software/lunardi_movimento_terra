@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CheckIcon,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -10,9 +9,7 @@ import {
   ChevronsUpDown,
   ChevronUp,
   Search,
-  XIcon,
 } from "lucide-react";
-import Link from "next/link";
 import {
   parseAsInteger,
   parseAsString,
@@ -20,25 +17,39 @@ import {
   useQueryState,
 } from "nuqs";
 import { useMemo, useState } from "react";
-import EliminaCantiereModal from "@/components/elimina-cantiere-modal";
-import ModificaCantiereModal from "@/components/modifica-cantiere-modal";
+import EliminaAttivitaModal from "@/components/elimina-attivita-modal";
+import ModificaAttivitaModal from "@/components/modifica-attivita-modal";
+import type { Attivita } from "@/lib/data/attivita.data";
+import type { UserNotBanned } from "@/lib/data/users.data";
 
-import type { Cantiere } from "@/lib/data/cantieri.data";
-
-type CantieriTableProps = {
-  cantieri: Cantiere[];
+type AttivitaTableProps = {
+  attivita: Attivita[];
+  users: UserNotBanned[];
 };
 
 const PAGE_SIZE = 10;
 
-function CantieriFilterDrawer({
+function AttivitaFilterDrawer({
   drawerId,
-  filterStatus,
-  setFilterStatus,
+  filterUser,
+  setFilterUser,
+  filterDateFrom,
+  setFilterDateFrom,
+  filterDateTo,
+  setFilterDateTo,
+  users,
 }: {
   drawerId: string;
-  filterStatus: string;
-  setFilterStatus: (val: string | null, options?: { history: "push" }) => void;
+  filterUser: string;
+  setFilterUser: (val: string | null, options?: { history: "push" }) => void;
+  filterDateFrom: string;
+  setFilterDateFrom: (
+    val: string | null,
+    options?: { history: "push" },
+  ) => void;
+  filterDateTo: string;
+  setFilterDateTo: (val: string | null, options?: { history: "push" }) => void;
+  users: { id: string; name: string }[];
 }) {
   return (
     <div className="drawer-side">
@@ -62,46 +73,69 @@ function CantieriFilterDrawer({
         aria-label="Chiudi filtro"
       ></button>
       <div className="menu p-4 w-80 min-h-full bg-base-100">
-        <h2 className="text-lg font-bold mb-4">Filtra cantieri</h2>
+        <h2 className="text-lg font-bold mb-4">Filtra attività</h2>
 
-        {/* Filtro Stato Cantiere */}
+        {/* Filtro Utente */}
         <div className="mb-6">
-          <h3 className="text-md font-semibold mb-2">Stato Cantiere</h3>
+          <h3 className="text-md font-semibold mb-2">Utente</h3>
           <div className="form-control mb-2">
             <label className="label cursor-pointer">
               <input
                 type="radio"
-                name="status-filter"
+                name="user-filter"
                 className="radio radio-sm"
-                checked={filterStatus === "all"}
-                onChange={() => setFilterStatus("all", { history: "push" })}
+                checked={filterUser === "all"}
+                onChange={() => setFilterUser("all", { history: "push" })}
               />
-              <span className="label-text">Tutti gli stati</span>
+              <span className="label-text">Tutti gli utenti</span>
             </label>
           </div>
+          {users.map((user) => (
+            <div key={user.id} className="form-control mb-2">
+              <label className="label cursor-pointer">
+                <input
+                  type="radio"
+                  name="user-filter"
+                  className="radio radio-sm"
+                  checked={filterUser === user.id}
+                  onChange={() => setFilterUser(user.id, { history: "push" })}
+                />
+                <span className="label-text">{user.name}</span>
+              </label>
+            </div>
+          ))}
+        </div>
+
+        {/* Filtro Data */}
+        <div className="mb-6">
+          <h3 className="text-md font-semibold mb-2">Periodo</h3>
           <div className="form-control mb-2">
-            <label className="label cursor-pointer">
-              <input
-                type="radio"
-                name="status-filter"
-                className="radio radio-sm"
-                checked={filterStatus === "open"}
-                onChange={() => setFilterStatus("open", { history: "push" })}
-              />
-              <span className="label-text">Aperti</span>
+            <label className="label" htmlFor="date-from">
+              <span className="label-text">Da</span>
             </label>
+            <input
+              id="date-from"
+              type="date"
+              className="input input-bordered input-sm"
+              value={filterDateFrom}
+              onChange={(e) =>
+                setFilterDateFrom(e.target.value || null, { history: "push" })
+              }
+            />
           </div>
           <div className="form-control mb-2">
-            <label className="label cursor-pointer">
-              <input
-                type="radio"
-                name="status-filter"
-                className="radio radio-sm"
-                checked={filterStatus === "closed"}
-                onChange={() => setFilterStatus("closed", { history: "push" })}
-              />
-              <span className="label-text">Chiusi</span>
+            <label className="label" htmlFor="date-to">
+              <span className="label-text">A</span>
             </label>
+            <input
+              id="date-to"
+              type="date"
+              className="input input-bordered input-sm"
+              value={filterDateTo}
+              onChange={(e) =>
+                setFilterDateTo(e.target.value || null, { history: "push" })
+              }
+            />
           </div>
         </div>
       </div>
@@ -117,24 +151,10 @@ function SortHeader({
   onSort,
 }: {
   label: string;
-  column:
-    | "nome"
-    | "descrizione"
-    | "open"
-    | "created_at"
-    | "user_cantieri_created_byTouser"
-    | "last_update_at";
+  column: "date" | "user" | "created_at" | "last_update_at";
   sortBy: string;
   sortDir: "asc" | "desc";
-  onSort: (
-    col:
-      | "nome"
-      | "descrizione"
-      | "open"
-      | "created_at"
-      | "user_cantieri_created_byTouser"
-      | "last_update_at",
-  ) => void;
+  onSort: (col: "date" | "user" | "created_at" | "last_update_at") => void;
 }) {
   return (
     <th className="cursor-pointer select-none" onClick={() => onSort(column)}>
@@ -154,48 +174,52 @@ function SortHeader({
   );
 }
 
-export default function CantieriTable({ cantieri }: CantieriTableProps) {
+export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
   const [search, setSearch] = useQueryState("q", parseAsString.withDefault(""));
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [sortBy, setSortBy] = useQueryState(
     "sortBy",
     parseAsStringLiteral([
-      "nome",
-      "descrizione",
-      "open",
+      "date",
+      "user",
       "created_at",
-      "user_cantieri_created_byTouser",
       "last_update_at",
-    ]).withDefault("nome"),
+    ]).withDefault("date"),
   );
   const [sortDir, setSortDir] = useQueryState(
     "sortDir",
-    parseAsStringLiteral(["asc", "desc"]).withDefault("asc"),
+    parseAsStringLiteral(["asc", "desc"]).withDefault("desc"),
   );
-  const [filterStatus, setFilterStatus] = useQueryState(
-    "filterStatus",
+  const [filterUser, setFilterUser] = useQueryState(
+    "filterUser",
     parseAsString.withDefault("all"),
   );
-  const [selectedCantiereForEdit, setSelectedCantiereForEdit] =
-    useState<Cantiere | null>(null);
-  const [selectedCantiereForDelete, setSelectedCantiereForDelete] =
-    useState<Cantiere | null>(null);
-  const drawerId = "cantieri-filter-drawer";
+  const [filterDateFrom, setFilterDateFrom] = useQueryState(
+    "filterDateFrom",
+    parseAsString.withDefault(""),
+  );
+  const [filterDateTo, setFilterDateTo] = useQueryState(
+    "filterDateTo",
+    parseAsString.withDefault(""),
+  );
+  const [selectedAttivitaForEdit, setSelectedAttivitaForEdit] =
+    useState<Attivita | null>(null);
+  const [selectedAttivitaForDelete, setSelectedAttivitaForDelete] =
+    useState<Attivita | null>(null);
+  const drawerId = "attivita-filter-drawer";
+
+  // Use users from props for filter
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (filterStatus !== "all") count++;
+    if (filterUser !== "all") count++;
+    if (filterDateFrom) count++;
+    if (filterDateTo) count++;
     return count;
-  }, [filterStatus]);
+  }, [filterUser, filterDateFrom, filterDateTo]);
 
   const handleSort = (
-    col:
-      | "nome"
-      | "descrizione"
-      | "open"
-      | "created_at"
-      | "user_cantieri_created_byTouser"
-      | "last_update_at",
+    col: "date" | "user" | "created_at" | "last_update_at",
   ) => {
     if (sortBy === col) {
       setSortDir(sortDir === "asc" ? "desc" : "asc", { history: "push" });
@@ -207,51 +231,50 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
   };
 
   const filtered = useMemo(() => {
-    let arr = cantieri;
+    let arr = attivita;
 
-    // Filter by status
-    if (filterStatus !== "all") {
-      if (filterStatus === "open") {
-        arr = arr.filter((c) => c.open === true);
-      } else if (filterStatus === "closed") {
-        arr = arr.filter((c) => c.open === false);
-      }
+    // Filter by user
+    if (filterUser !== "all") {
+      arr = arr.filter((a) => a.user.id === filterUser);
+    }
+
+    // Filter by date range
+    if (filterDateFrom) {
+      const fromDate = new Date(filterDateFrom);
+      arr = arr.filter((a) => new Date(a.date) >= fromDate);
+    }
+    if (filterDateTo) {
+      const toDate = new Date(filterDateTo);
+      arr = arr.filter((a) => new Date(a.date) <= toDate);
     }
 
     // Filter by search text
     if (search) {
       const s = search.toLowerCase();
       arr = arr.filter(
-        (c) =>
-          c.nome.toLowerCase().includes(s) ||
-          c.descrizione.toLowerCase().includes(s) ||
-          c.user_cantieri_created_byTouser.name.toLowerCase().includes(s),
+        (a) =>
+          a.user.name.toLowerCase().includes(s) ||
+          new Date(a.date).toLocaleDateString("it-IT").includes(s),
       );
     }
 
     return arr;
-  }, [search, cantieri, filterStatus]);
+  }, [search, attivita, filterUser, filterDateFrom, filterDateTo]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
     arr.sort((a, b) => {
       let vA: string = "";
       let vB: string = "";
-      if (sortBy === "nome") {
-        vA = a.nome.toLowerCase();
-        vB = b.nome.toLowerCase();
-      } else if (sortBy === "descrizione") {
-        vA = a.descrizione.toLowerCase();
-        vB = b.descrizione.toLowerCase();
-      } else if (sortBy === "open") {
-        vA = a.open ? "aperto" : "chiuso";
-        vB = b.open ? "aperto" : "chiuso";
+      if (sortBy === "date") {
+        vA = new Date(a.date).toISOString();
+        vB = new Date(b.date).toISOString();
+      } else if (sortBy === "user") {
+        vA = a.user.name.toLowerCase();
+        vB = b.user.name.toLowerCase();
       } else if (sortBy === "created_at") {
         vA = new Date(a.created_at).toISOString();
         vB = new Date(b.created_at).toISOString();
-      } else if (sortBy === "user_cantieri_created_byTouser") {
-        vA = a.user_cantieri_created_byTouser.name.toLowerCase();
-        vB = b.user_cantieri_created_byTouser.name.toLowerCase();
       } else if (sortBy === "last_update_at") {
         vA = new Date(a.last_update_at).toISOString();
         vB = new Date(b.last_update_at).toISOString();
@@ -280,7 +303,7 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
           <div className="join w-full max-w-md">
             <input
               type="text"
-              placeholder="Cerca per nome o descrizione"
+              placeholder="Cerca per utente o data"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value, { history: "push" });
@@ -310,26 +333,21 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
             <thead>
               <tr>
                 <SortHeader
-                  label="Nome"
-                  column="nome"
+                  label="Data"
+                  column="date"
                   sortBy={sortBy}
                   sortDir={sortDir}
                   onSort={handleSort}
                 />
                 <SortHeader
-                  label="Descrizione"
-                  column="descrizione"
+                  label="Utente"
+                  column="user"
                   sortBy={sortBy}
                   sortDir={sortDir}
                   onSort={handleSort}
                 />
-                <SortHeader
-                  label="Stato"
-                  column="open"
-                  sortBy={sortBy}
-                  sortDir={sortDir}
-                  onSort={handleSort}
-                />
+                <th># Cantieri</th>
+                <th># Mezzi</th>
                 <SortHeader
                   label="Data creazione"
                   column="created_at"
@@ -339,7 +357,7 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
                 />
                 <SortHeader
                   label="Creato da"
-                  column="user_cantieri_created_byTouser"
+                  column="created_at"
                   sortBy={sortBy}
                   sortDir={sortDir}
                   onSort={handleSort}
@@ -358,50 +376,51 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
               {paginated.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center text-base-content/60 py-8"
                   >
-                    Nessun cantiere trovato.
+                    Nessuna attività trovata.
                   </td>
                 </tr>
               ) : (
-                paginated.map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.nome}</td>
-                    <td>{c.descrizione}</td>
+                paginated.map((a) => (
+                  <tr key={a.id}>
+                    <td>{new Date(a.date).toLocaleDateString("it-IT")}</td>
+                    <td>{a.user.name}</td>
                     <td>
-                      <div className="flex items-center gap-2">
-                        {c.open ? (
-                          <>
-                            <CheckIcon className="w-4 h-4 text-success" />
-                            <span className="text-success font-medium">
-                              Aperto
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <XIcon className="w-4 h-4 text-error" />
-                            <span className="text-error font-medium">
-                              Chiuso
-                            </span>
-                          </>
-                        )}
+                      <span className="badge badge-primary">
+                        {a.cantieriCount}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="badge badge-secondary">
+                        {a.mezziCount}
+                      </span>
+                    </td>
+                    <td>
+                      {new Date(a.created_at).toLocaleDateString("it-IT")}
+                    </td>
+                    <td>{a.user_attivita_created_byTouser.name}</td>
+                    <td>
+                      {new Date(a.last_update_at).toLocaleDateString("it-IT")}
+                    </td>
+                    <td>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-ghost"
+                          onClick={() => setSelectedAttivitaForEdit(a)}
+                        >
+                          Modifica
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-ghost text-error"
+                          onClick={() => setSelectedAttivitaForDelete(a)}
+                        >
+                          Elimina
+                        </button>
                       </div>
-                    </td>
-                    <td>
-                      {new Date(c.created_at).toLocaleDateString("it-IT")}
-                    </td>
-                    <td>{c.user_cantieri_created_byTouser.name}</td>
-                    <td>
-                      {new Date(c.last_update_at).toLocaleDateString("it-IT")}
-                    </td>
-                    <td>
-                      <Link
-                        href={`/cantieri/${c.external_id}`}
-                        className="btn btn-sm btn-ghost"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </Link>
                     </td>
                   </tr>
                 ))
@@ -409,10 +428,15 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
             </tbody>
           </table>
         </div>
-        <CantieriFilterDrawer
+        <AttivitaFilterDrawer
           drawerId={drawerId}
-          filterStatus={filterStatus}
-          setFilterStatus={setFilterStatus}
+          filterUser={filterUser}
+          setFilterUser={setFilterUser}
+          filterDateFrom={filterDateFrom}
+          setFilterDateFrom={setFilterDateFrom}
+          filterDateTo={filterDateTo}
+          setFilterDateTo={setFilterDateTo}
+          users={users}
         />
       </div>
 
@@ -463,24 +487,27 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
         </div>
       )}
 
-      {selectedCantiereForEdit && (
-        <ModificaCantiereModal
-          cantiere={{
-            id: selectedCantiereForEdit.id,
-            nome: selectedCantiereForEdit.nome,
-            descrizione: selectedCantiereForEdit.descrizione,
-            open: selectedCantiereForEdit.open,
+      {selectedAttivitaForEdit && (
+        <ModificaAttivitaModal
+          attivita={{
+            id: selectedAttivitaForEdit.id,
+            date: new Date(selectedAttivitaForEdit.date)
+              .toISOString()
+              .split("T")[0],
+            user_id: selectedAttivitaForEdit.user_id,
           }}
-          onClose={() => setSelectedCantiereForEdit(null)}
+          users={users}
+          onClose={() => setSelectedAttivitaForEdit(null)}
         />
       )}
-      {selectedCantiereForDelete && (
-        <EliminaCantiereModal
-          cantiere={{
-            id: selectedCantiereForDelete.id,
-            nome: selectedCantiereForDelete.nome,
+      {selectedAttivitaForDelete && (
+        <EliminaAttivitaModal
+          attivita={{
+            id: selectedAttivitaForDelete.id,
+            date: selectedAttivitaForDelete.date.toString(),
+            user: selectedAttivitaForDelete.user.name,
           }}
-          onClose={() => setSelectedCantiereForDelete(null)}
+          onClose={() => setSelectedAttivitaForDelete(null)}
         />
       )}
     </div>

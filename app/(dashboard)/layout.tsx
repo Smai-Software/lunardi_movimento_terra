@@ -44,8 +44,8 @@ export default function DashboardLayout({
             </Link>
           </li>
           <li>
-            <Link href="/clienti" className="hover:bg-base-300 rounded-md">
-              <Building2 className="size-6" /> Clienti
+            <Link href="/attivita" className="hover:bg-base-300 rounded-md">
+              <Building2 className="size-6" /> Attività
             </Link>
           </li>
           <li>
