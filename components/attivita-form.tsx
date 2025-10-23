@@ -184,7 +184,7 @@ function AttivitaForm({ users }: AttivitaFormProps) {
     setCantieri(updatedCantieri);
   };
 
-  const removeCantiere = (cantiereIndex: number) => {
+  const _removeCantiere = (cantiereIndex: number) => {
     const updatedCantieri = [...cantieri];
     updatedCantieri.splice(cantiereIndex, 1);
     setCantieri(updatedCantieri);
@@ -213,13 +213,24 @@ function AttivitaForm({ users }: AttivitaFormProps) {
     });
   };
 
-  const getUsedCantieriIds = () => {
-    return cantieri.map((c) => c.cantiereId);
+  const getAvailableCantieriForSelection = () => {
+    return availableCantieri;
   };
 
-  const getAvailableCantieriForSelection = () => {
-    const usedIds = getUsedCantieriIds();
-    return availableCantieri.filter((c) => !usedIds.includes(c.id));
+  const getTotalHours = () => {
+    const totalMinutes = cantieri.reduce((total, cantiere) => {
+      return (
+        total +
+        cantiere.interazioni.reduce((cantiereTotal, interazione) => {
+          return cantiereTotal + interazione.ore * 60 + interazione.minuti;
+        }, 0)
+      );
+    }, 0);
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    return { hours, minutes };
   };
 
   return (
@@ -326,33 +337,39 @@ function AttivitaForm({ users }: AttivitaFormProps) {
                     <label htmlFor="ore-input" className="label">
                       <span className="label-text">Ore</span>
                     </label>
-                    <input
+                    <select
                       id="ore-input"
-                      type="number"
-                      min="0"
-                      className="input input-bordered"
+                      className="select select-bordered"
                       value={currentOre}
                       onChange={(e) =>
                         setCurrentOre(parseInt(e.target.value, 10) || 0)
                       }
-                    />
+                    >
+                      {Array.from({ length: 13 }, (_, i) => (
+                        <option key={`hour-${i.toString()}`} value={i}>
+                          {i}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="form-control">
                     <label htmlFor="minuti-input" className="label">
                       <span className="label-text">Minuti</span>
                     </label>
-                    <input
+                    <select
                       id="minuti-input"
-                      type="number"
-                      min="0"
-                      max="59"
-                      className="input input-bordered"
+                      className="select select-bordered"
                       value={currentMinuti}
                       onChange={(e) =>
                         setCurrentMinuti(parseInt(e.target.value, 10) || 0)
                       }
-                    />
+                    >
+                      <option value={0}>00</option>
+                      <option value={15}>15</option>
+                      <option value={30}>30</option>
+                      <option value={45}>45</option>
+                    </select>
                   </div>
                 </div>
 
@@ -372,63 +389,79 @@ function AttivitaForm({ users }: AttivitaFormProps) {
               {cantieri.length > 0 && (
                 <div className="space-y-4">
                   <h3 className="font-semibold">Interazioni Aggiunte</h3>
-                  {cantieri.map((cantiere, cantiereIndex) => (
-                    <div
-                      key={cantiere.cantiereId}
-                      className="card bg-base-200 p-4"
-                    >
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="font-semibold">
-                          {cantiere.cantiereNome}
-                        </h4>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-error"
-                          onClick={() => removeCantiere(cantiereIndex)}
-                        >
-                          Rimuovi Cantiere
-                        </button>
-                      </div>
-
-                      <div className="space-y-2">
-                        {cantiere.interazioni.map(
-                          (interazione, interazioneIndex) => (
-                            <div
-                              key={`${cantiere.cantiereId}-${interazioneIndex}`}
-                              className="flex justify-between items-center bg-base-100 p-2 rounded"
-                            >
-                              <div className="flex gap-4">
-                                <span>
-                                  <strong>Mezzo:</strong>{" "}
+                  <div className="overflow-x-auto">
+                    <table className="table table-zebra w-full">
+                      <thead>
+                        <tr>
+                          <th>Cantiere</th>
+                          <th>Mezzo</th>
+                          <th>Tempo</th>
+                          <th>Azioni</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cantieri.flatMap((cantiere, cantiereIndex) =>
+                          cantiere.interazioni.map(
+                            (interazione, interazioneIndex) => (
+                              <tr
+                                key={`${cantiere.cantiereId}-${interazioneIndex}`}
+                              >
+                                <td className="font-medium">
+                                  {cantiere.cantiereNome}
+                                </td>
+                                <td>
                                   {interazione.mezziId
                                     ? availableMezzi.find(
                                         (m) => m.id === interazione.mezziId,
                                       )?.nome || "N/A"
                                     : "Nessuno"}
-                                </span>
-                                <span>
-                                  <strong>Tempo:</strong> {interazione.ore}h{" "}
-                                  {interazione.minuti}m
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline btn-error"
-                                onClick={() =>
-                                  removeInterazione(
-                                    cantiereIndex,
-                                    interazioneIndex,
-                                  )
-                                }
-                              >
-                                Rimuovi
-                              </button>
-                            </div>
+                                </td>
+                                <td>
+                                  {interazione.ore}h {interazione.minuti}m
+                                </td>
+                                <td>
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline btn-error"
+                                    onClick={() =>
+                                      removeInterazione(
+                                        cantiereIndex,
+                                        interazioneIndex,
+                                      )
+                                    }
+                                  >
+                                    Rimuovi
+                                  </button>
+                                </td>
+                              </tr>
+                            ),
                           ),
                         )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Total Hours Summary */}
+                  {cantieri.length > 0 && (
+                    <div className="mt-4">
+                      <div className="card bg-primary text-primary-content">
+                        <div className="card-body py-3">
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold">Totale Ore:</span>
+                            <span className="text-lg font-bold">
+                              {getTotalHours()
+                                .hours.toString()
+                                .padStart(2, "0")}
+                              :
+                              {getTotalHours()
+                                .minutes.toString()
+                                .padStart(2, "0")}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </div>

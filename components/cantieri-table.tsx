@@ -480,7 +480,6 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
             id: selectedCantiereForDelete.id,
             nome: selectedCantiereForDelete.nome,
           }}
-          onClose={() => setSelectedCantiereForDelete(null)}
         />
       )}
     </div>

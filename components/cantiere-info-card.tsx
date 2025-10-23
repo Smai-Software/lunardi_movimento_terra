@@ -114,7 +114,6 @@ export default function CantiereInfoCard({ cantiere }: CantiereInfoCardProps) {
             id: cantiere.id,
             nome: cantiere.nome,
           }}
-          onClose={() => setShowEliminaCantiere(false)}
         />
       )}
     </>

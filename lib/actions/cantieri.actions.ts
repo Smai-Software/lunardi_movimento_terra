@@ -2,6 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 import { getCantieriByUserId } from "@/lib/data/cantieri.data";
@@ -13,8 +14,8 @@ export const createCantiere = actionClientWithAuth
   .inputSchema(
     zfd.formData({
       nome: zfd.text(z.string().min(1, "Il nome è obbligatorio")),
-      descrizione: zfd.text(z.string().min(1, "La descrizione è obbligatoria")),
-      open: zfd.checkbox(),
+      descrizione: zfd.text(z.string().optional()),
+      open: zfd.text(z.string().min(1, "Lo stato del cantiere è obbligatorio")),
     }),
   )
   .outputSchema(
@@ -29,8 +30,8 @@ export const createCantiere = actionClientWithAuth
         await prisma.cantieri.create({
           data: {
             nome,
-            descrizione,
-            open: open,
+            descrizione: descrizione || "",
+            open: open === "1",
             created_at: new Date(),
             last_update_at: new Date(),
             created_by: userId,
@@ -77,7 +78,7 @@ export const updateCantiere = actionClientWithAuth
           where: { id },
           data: {
             nome,
-            descrizione,
+            descrizione: descrizione || "",
             open,
             last_update_at: new Date(),
             last_update_by: userId,
@@ -153,7 +154,6 @@ export const deleteCantiere = actionClientWithAuth
     try {
       await prisma.cantieri.delete({ where: { id } });
       revalidateTag("cantieri");
-      return { success: true };
     } catch (error) {
       console.log(error);
       return {
@@ -161,6 +161,7 @@ export const deleteCantiere = actionClientWithAuth
         error: "Errore durante l'eliminazione del cantiere",
       };
     }
+    redirect("/cantieri");
   });
 
 // --- AGGIUNGI UTENTE CANTIERE ---

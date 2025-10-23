@@ -20,6 +20,12 @@ export const getInterazioniByCantiereId = unstable_cache(
         last_update_at: true,
         created_by: true,
         last_update_by: true,
+        cantieri: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
         user: {
           select: {
             id: true,
@@ -80,6 +86,12 @@ export const getInterazioni = unstable_cache(
         last_update_at: true,
         created_by: true,
         last_update_by: true,
+        cantieri: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
         user: {
           select: {
             id: true,

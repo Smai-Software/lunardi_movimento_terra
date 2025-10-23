@@ -76,10 +76,9 @@ export default function ModificaCantiereModal({
             >
               Descrizione
             </label>
-            <input
+            <textarea
               id={`descrizione-cantiere-${cantiere.id}`}
-              className="input input-bordered w-full"
-              type="text"
+              className="textarea textarea-bordered w-full"
               name="descrizione"
               value={descrizione}
               onChange={(e) => setDescrizione(e.target.value)}

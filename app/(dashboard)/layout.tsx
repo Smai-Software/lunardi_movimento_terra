@@ -1,7 +1,7 @@
-import { Building2, Forklift, HardHat, Home, Menu, Users } from "lucide-react";
-import Link from "next/link";
+import { Menu } from "lucide-react";
 import CurrentUserName from "@/components/current-username";
 import SignOut from "@/components/logout-form";
+import NavigationItem from "@/components/navigation-item";
 
 export default function DashboardLayout({
   children,
@@ -37,34 +37,22 @@ export default function DashboardLayout({
           className="drawer-overlay"
         ></label>
         <ul className="menu bg-base-200 text-base-content min-h-full w-fit p-4 space-y-2 text-base">
-          <li className="ml-4 mt-1 font-semibold text-lg">Studio R.M.</li>
-          <li>
-            <Link href="/" className="hover:bg-base-300 rounded-md mt-8">
-              <Home className="size-6" /> Home
-            </Link>
-          </li>
-          <li>
-            <Link href="/attivita" className="hover:bg-base-300 rounded-md">
-              <Building2 className="size-6" /> Attività
-            </Link>
-          </li>
-          <li>
-            <Link href="/cantieri" className="hover:bg-base-300 rounded-md">
-              <HardHat className="size-6" />
-              Cantieri
-            </Link>
-          </li>
-          <li>
-            <Link href="/mezzi" className="hover:bg-base-300 rounded-md">
-              <Forklift className="size-6" />
-              Mezzi
-            </Link>
-          </li>
-          <li>
-            <Link href="/utenti" className="hover:bg-base-300 rounded-md">
-              <Users className="size-6" /> Utenti
-            </Link>
-          </li>
+          <li className="ml-4 mt-1 font-semibold text-lg">L.M.T</li>
+          <NavigationItem href="/" iconName="home" className="mt-8">
+            Home
+          </NavigationItem>
+          <NavigationItem href="/attivita" iconName="building2">
+            Attività
+          </NavigationItem>
+          <NavigationItem href="/cantieri" iconName="hardhat">
+            Cantieri
+          </NavigationItem>
+          <NavigationItem href="/mezzi" iconName="forklift">
+            Mezzi
+          </NavigationItem>
+          <NavigationItem href="/utenti" iconName="users">
+            Utenti
+          </NavigationItem>
         </ul>
       </div>
     </div>

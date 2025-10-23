@@ -11,7 +11,6 @@ export default function AggiungiCantiereModal() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [nome, setNome] = useState("");
   const [descrizione, setDescrizione] = useState("");
-  const [open, setOpen] = useState(true);
 
   const { execute, result, reset } = useAction(createCantiere, {
     onSuccess: () => {
@@ -30,7 +29,6 @@ export default function AggiungiCantiereModal() {
   const handleClose = () => {
     setNome("");
     setDescrizione("");
-    setOpen(true);
     reset();
     dialogRef.current?.close();
   };
@@ -49,7 +47,7 @@ export default function AggiungiCantiereModal() {
                 className="block font-medium mb-1 text-sm"
                 htmlFor="nome-cantiere"
               >
-                Nome
+                Nome *
               </label>
               <input
                 id="nome-cantiere"
@@ -69,36 +67,16 @@ export default function AggiungiCantiereModal() {
               >
                 Descrizione
               </label>
-              <input
+              <textarea
                 id="descrizione-cantiere"
-                className="input input-bordered w-full"
-                type="text"
+                className="textarea textarea-bordered w-full"
                 name="descrizione"
                 value={descrizione}
                 onChange={(e) => setDescrizione(e.target.value)}
                 placeholder="Inserisci la descrizione"
-                required
               />
             </div>
-            <div className="mb-4">
-              <label
-                className="block font-medium mb-1 text-sm"
-                htmlFor="open-cantiere"
-              >
-                Stato cantiere
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  id="open-cantiere"
-                  className="toggle toggle-success"
-                  type="checkbox"
-                  name="open"
-                  checked={open}
-                  onChange={(e) => setOpen(e.target.checked)}
-                />
-                <span className="text-sm">{open ? "Aperto" : "Chiuso"}</span>
-              </div>
-            </div>
+            <input type="hidden" name="open" value="1" />
             <ValidationErrors result={result} />
             <div className="modal-action">
               <button

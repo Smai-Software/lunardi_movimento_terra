@@ -25,11 +25,8 @@ export default function EliminaAttivitaModal({
   const { execute, result, reset } = useAction(
     deleteAttivita.bind(null, attivita.id),
     {
-      onSuccess: () => {
-        if (result.data?.success) {
-          toast.success("Attività eliminata con successo!");
-          handleClose();
-        }
+      onNavigation: () => {
+        toast.success("Attività eliminata con successo!");
       },
     },
   );

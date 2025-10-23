@@ -5,8 +5,7 @@ import CantiereDetailClient from "@/app/(dashboard)/cantieri/[slug]/cantiere-det
 import CantiereInfoCard from "@/components/cantiere-info-card";
 import StatsCardSkeleton from "@/components/stats-card-skeleton";
 import TotalHoursCard from "@/components/total-hours-card";
-import UniqueMezziCard from "@/components/unique-mezzi-card";
-import UniqueUsersCard from "@/components/unique-users-card";
+import TotalInterazioniCard from "@/components/total-interazioni-card";
 import { auth } from "@/lib/auth";
 import { getUserCantieriByCantiereId } from "@/lib/data/cantieri.data";
 import {
@@ -84,15 +83,12 @@ export default async function CantiereDetailPage({ params }: PageProps) {
       <CantiereInfoCard cantiere={cantiere} />
 
       {/* Statistics Cards with Suspense */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Suspense fallback={<StatsCardSkeleton />}>
           <TotalHoursCard cantieriId={cantiere.id} />
         </Suspense>
         <Suspense fallback={<StatsCardSkeleton />}>
-          <UniqueUsersCard cantieriId={cantiere.id} />
-        </Suspense>
-        <Suspense fallback={<StatsCardSkeleton />}>
-          <UniqueMezziCard cantieriId={cantiere.id} />
+          <TotalInterazioniCard cantieriId={cantiere.id} />
         </Suspense>
       </div>
 

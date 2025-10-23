@@ -3,7 +3,7 @@
 import AssegnaUtenteCantiereModal from "@/components/assegna-utente-cantiere-modal";
 import InterazioniTable from "@/components/interazioni-table";
 import type { UserCantieri } from "@/lib/data/cantieri.data";
-import type { Interazione } from "@/lib/data/interazioni.data";
+import type { InterazioneAll } from "@/lib/data/interazioni.data";
 import type { UserNotBanned } from "@/lib/data/users.data";
 
 type CantiereDetailClientProps = {
@@ -27,7 +27,7 @@ type CantiereDetailClientProps = {
       name: string;
     };
   };
-  interazioni: Interazione[];
+  interazioni: InterazioneAll[];
   users: UserNotBanned[];
   mezzi: Array<{ id: number; nome: string }>;
   attivita: Array<{ id: number; date: Date }>;

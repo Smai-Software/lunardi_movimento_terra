@@ -8,23 +8,24 @@ export async function getTotalHoursByCantiereId(cantieriId: number) {
   return result._sum.tempo_totale?.toString() || "0";
 }
 
-export async function getUniqueUsersByCantiereId(cantieriId: number) {
-  const result = await prisma.interazioni.groupBy({
-    by: ["user_id"],
+export async function getTotalInterazioniByCantiereId(cantieriId: number) {
+  const result = await prisma.interazioni.count({
     where: { cantieri_id: cantieriId },
-    _count: { user_id: true },
   });
-  return result.length;
+  return result;
 }
 
-export async function getUniqueMezziByCantiereId(cantieriId: number) {
-  const result = await prisma.interazioni.groupBy({
-    by: ["mezzi_id"],
-    where: {
-      cantieri_id: cantieriId,
-      mezzi_id: { not: null },
-    },
-    _count: { mezzi_id: true },
+export async function getTotalHoursByAttivitaId(attivitaId: number) {
+  const result = await prisma.interazioni.aggregate({
+    where: { attivita_id: attivitaId },
+    _sum: { tempo_totale: true },
   });
-  return result.length;
+  return result._sum.tempo_totale?.toString() || "0";
+}
+
+export async function getTotalInterazioniByAttivitaId(attivitaId: number) {
+  const result = await prisma.interazioni.count({
+    where: { attivita_id: attivitaId },
+  });
+  return result;
 }

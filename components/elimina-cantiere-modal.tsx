@@ -12,32 +12,21 @@ type EliminaCantiereModalProps = {
     id: number;
     nome: string;
   };
-  onClose: () => void;
 };
 
 export default function EliminaCantiereModal({
   cantiere,
-  onClose,
 }: EliminaCantiereModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const { execute, result, reset } = useAction(
     deleteCantiere.bind(null, cantiere.id),
     {
-      onError: () => {
-        toast.error("Errore durante l'eliminazione del cantiere");
-      },
-      onSuccess: () => {
+      onNavigation: () => {
         toast.success("Cantiere eliminato con successo!");
-        onClose();
       },
     },
   );
-
-  const handleClose = () => {
-    reset();
-    onClose();
-  };
 
   useEffect(() => {
     dialogRef.current?.showModal();
@@ -53,20 +42,15 @@ export default function EliminaCantiereModal({
           </p>
           <ValidationErrors result={result} />
           <div className="modal-action">
-            <button type="button" className="btn" onClick={handleClose}>
+            <button type="button" className="btn" onClick={() => reset()}>
               Annulla
             </button>
             <SubmitButton className="btn btn-error">
-              Conferma eliminazione
+              Elimina cantiere
             </SubmitButton>
           </div>
         </form>
       </div>
-      <form method="dialog" className="modal-backdrop">
-        <button tabIndex={-1} type="submit">
-          Annulla
-        </button>
-      </form>
     </dialog>
   );
 }

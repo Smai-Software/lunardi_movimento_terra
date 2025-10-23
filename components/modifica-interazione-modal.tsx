@@ -154,16 +154,20 @@ export default function ModificaInterazioneModal({
               >
                 Ore *
               </label>
-              <input
+              <select
                 id={`ore-interazione-${interazione.id}`}
-                className="input input-bordered w-full"
-                type="number"
+                className="select select-bordered w-full"
                 name="ore"
                 value={ore}
                 onChange={(e) => setOre(Number(e.target.value))}
-                min="0"
                 required
-              />
+              >
+                {Array.from({ length: 13 }, (_, i) => (
+                  <option key={`hour-${i.toString()}`} value={i}>
+                    {i}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label
@@ -172,17 +176,19 @@ export default function ModificaInterazioneModal({
               >
                 Minuti *
               </label>
-              <input
+              <select
                 id={`minuti-interazione-${interazione.id}`}
-                className="input input-bordered w-full"
-                type="number"
+                className="select select-bordered w-full"
                 name="minuti"
                 value={minuti}
                 onChange={(e) => setMinuti(Number(e.target.value))}
-                min="0"
-                max="59"
                 required
-              />
+              >
+                <option value={0}>00</option>
+                <option value={15}>15</option>
+                <option value={30}>30</option>
+                <option value={45}>45</option>
+              </select>
             </div>
           </div>
 

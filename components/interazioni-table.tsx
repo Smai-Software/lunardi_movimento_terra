@@ -31,6 +31,171 @@ type InterazioniTableProps = {
 
 const PAGE_SIZE = 10;
 
+function InterazioniFilterDrawer({
+  drawerId,
+  filterUser,
+  setFilterUser,
+  filterDateFrom,
+  setFilterDateFrom,
+  filterDateTo,
+  setFilterDateTo,
+  filterMezzo,
+  setFilterMezzo,
+  users,
+  mezzi,
+}: {
+  drawerId: string;
+  filterUser: string;
+  setFilterUser: (val: string | null, options?: { history: "push" }) => void;
+  filterDateFrom: string;
+  setFilterDateFrom: (
+    val: string | null,
+    options?: { history: "push" },
+  ) => void;
+  filterDateTo: string;
+  setFilterDateTo: (val: string | null, options?: { history: "push" }) => void;
+  filterMezzo: string;
+  setFilterMezzo: (val: string | null, options?: { history: "push" }) => void;
+  users: { id: string; name: string }[];
+  mezzi: { id: number; nome: string }[];
+}) {
+  return (
+    <div className="drawer-side">
+      <button
+        type="button"
+        className="drawer-overlay"
+        onClick={() => {
+          const checkbox = document.getElementById(
+            drawerId,
+          ) as HTMLInputElement;
+          if (checkbox) checkbox.checked = false;
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            const checkbox = document.getElementById(
+              drawerId,
+            ) as HTMLInputElement;
+            if (checkbox) checkbox.checked = false;
+          }
+        }}
+        aria-label="Chiudi filtro"
+      ></button>
+      <div className="menu p-4 w-80 min-h-full bg-base-100">
+        <h2 className="text-lg font-bold mb-4">Filtra interazioni</h2>
+
+        {/* Filtro Utente */}
+        <div className="mb-6">
+          <h3 className="text-md font-semibold mb-2">Utente</h3>
+          <div className="form-control mb-2">
+            <label className="label cursor-pointer">
+              <input
+                type="radio"
+                name="user-filter"
+                className="radio radio-sm"
+                checked={filterUser === "all"}
+                onChange={() => setFilterUser("all", { history: "push" })}
+              />
+              <span className="label-text">Tutti gli utenti</span>
+            </label>
+          </div>
+          {users.map((user) => (
+            <div key={user.id} className="form-control mb-2">
+              <label className="label cursor-pointer">
+                <input
+                  type="radio"
+                  name="user-filter"
+                  className="radio radio-sm"
+                  checked={filterUser === user.id}
+                  onChange={() => setFilterUser(user.id, { history: "push" })}
+                />
+                <span className="label-text">{user.name}</span>
+              </label>
+            </div>
+          ))}
+        </div>
+
+        {/* Filtro Mezzo */}
+        <div className="mb-6">
+          <h3 className="text-md font-semibold mb-2">Mezzo</h3>
+          <div className="form-control mb-2">
+            <label className="label cursor-pointer">
+              <input
+                type="radio"
+                name="mezzo-filter"
+                className="radio radio-sm"
+                checked={filterMezzo === "all"}
+                onChange={() => setFilterMezzo("all", { history: "push" })}
+              />
+              <span className="label-text">Tutti i mezzi</span>
+            </label>
+          </div>
+          <div className="form-control mb-2">
+            <label className="label cursor-pointer">
+              <input
+                type="radio"
+                name="mezzo-filter"
+                className="radio radio-sm"
+                checked={filterMezzo === "none"}
+                onChange={() => setFilterMezzo("none", { history: "push" })}
+              />
+              <span className="label-text">Nessun mezzo</span>
+            </label>
+          </div>
+          {mezzi.map((mezzo) => (
+            <div key={mezzo.id} className="form-control mb-2">
+              <label className="label cursor-pointer">
+                <input
+                  type="radio"
+                  name="mezzo-filter"
+                  className="radio radio-sm"
+                  checked={filterMezzo === mezzo.id.toString()}
+                  onChange={() =>
+                    setFilterMezzo(mezzo.id.toString(), { history: "push" })
+                  }
+                />
+                <span className="label-text">{mezzo.nome}</span>
+              </label>
+            </div>
+          ))}
+        </div>
+
+        {/* Filtro Data */}
+        <div className="mb-6">
+          <h3 className="text-md font-semibold mb-2">Periodo</h3>
+          <div className="form-control mb-2">
+            <label className="label" htmlFor="date-from">
+              <span className="label-text">Da</span>
+            </label>
+            <input
+              id="date-from"
+              type="date"
+              className="input input-bordered input-sm"
+              value={filterDateFrom}
+              onChange={(e) =>
+                setFilterDateFrom(e.target.value || null, { history: "push" })
+              }
+            />
+          </div>
+          <div className="form-control mb-2">
+            <label className="label" htmlFor="date-to">
+              <span className="label-text">A</span>
+            </label>
+            <input
+              id="date-to"
+              type="date"
+              className="input input-bordered input-sm"
+              value={filterDateTo}
+              onChange={(e) =>
+                setFilterDateTo(e.target.value || null, { history: "push" })
+              }
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SortHeader({
   label,
   column,
@@ -84,10 +249,36 @@ export default function InterazioniTable({
     "sortDir",
     parseAsStringLiteral(["asc", "desc"]).withDefault("desc"),
   );
+  const [filterUser, setFilterUser] = useQueryState(
+    "filterUser",
+    parseAsString.withDefault("all"),
+  );
+  const [filterDateFrom, setFilterDateFrom] = useQueryState(
+    "filterDateFrom",
+    parseAsString.withDefault(""),
+  );
+  const [filterDateTo, setFilterDateTo] = useQueryState(
+    "filterDateTo",
+    parseAsString.withDefault(""),
+  );
+  const [filterMezzo, setFilterMezzo] = useQueryState(
+    "filterMezzo",
+    parseAsString.withDefault("all"),
+  );
   const [selectedInterazioneForEdit, setSelectedInterazioneForEdit] =
     useState<InterazioneAll | null>(null);
   const [selectedInterazioneForDelete, setSelectedInterazioneForDelete] =
     useState<InterazioneAll | null>(null);
+  const drawerId = "interazioni-filter-drawer";
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filterUser !== "all") count++;
+    if (filterDateFrom) count++;
+    if (filterDateTo) count++;
+    if (filterMezzo !== "all") count++;
+    return count;
+  }, [filterUser, filterDateFrom, filterDateTo, filterMezzo]);
 
   const handleSort = (
     col: "user" | "mezzi" | "attivita" | "tempo" | "created_at",
@@ -104,6 +295,30 @@ export default function InterazioniTable({
   const filtered = useMemo(() => {
     let arr = interazioni;
 
+    // Filter by user
+    if (filterUser !== "all") {
+      arr = arr.filter((i) => i.user.id === filterUser);
+    }
+
+    // Filter by mezzo
+    if (filterMezzo !== "all") {
+      if (filterMezzo === "none") {
+        arr = arr.filter((i) => !i.mezzi);
+      } else {
+        arr = arr.filter((i) => i.mezzi?.id.toString() === filterMezzo);
+      }
+    }
+
+    // Filter by date range
+    if (filterDateFrom) {
+      const fromDate = new Date(filterDateFrom);
+      arr = arr.filter((i) => new Date(i.attivita.date) >= fromDate);
+    }
+    if (filterDateTo) {
+      const toDate = new Date(filterDateTo);
+      arr = arr.filter((i) => new Date(i.attivita.date) <= toDate);
+    }
+
     // Filter by search text
     if (search) {
       const s = search.toLowerCase();
@@ -116,7 +331,14 @@ export default function InterazioniTable({
     }
 
     return arr;
-  }, [search, interazioni]);
+  }, [
+    search,
+    interazioni,
+    filterUser,
+    filterDateFrom,
+    filterDateTo,
+    filterMezzo,
+  ]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -169,7 +391,7 @@ export default function InterazioniTable({
           <div className="join w-full max-w-md">
             <input
               type="text"
-              placeholder="Cerca per utente o mezzo"
+              placeholder="Cerca per utente, mezzo o creatore"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value, { history: "push" });
@@ -182,95 +404,121 @@ export default function InterazioniTable({
             </button>
           </div>
         </div>
+        <label htmlFor={drawerId} className="btn btn-outline relative">
+          Filtra
+          {activeFilterCount > 0 && (
+            <span className="badge badge-secondary badge-sm absolute -top-2 -right-2">
+              {activeFilterCount}
+            </span>
+          )}
+        </label>
       </div>
 
-      <div className="overflow-x-auto rounded-lg shadow">
-        <table className="table w-full">
-          <thead>
-            <tr>
-              <SortHeader
-                label="Utente"
-                column="user"
-                sortBy={sortBy}
-                sortDir={sortDir}
-                onSort={handleSort}
-              />
-              <SortHeader
-                label="Mezzo"
-                column="mezzi"
-                sortBy={sortBy}
-                sortDir={sortDir}
-                onSort={handleSort}
-              />
-              <SortHeader
-                label="Attività"
-                column="attivita"
-                sortBy={sortBy}
-                sortDir={sortDir}
-                onSort={handleSort}
-              />
-              <SortHeader
-                label="Tempo"
-                column="tempo"
-                sortBy={sortBy}
-                sortDir={sortDir}
-                onSort={handleSort}
-              />
-              <SortHeader
-                label="Data creazione"
-                column="created_at"
-                sortBy={sortBy}
-                sortDir={sortDir}
-                onSort={handleSort}
-              />
-              <th>Azioni</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.length === 0 ? (
+      <div className="drawer drawer-end z-10">
+        <input id={drawerId} type="checkbox" className="drawer-toggle" />
+        <div className="overflow-x-auto rounded-lg shadow">
+          <table className="table w-full">
+            <thead>
               <tr>
-                <td
-                  colSpan={6}
-                  className="text-center text-base-content/60 py-8"
-                >
-                  Nessuna interazione trovata.
-                </td>
+                <SortHeader
+                  label="Utente"
+                  column="user"
+                  sortBy={sortBy}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                />
+                <SortHeader
+                  label="Mezzo"
+                  column="mezzi"
+                  sortBy={sortBy}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                />
+                <SortHeader
+                  label="Attività"
+                  column="attivita"
+                  sortBy={sortBy}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                />
+                <SortHeader
+                  label="Tempo"
+                  column="tempo"
+                  sortBy={sortBy}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                />
+                <SortHeader
+                  label="Data creazione"
+                  column="created_at"
+                  sortBy={sortBy}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                />
+                <th>Azioni</th>
               </tr>
-            ) : (
-              paginated.map((i) => (
-                <tr key={i.id}>
-                  <td>{i.user.name}</td>
-                  <td>{i.mezzi?.nome || "Nessuno"}</td>
-                  <td>
-                    <span className="link link-primary cursor-pointer">
-                      {new Date(i.attivita.date).toLocaleDateString("it-IT")}
-                    </span>
-                  </td>
-                  <td>{formatTime(i.ore, i.minuti)}</td>
-                  <td>{new Date(i.created_at).toLocaleDateString("it-IT")}</td>
-                  <td>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline"
-                        onClick={() => setSelectedInterazioneForEdit(i)}
-                      >
-                        Modifica
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline btn-error"
-                        onClick={() => setSelectedInterazioneForDelete(i)}
-                      >
-                        Elimina
-                      </button>
-                    </div>
+            </thead>
+            <tbody>
+              {paginated.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="text-center text-base-content/60 py-8"
+                  >
+                    Nessuna interazione trovata.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                paginated.map((i) => (
+                  <tr key={i.id}>
+                    <td>{i.user.name}</td>
+                    <td>{i.mezzi?.nome || "Nessuno"}</td>
+                    <td>
+                      <span className="link link-primary cursor-pointer">
+                        {new Date(i.attivita.date).toLocaleDateString("it-IT")}
+                      </span>
+                    </td>
+                    <td>{formatTime(i.ore, i.minuti)}</td>
+                    <td>
+                      {new Date(i.created_at).toLocaleDateString("it-IT")}
+                    </td>
+                    <td>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline"
+                          onClick={() => setSelectedInterazioneForEdit(i)}
+                        >
+                          Modifica
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline btn-error"
+                          onClick={() => setSelectedInterazioneForDelete(i)}
+                        >
+                          Elimina
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <InterazioniFilterDrawer
+          drawerId={drawerId}
+          filterUser={filterUser}
+          setFilterUser={setFilterUser}
+          filterDateFrom={filterDateFrom}
+          setFilterDateFrom={setFilterDateFrom}
+          filterDateTo={filterDateTo}
+          setFilterDateTo={setFilterDateTo}
+          filterMezzo={filterMezzo}
+          setFilterMezzo={setFilterMezzo}
+          users={users}
+          mezzi={mezzi}
+        />
       </div>
 
       {/* Paginazione */}

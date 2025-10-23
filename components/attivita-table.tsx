@@ -10,6 +10,7 @@ import {
   ChevronUp,
   Search,
 } from "lucide-react";
+import Link from "next/link";
 import {
   parseAsInteger,
   parseAsString,
@@ -369,7 +370,7 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
                   sortDir={sortDir}
                   onSort={handleSort}
                 />
-                <th>Azioni</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -384,43 +385,74 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
                 </tr>
               ) : (
                 paginated.map((a) => (
-                  <tr key={a.id}>
-                    <td>{new Date(a.date).toLocaleDateString("it-IT")}</td>
-                    <td>{a.user.name}</td>
+                  <tr key={a.id} className="hover:bg-base-200 cursor-pointer">
                     <td>
-                      <span className="badge badge-primary">
-                        {a.cantieriCount}
-                      </span>
+                      <Link
+                        href={`/attivita/${a.external_id}`}
+                        className="block"
+                      >
+                        {new Date(a.date).toLocaleDateString("it-IT")}
+                      </Link>
                     </td>
                     <td>
-                      <span className="badge badge-secondary">
-                        {a.mezziCount}
-                      </span>
+                      <Link
+                        href={`/attivita/${a.external_id}`}
+                        className="block"
+                      >
+                        {a.user.name}
+                      </Link>
                     </td>
                     <td>
-                      {new Date(a.created_at).toLocaleDateString("it-IT")}
+                      <Link
+                        href={`/attivita/${a.external_id}`}
+                        className="block"
+                      >
+                        <span className="badge badge-primary">
+                          {a.cantieriCount}
+                        </span>
+                      </Link>
                     </td>
-                    <td>{a.user_attivita_created_byTouser.name}</td>
                     <td>
-                      {new Date(a.last_update_at).toLocaleDateString("it-IT")}
+                      <Link
+                        href={`/attivita/${a.external_id}`}
+                        className="block"
+                      >
+                        <span className="badge badge-secondary">
+                          {a.mezziCount}
+                        </span>
+                      </Link>
                     </td>
                     <td>
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-ghost"
-                          onClick={() => setSelectedAttivitaForEdit(a)}
-                        >
-                          Modifica
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-ghost text-error"
-                          onClick={() => setSelectedAttivitaForDelete(a)}
-                        >
-                          Elimina
-                        </button>
-                      </div>
+                      <Link
+                        href={`/attivita/${a.external_id}`}
+                        className="block"
+                      >
+                        {new Date(a.created_at).toLocaleDateString("it-IT")}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link
+                        href={`/attivita/${a.external_id}`}
+                        className="block"
+                      >
+                        {a.user_attivita_created_byTouser.name}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link
+                        href={`/attivita/${a.external_id}`}
+                        className="block"
+                      >
+                        {new Date(a.last_update_at).toLocaleDateString("it-IT")}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link
+                        href={`/attivita/${a.external_id}`}
+                        className="btn btn-sm btn-ghost"
+                      >
+                        <ChevronRight className="size-4" />
+                      </Link>
                     </td>
                   </tr>
                 ))
@@ -496,7 +528,6 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
               .split("T")[0],
             user_id: selectedAttivitaForEdit.user_id,
           }}
-          users={users}
           onClose={() => setSelectedAttivitaForEdit(null)}
         />
       )}
