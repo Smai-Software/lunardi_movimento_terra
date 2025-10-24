@@ -42,6 +42,7 @@ export const getInterazioniByCantiereId = unstable_cache(
           select: {
             id: true,
             date: true,
+            external_id: true,
           },
         },
         user_interazione_created_byTouser: {
@@ -108,6 +109,7 @@ export const getInterazioni = unstable_cache(
           select: {
             id: true,
             date: true,
+            external_id: true,
           },
         },
         user_interazione_created_byTouser: {

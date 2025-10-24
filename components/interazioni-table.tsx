@@ -21,12 +21,13 @@ import EliminaInterazioneModal from "@/components/elimina-interazione-modal";
 import ModificaInterazioneModal from "@/components/modifica-interazione-modal";
 
 import type { InterazioneAll } from "@/lib/data/interazioni.data";
+import Link from "next/link";
 
 type InterazioniTableProps = {
   interazioni: InterazioneAll[];
   users: Array<{ id: string; name: string }>;
   mezzi: Array<{ id: number; nome: string }>;
-  attivita: Array<{ id: number; date: Date }>;
+  attivita: Array<{ id: number; date: Date; external_id: string }>;
 };
 
 const PAGE_SIZE = 10;
@@ -204,10 +205,10 @@ function SortHeader({
   onSort,
 }: {
   label: string;
-  column: "user" | "mezzi" | "attivita" | "tempo" | "created_at";
+  column: "user" | "mezzi" | "attivita" | "tempo";
   sortBy: string;
   sortDir: "asc" | "desc";
-  onSort: (col: "user" | "mezzi" | "attivita" | "tempo" | "created_at") => void;
+  onSort: (col: "user" | "mezzi" | "attivita" | "tempo") => void;
 }) {
   return (
     <th className="cursor-pointer select-none" onClick={() => onSort(column)}>
@@ -237,13 +238,9 @@ export default function InterazioniTable({
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [sortBy, setSortBy] = useQueryState(
     "sortBy",
-    parseAsStringLiteral([
-      "user",
-      "mezzi",
+    parseAsStringLiteral(["user", "mezzi", "attivita", "tempo"]).withDefault(
       "attivita",
-      "tempo",
-      "created_at",
-    ]).withDefault("created_at"),
+    ),
   );
   const [sortDir, setSortDir] = useQueryState(
     "sortDir",
@@ -280,9 +277,7 @@ export default function InterazioniTable({
     return count;
   }, [filterUser, filterDateFrom, filterDateTo, filterMezzo]);
 
-  const handleSort = (
-    col: "user" | "mezzi" | "attivita" | "tempo" | "created_at",
-  ) => {
+  const handleSort = (col: "user" | "mezzi" | "attivita" | "tempo") => {
     if (sortBy === col) {
       setSortDir(sortDir === "asc" ? "desc" : "asc", { history: "push" });
     } else {
@@ -358,9 +353,6 @@ export default function InterazioniTable({
       } else if (sortBy === "tempo") {
         vA = a.ore * 60 + a.minuti;
         vB = b.ore * 60 + b.minuti;
-      } else if (sortBy === "created_at") {
-        vA = new Date(a.created_at).toISOString();
-        vB = new Date(b.created_at).toISOString();
       }
 
       if (vA < vB) return sortDir === "asc" ? -1 : 1;
@@ -448,13 +440,6 @@ export default function InterazioniTable({
                   sortDir={sortDir}
                   onSort={handleSort}
                 />
-                <SortHeader
-                  label="Data creazione"
-                  column="created_at"
-                  sortBy={sortBy}
-                  sortDir={sortDir}
-                  onSort={handleSort}
-                />
                 <th>Azioni</th>
               </tr>
             </thead>
@@ -474,14 +459,14 @@ export default function InterazioniTable({
                     <td>{i.user.name}</td>
                     <td>{i.mezzi?.nome || "Nessuno"}</td>
                     <td>
-                      <span className="link link-primary cursor-pointer">
+                      <Link
+                        href={`/attivita/${i.attivita.external_id}`}
+                        className="block link link-primary"
+                      >
                         {new Date(i.attivita.date).toLocaleDateString("it-IT")}
-                      </span>
+                      </Link>
                     </td>
                     <td>{formatTime(i.ore, i.minuti)}</td>
-                    <td>
-                      {new Date(i.created_at).toLocaleDateString("it-IT")}
-                    </td>
                     <td>
                       <div className="flex gap-2">
                         <button

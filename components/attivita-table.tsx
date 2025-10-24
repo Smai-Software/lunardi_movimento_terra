@@ -152,10 +152,10 @@ function SortHeader({
   onSort,
 }: {
   label: string;
-  column: "date" | "user" | "created_at" | "last_update_at";
+  column: "date" | "user" | "totalMilliseconds";
   sortBy: string;
   sortDir: "asc" | "desc";
-  onSort: (col: "date" | "user" | "created_at" | "last_update_at") => void;
+  onSort: (col: "date" | "user" | "totalMilliseconds") => void;
 }) {
   return (
     <th className="cursor-pointer select-none" onClick={() => onSort(column)}>
@@ -180,12 +180,9 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [sortBy, setSortBy] = useQueryState(
     "sortBy",
-    parseAsStringLiteral([
+    parseAsStringLiteral(["date", "user", "totalMilliseconds"]).withDefault(
       "date",
-      "user",
-      "created_at",
-      "last_update_at",
-    ]).withDefault("date"),
+    ),
   );
   const [sortDir, setSortDir] = useQueryState(
     "sortDir",
@@ -219,9 +216,7 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
     return count;
   }, [filterUser, filterDateFrom, filterDateTo]);
 
-  const handleSort = (
-    col: "date" | "user" | "created_at" | "last_update_at",
-  ) => {
+  const handleSort = (col: "date" | "user" | "totalMilliseconds") => {
     if (sortBy === col) {
       setSortDir(sortDir === "asc" ? "desc" : "asc", { history: "push" });
     } else {
@@ -273,12 +268,9 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
       } else if (sortBy === "user") {
         vA = a.user.name.toLowerCase();
         vB = b.user.name.toLowerCase();
-      } else if (sortBy === "created_at") {
-        vA = new Date(a.created_at).toISOString();
-        vB = new Date(b.created_at).toISOString();
-      } else if (sortBy === "last_update_at") {
-        vA = new Date(a.last_update_at).toISOString();
-        vB = new Date(b.last_update_at).toISOString();
+      } else if (sortBy === "totalMilliseconds") {
+        vA = a.totalMilliseconds.toString();
+        vB = b.totalMilliseconds.toString();
       }
       if (vA < vB) return sortDir === "asc" ? -1 : 1;
       if (vA > vB) return sortDir === "asc" ? 1 : -1;
@@ -331,7 +323,7 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
         <input id={drawerId} type="checkbox" className="drawer-toggle" />
         <div className="overflow-x-auto rounded-lg shadow">
           <table className="table w-full">
-            <thead>
+            <thead className="bg-base-200">
               <tr>
                 <SortHeader
                   label="Data"
@@ -350,22 +342,8 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
                 <th># Cantieri</th>
                 <th># Mezzi</th>
                 <SortHeader
-                  label="Data creazione"
-                  column="created_at"
-                  sortBy={sortBy}
-                  sortDir={sortDir}
-                  onSort={handleSort}
-                />
-                <SortHeader
-                  label="Creato da"
-                  column="created_at"
-                  sortBy={sortBy}
-                  sortDir={sortDir}
-                  onSort={handleSort}
-                />
-                <SortHeader
-                  label="Ultima modifica"
-                  column="last_update_at"
+                  label="Totale ore"
+                  column="totalMilliseconds"
                   sortBy={sortBy}
                   sortDir={sortDir}
                   onSort={handleSort}
@@ -377,7 +355,7 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
               {paginated.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="text-center text-base-content/60 py-8"
                   >
                     Nessuna attività trovata.
@@ -385,66 +363,20 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
                 </tr>
               ) : (
                 paginated.map((a) => (
-                  <tr key={a.id} className="hover:bg-base-200 cursor-pointer">
+                  <tr key={a.id}>
+                    <td>{new Date(a.date).toLocaleDateString("it-IT")}</td>
+                    <td>{a.user.name}</td>
+                    <td>{a.cantieriCount}</td>
+                    <td>{a.mezziCount}</td>
                     <td>
-                      <Link
-                        href={`/attivita/${a.external_id}`}
-                        className="block"
-                      >
-                        {new Date(a.date).toLocaleDateString("it-IT")}
-                      </Link>
-                    </td>
-                    <td>
-                      <Link
-                        href={`/attivita/${a.external_id}`}
-                        className="block"
-                      >
-                        {a.user.name}
-                      </Link>
-                    </td>
-                    <td>
-                      <Link
-                        href={`/attivita/${a.external_id}`}
-                        className="block"
-                      >
-                        <span className="badge badge-primary">
-                          {a.cantieriCount}
-                        </span>
-                      </Link>
-                    </td>
-                    <td>
-                      <Link
-                        href={`/attivita/${a.external_id}`}
-                        className="block"
-                      >
-                        <span className="badge badge-secondary">
-                          {a.mezziCount}
-                        </span>
-                      </Link>
-                    </td>
-                    <td>
-                      <Link
-                        href={`/attivita/${a.external_id}`}
-                        className="block"
-                      >
-                        {new Date(a.created_at).toLocaleDateString("it-IT")}
-                      </Link>
-                    </td>
-                    <td>
-                      <Link
-                        href={`/attivita/${a.external_id}`}
-                        className="block"
-                      >
-                        {a.user_attivita_created_byTouser.name}
-                      </Link>
-                    </td>
-                    <td>
-                      <Link
-                        href={`/attivita/${a.external_id}`}
-                        className="block"
-                      >
-                        {new Date(a.last_update_at).toLocaleDateString("it-IT")}
-                      </Link>
+                      {(() => {
+                        const totalMinutes = Math.floor(
+                          Number(a.totalMilliseconds) / (1000 * 60),
+                        );
+                        const hours = Math.floor(totalMinutes / 60);
+                        const minutes = totalMinutes % 60;
+                        return `${hours}h ${minutes}m`;
+                      })()}
                     </td>
                     <td>
                       <Link

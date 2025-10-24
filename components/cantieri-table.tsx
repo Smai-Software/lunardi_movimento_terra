@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CheckIcon,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -10,7 +9,6 @@ import {
   ChevronsUpDown,
   ChevronUp,
   Search,
-  XIcon,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -20,7 +18,6 @@ import {
   useQueryState,
 } from "nuqs";
 import { useMemo, useState } from "react";
-import EliminaCantiereModal from "@/components/elimina-cantiere-modal";
 import ModificaCantiereModal from "@/components/modifica-cantiere-modal";
 
 import type { Cantiere } from "@/lib/data/cantieri.data";
@@ -121,9 +118,8 @@ function SortHeader({
     | "nome"
     | "descrizione"
     | "open"
-    | "created_at"
-    | "user_cantieri_created_byTouser"
-    | "last_update_at";
+    | "totalInterazioni"
+    | "totalMilliseconds";
   sortBy: string;
   sortDir: "asc" | "desc";
   onSort: (
@@ -131,9 +127,8 @@ function SortHeader({
       | "nome"
       | "descrizione"
       | "open"
-      | "created_at"
-      | "user_cantieri_created_byTouser"
-      | "last_update_at",
+      | "totalInterazioni"
+      | "totalMilliseconds",
   ) => void;
 }) {
   return (
@@ -163,9 +158,8 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
       "nome",
       "descrizione",
       "open",
-      "created_at",
-      "user_cantieri_created_byTouser",
-      "last_update_at",
+      "totalInterazioni",
+      "totalMilliseconds",
     ]).withDefault("nome"),
   );
   const [sortDir, setSortDir] = useQueryState(
@@ -177,8 +171,6 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
     parseAsString.withDefault("all"),
   );
   const [selectedCantiereForEdit, setSelectedCantiereForEdit] =
-    useState<Cantiere | null>(null);
-  const [selectedCantiereForDelete, setSelectedCantiereForDelete] =
     useState<Cantiere | null>(null);
   const drawerId = "cantieri-filter-drawer";
 
@@ -193,9 +185,8 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
       | "nome"
       | "descrizione"
       | "open"
-      | "created_at"
-      | "user_cantieri_created_byTouser"
-      | "last_update_at",
+      | "totalInterazioni"
+      | "totalMilliseconds",
   ) => {
     if (sortBy === col) {
       setSortDir(sortDir === "asc" ? "desc" : "asc", { history: "push" });
@@ -246,15 +237,12 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
       } else if (sortBy === "open") {
         vA = a.open ? "aperto" : "chiuso";
         vB = b.open ? "aperto" : "chiuso";
-      } else if (sortBy === "created_at") {
-        vA = new Date(a.created_at).toISOString();
-        vB = new Date(b.created_at).toISOString();
-      } else if (sortBy === "user_cantieri_created_byTouser") {
-        vA = a.user_cantieri_created_byTouser.name.toLowerCase();
-        vB = b.user_cantieri_created_byTouser.name.toLowerCase();
-      } else if (sortBy === "last_update_at") {
-        vA = new Date(a.last_update_at).toISOString();
-        vB = new Date(b.last_update_at).toISOString();
+      } else if (sortBy === "totalInterazioni") {
+        vA = a.totalInterazioni.toString();
+        vB = b.totalInterazioni.toString();
+      } else if (sortBy === "totalMilliseconds") {
+        vA = a.totalMilliseconds.toString();
+        vB = b.totalMilliseconds.toString();
       }
       if (vA < vB) return sortDir === "asc" ? -1 : 1;
       if (vA > vB) return sortDir === "asc" ? 1 : -1;
@@ -307,7 +295,7 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
         <input id={drawerId} type="checkbox" className="drawer-toggle" />
         <div className="overflow-x-auto rounded-lg shadow">
           <table className="table w-full">
-            <thead>
+            <thead className="bg-base-200">
               <tr>
                 <SortHeader
                   label="Nome"
@@ -331,22 +319,15 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
                   onSort={handleSort}
                 />
                 <SortHeader
-                  label="Data creazione"
-                  column="created_at"
+                  label="Numero interazioni"
+                  column="totalInterazioni"
                   sortBy={sortBy}
                   sortDir={sortDir}
                   onSort={handleSort}
                 />
                 <SortHeader
-                  label="Creato da"
-                  column="user_cantieri_created_byTouser"
-                  sortBy={sortBy}
-                  sortDir={sortDir}
-                  onSort={handleSort}
-                />
-                <SortHeader
-                  label="Ultima modifica"
-                  column="last_update_at"
+                  label="Totale ore"
+                  column="totalMilliseconds"
                   sortBy={sortBy}
                   sortDir={sortDir}
                   onSort={handleSort}
@@ -358,7 +339,7 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
               {paginated.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={5}
                     className="text-center text-base-content/60 py-8"
                   >
                     Nessun cantiere trovato.
@@ -370,30 +351,22 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
                     <td>{c.nome}</td>
                     <td>{c.descrizione}</td>
                     <td>
-                      <div className="flex items-center gap-2">
-                        {c.open ? (
-                          <>
-                            <CheckIcon className="w-4 h-4 text-success" />
-                            <span className="text-success font-medium">
-                              Aperto
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <XIcon className="w-4 h-4 text-error" />
-                            <span className="text-error font-medium">
-                              Chiuso
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      {c.open ? (
+                        <span className="badge badge-success">Aperto</span>
+                      ) : (
+                        <span className="badge badge-error">Chiuso</span>
+                      )}
                     </td>
+                    <td>{c.totalInterazioni}</td>
                     <td>
-                      {new Date(c.created_at).toLocaleDateString("it-IT")}
-                    </td>
-                    <td>{c.user_cantieri_created_byTouser.name}</td>
-                    <td>
-                      {new Date(c.last_update_at).toLocaleDateString("it-IT")}
+                      {(() => {
+                        const totalMinutes = Math.floor(
+                          Number(c.totalMilliseconds) / (1000 * 60),
+                        );
+                        const hours = Math.floor(totalMinutes / 60);
+                        const minutes = totalMinutes % 60;
+                        return `${hours}h ${minutes}m`;
+                      })()}
                     </td>
                     <td>
                       <Link
@@ -472,14 +445,6 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
             open: selectedCantiereForEdit.open,
           }}
           onClose={() => setSelectedCantiereForEdit(null)}
-        />
-      )}
-      {selectedCantiereForDelete && (
-        <EliminaCantiereModal
-          cantiere={{
-            id: selectedCantiereForDelete.id,
-            nome: selectedCantiereForDelete.nome,
-          }}
         />
       )}
     </div>

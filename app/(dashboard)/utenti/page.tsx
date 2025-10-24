@@ -25,9 +25,9 @@ export default async function UtentiPage() {
         <AggiungiUtenteModal />
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="table table-zebra">
-          <thead>
+      <div className="overflow-x-auto rounded-lg shadow">
+        <table className="table">
+          <thead className="bg-base-200">
             <tr>
               <th>Nome</th>
               <th>Email</th>

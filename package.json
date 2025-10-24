@@ -7,8 +7,7 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "biome check",
-    "format": "biome format --write",
-    "addAdmin": "tsx scripts/addAdmin.ts"
+    "format": "biome format --write"
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",

@@ -37,9 +37,7 @@ export default function UtenteCantiere({
     addUtenteCantiere.bind(null, cantiereId, user.id),
     {
       onSuccess: (result) => {
-        if (result.data?.success) {
-          toast.success(`${user.name} assegnato al cantiere`);
-        } else {
+        if (!result.data?.success) {
           toast.error(result.data?.error || "Errore durante l'assegnazione");
         }
       },
@@ -53,9 +51,7 @@ export default function UtenteCantiere({
     removeUtenteCantiere.bind(null, cantiereId, user.id),
     {
       onSuccess: (result) => {
-        if (result.data?.success) {
-          toast.success(`${user.name} rimosso dal cantiere`);
-        } else {
+        if (!result.data?.success) {
           toast.error(result.data?.error || "Errore durante la rimozione");
         }
       },
@@ -80,7 +76,12 @@ export default function UtenteCantiere({
       <div className="flex-1">
         <div className="font-medium">{user.name}</div>
       </div>
-      <div className="ml-4">
+      <div className="ml-4 flex items-center">
+        {isLoading && (
+          <div className="ml-2">
+            <span className="loading loading-spinner loading-sm text-gray-200"></span>
+          </div>
+        )}
         <input
           type="checkbox"
           className="toggle toggle-success"
@@ -90,11 +91,6 @@ export default function UtenteCantiere({
             handleCheckboxChange(e.target.checked);
           }}
         />
-        {isLoading && (
-          <div className="ml-2">
-            <span className="loading loading-spinner loading-sm"></span>
-          </div>
-        )}
       </div>
     </div>
   );

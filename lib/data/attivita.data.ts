@@ -38,6 +38,7 @@ export const getAttivita = unstable_cache(
           select: {
             cantieri_id: true,
             mezzi_id: true,
+            tempo_totale: true,
           },
         },
       },
@@ -46,7 +47,7 @@ export const getAttivita = unstable_cache(
       },
     });
 
-    // Calculate aggregated counts for each attivita
+    // Calculate aggregated counts and total milliseconds for each attivita
     const attivitaWithCounts = attivita.map((attivita) => {
       const uniqueCantieri = new Set(
         attivita.interazioni.map((i) => i.cantieri_id),
@@ -54,11 +55,20 @@ export const getAttivita = unstable_cache(
       const uniqueMezzi = new Set(
         attivita.interazioni.filter((i) => i.mezzi_id).map((i) => i.mezzi_id),
       );
+      const totalMilliseconds = attivita.interazioni.reduce(
+        (sum, i) => sum + Number(i.tempo_totale),
+        0,
+      );
 
       return {
         ...attivita,
         cantieriCount: uniqueCantieri.size,
         mezziCount: uniqueMezzi.size,
+        totalMilliseconds,
+        interazioni: attivita.interazioni.map((interazione) => ({
+          ...interazione,
+          tempo_totale: interazione.tempo_totale.toString(),
+        })),
       };
     });
 
@@ -150,6 +160,7 @@ export const getInterazioniByAttivitaId = unstable_cache(
           select: {
             id: true,
             date: true,
+            external_id: true,
           },
         },
         user_interazione_created_byTouser: {

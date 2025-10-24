@@ -30,13 +30,44 @@ export const getCantieri = unstable_cache(
             name: true,
           },
         },
+        _count: {
+          select: {
+            interazioni: true,
+          },
+        },
+        interazioni: {
+          select: {
+            tempo_totale: true,
+          },
+        },
       },
       orderBy: {
         nome: "asc",
       },
     });
 
-    return cantieri;
+    // Calculate total hours for each cantiere
+    const cantieriWithStats = cantieri.map((cantiere) => {
+      const totalMilliseconds = cantiere.interazioni.reduce(
+        (sum, interazione) => {
+          return sum + Number(interazione.tempo_totale);
+        },
+        0,
+      );
+
+      return {
+        ...cantiere,
+        totalInterazioni: cantiere._count.interazioni,
+        totalMilliseconds,
+        // Convert BigInt tempo_totale to number for JSON serialization
+        interazioni: cantiere.interazioni.map((interazione) => ({
+          ...interazione,
+          tempo_totale: Number(interazione.tempo_totale),
+        })),
+      };
+    });
+
+    return cantieriWithStats;
   },
   ["cantieri"],
   { tags: ["cantieri", "all"], revalidate: 60 },

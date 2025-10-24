@@ -235,58 +235,57 @@ function AttivitaForm({ users }: AttivitaFormProps) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card bg-base-100 shadow-xl border border-gray-200">
         <div className="card-body">
-          {/* Step 1: Select User */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">
-              1. Seleziona Operatore
-            </h2>
-            <div className="form-control">
-              <label htmlFor="user-select" className="label">
-                <span className="label-text">Operatore</span>
-              </label>
-              <select
-                id="user-select"
-                className="select select-bordered w-full"
-                value={selectedUserId}
-                onChange={(e) => setSelectedUserId(e.target.value)}
-                required
-              >
-                <option value="">Seleziona un operatore</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.name}
-                  </option>
-                ))}
-              </select>
+          <h1 className="text-xl font-bold">Nuova Attività</h1>
+          <p className="text-gray-600">
+            Crea una nuova attività con interazioni per cantieri e mezzi
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="mb-6">
+              <div className="form-control">
+                <label htmlFor="date-input" className="label">
+                  <span className="font-medium">Data</span>
+                </label>
+                <input
+                  id="date-input"
+                  type="date"
+                  className="input input-bordered w-full"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Step 2: Select Date */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">2. Seleziona Data</h2>
-            <div className="form-control">
-              <label htmlFor="date-input" className="label">
-                <span className="label-text">Data</span>
-              </label>
-              <input
-                id="date-input"
-                type="date"
-                className="input input-bordered w-full"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                required
-              />
+            <div className="mb-6">
+              <div className="form-control">
+                <label htmlFor="user-select" className="label">
+                  <span className="font-medium">Operatore</span>
+                </label>
+                <select
+                  id="user-select"
+                  className="select select-bordered w-full"
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  required
+                  disabled={selectedDate === ""}
+                >
+                  <option value="">Seleziona un operatore</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
           {/* Step 3: Add Cantieri and Interazioni */}
           {selectedUserId && (
             <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">
-                3. Aggiungi Interazioni
-              </h2>
+              <h2 className="text-xl font-semibold mb-4">Interazioni</h2>
 
               {/* Add new interazione form */}
               <div className="card bg-base-200 p-4 mb-4">

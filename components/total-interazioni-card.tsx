@@ -8,7 +8,7 @@ export default async function TotalInterazioniCard({
   const totalInterazioni = await getTotalInterazioniByCantiereId(cantieriId);
 
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="card bg-base-100 shadow border border-gray-200">
       <div className="card-body text-center">
         <h3 className="card-title text-lg justify-center">
           Totale Interazioni

@@ -12,7 +12,7 @@ export default async function TotalHoursCard({
   const totalTime = `${hours}:${minutes.toString().padStart(2, "0")}`;
 
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="card bg-base-100 shadow border border-gray-200">
       <div className="card-body text-center">
         <h3 className="card-title text-lg justify-center">Ore Totali</h3>
         <p className="text-3xl font-bold text-primary">{totalTime}</p>
