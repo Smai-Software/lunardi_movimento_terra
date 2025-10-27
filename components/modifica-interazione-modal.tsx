@@ -25,7 +25,6 @@ type ModificaInterazioneModalProps = {
       date: Date;
     };
   };
-  users: Array<{ id: string; name: string }>;
   mezzi: Array<{ id: number; nome: string }>;
   attivita: Array<{ id: number; date: Date }>;
   onClose: () => void;
@@ -33,7 +32,6 @@ type ModificaInterazioneModalProps = {
 
 export default function ModificaInterazioneModal({
   interazione,
-  users,
   mezzi,
   attivita,
   onClose,
@@ -41,7 +39,6 @@ export default function ModificaInterazioneModal({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [ore, setOre] = useState(interazione.ore);
   const [minuti, setMinuti] = useState(interazione.minuti);
-  const [userId, setUserId] = useState(interazione.user.id);
   const [mezziId, setMezziId] = useState<number | null>(
     interazione.mezzi?.id || null,
   );
@@ -78,23 +75,15 @@ export default function ModificaInterazioneModal({
               className="block font-medium mb-1 text-sm"
               htmlFor={`user-interazione-${interazione.id}`}
             >
-              Utente *
+              Utente
             </label>
-            <select
-              id={`user-interazione-${interazione.id}`}
-              className="select select-bordered w-full"
-              name="user_id"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              required
-            >
-              <option value="">Seleziona un utente</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name}
-                </option>
-              ))}
-            </select>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={interazione.user.name}
+              disabled
+              readOnly
+            />
           </div>
 
           <div className="mb-4">

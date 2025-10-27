@@ -39,7 +39,7 @@ export default function DashboardLayout({
         <ul className="menu bg-base-200 text-base-content min-h-full w-fit p-4 space-y-2 text-base">
           <li className="ml-4 mt-1 font-semibold text-lg">L.M.T</li>
           <NavigationItem href="/" iconName="home" className="mt-8">
-            Home
+            Dashboard
           </NavigationItem>
           <NavigationItem href="/attivita" iconName="building2">
             Attività

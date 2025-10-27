@@ -39,6 +39,7 @@ function AttivitaFilterDrawer({
   filterDateTo,
   setFilterDateTo,
   users,
+  setPage,
 }: {
   drawerId: string;
   filterUser: string;
@@ -51,6 +52,7 @@ function AttivitaFilterDrawer({
   filterDateTo: string;
   setFilterDateTo: (val: string | null, options?: { history: "push" }) => void;
   users: { id: string; name: string }[];
+  setPage: (val: number, options?: { history: "push" }) => void;
 }) {
   return (
     <div className="drawer-side">
@@ -86,7 +88,10 @@ function AttivitaFilterDrawer({
                 name="user-filter"
                 className="radio radio-sm"
                 checked={filterUser === "all"}
-                onChange={() => setFilterUser("all", { history: "push" })}
+                onChange={() => {
+                  setFilterUser("all", { history: "push" });
+                  setPage(1, { history: "push" });
+                }}
               />
               <span className="label-text">Tutti gli utenti</span>
             </label>
@@ -99,7 +104,10 @@ function AttivitaFilterDrawer({
                   name="user-filter"
                   className="radio radio-sm"
                   checked={filterUser === user.id}
-                  onChange={() => setFilterUser(user.id, { history: "push" })}
+                  onChange={() => {
+                    setFilterUser(user.id, { history: "push" });
+                    setPage(1, { history: "push" });
+                  }}
                 />
                 <span className="label-text">{user.name}</span>
               </label>
@@ -119,9 +127,10 @@ function AttivitaFilterDrawer({
               type="date"
               className="input input-bordered input-sm"
               value={filterDateFrom}
-              onChange={(e) =>
-                setFilterDateFrom(e.target.value || null, { history: "push" })
-              }
+              onChange={(e) => {
+                setFilterDateFrom(e.target.value || null, { history: "push" });
+                setPage(1, { history: "push" });
+              }}
             />
           </div>
           <div className="form-control mb-2">
@@ -133,9 +142,10 @@ function AttivitaFilterDrawer({
               type="date"
               className="input input-bordered input-sm"
               value={filterDateTo}
-              onChange={(e) =>
-                setFilterDateTo(e.target.value || null, { history: "push" })
-              }
+              onChange={(e) => {
+                setFilterDateTo(e.target.value || null, { history: "push" });
+                setPage(1, { history: "push" });
+              }}
             />
           </div>
         </div>
@@ -401,6 +411,7 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
           filterDateTo={filterDateTo}
           setFilterDateTo={setFilterDateTo}
           users={users}
+          setPage={setPage}
         />
       </div>
 

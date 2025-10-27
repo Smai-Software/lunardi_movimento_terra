@@ -118,7 +118,7 @@ export const getAttivitaByExternalId = unstable_cache(
     return attivita;
   },
   ["attivita-by-external-id"],
-  { tags: ["attivita"], revalidate: 60 },
+  { tags: ["attivita", "all"], revalidate: 60 },
 );
 
 export const getInterazioniByAttivitaId = unstable_cache(
@@ -188,7 +188,7 @@ export const getInterazioniByAttivitaId = unstable_cache(
     }));
   },
   ["interazioni-by-attivita"],
-  { tags: ["interazioni", "attivita"], revalidate: 60 },
+  { tags: ["interazioni", "attivita", "all"], revalidate: 60 },
 );
 
 export type Attivita = NonNullable<

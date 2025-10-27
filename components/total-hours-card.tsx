@@ -9,7 +9,7 @@ export default async function TotalHoursCard({
   const totalMinutes = Math.floor(Number(totalMilliseconds) / (1000 * 60));
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  const totalTime = `${hours}:${minutes.toString().padStart(2, "0")}`;
+  const totalTime = `${hours}h ${minutes}m`;
 
   return (
     <div className="card bg-base-100 shadow border border-gray-200">

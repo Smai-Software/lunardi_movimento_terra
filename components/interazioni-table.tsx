@@ -44,6 +44,7 @@ function InterazioniFilterDrawer({
   setFilterMezzo,
   users,
   mezzi,
+  setPage,
 }: {
   drawerId: string;
   filterUser: string;
@@ -59,6 +60,7 @@ function InterazioniFilterDrawer({
   setFilterMezzo: (val: string | null, options?: { history: "push" }) => void;
   users: { id: string; name: string }[];
   mezzi: { id: number; nome: string }[];
+  setPage: (val: number, options?: { history: "push" }) => void;
 }) {
   return (
     <div className="drawer-side">
@@ -94,7 +96,10 @@ function InterazioniFilterDrawer({
                 name="user-filter"
                 className="radio radio-sm"
                 checked={filterUser === "all"}
-                onChange={() => setFilterUser("all", { history: "push" })}
+                onChange={() => {
+                  setFilterUser("all", { history: "push" });
+                  setPage(1, { history: "push" });
+                }}
               />
               <span className="label-text">Tutti gli utenti</span>
             </label>
@@ -107,7 +112,10 @@ function InterazioniFilterDrawer({
                   name="user-filter"
                   className="radio radio-sm"
                   checked={filterUser === user.id}
-                  onChange={() => setFilterUser(user.id, { history: "push" })}
+                  onChange={() => {
+                    setFilterUser(user.id, { history: "push" });
+                    setPage(1, { history: "push" });
+                  }}
                 />
                 <span className="label-text">{user.name}</span>
               </label>
@@ -125,7 +133,10 @@ function InterazioniFilterDrawer({
                 name="mezzo-filter"
                 className="radio radio-sm"
                 checked={filterMezzo === "all"}
-                onChange={() => setFilterMezzo("all", { history: "push" })}
+                onChange={() => {
+                  setFilterMezzo("all", { history: "push" });
+                  setPage(1, { history: "push" });
+                }}
               />
               <span className="label-text">Tutti i mezzi</span>
             </label>
@@ -137,7 +148,10 @@ function InterazioniFilterDrawer({
                 name="mezzo-filter"
                 className="radio radio-sm"
                 checked={filterMezzo === "none"}
-                onChange={() => setFilterMezzo("none", { history: "push" })}
+                onChange={() => {
+                  setFilterMezzo("none", { history: "push" });
+                  setPage(1, { history: "push" });
+                }}
               />
               <span className="label-text">Nessun mezzo</span>
             </label>
@@ -150,9 +164,10 @@ function InterazioniFilterDrawer({
                   name="mezzo-filter"
                   className="radio radio-sm"
                   checked={filterMezzo === mezzo.id.toString()}
-                  onChange={() =>
-                    setFilterMezzo(mezzo.id.toString(), { history: "push" })
-                  }
+                  onChange={() => {
+                    setFilterMezzo(mezzo.id.toString(), { history: "push" });
+                    setPage(1, { history: "push" });
+                  }}
                 />
                 <span className="label-text">{mezzo.nome}</span>
               </label>
@@ -172,9 +187,10 @@ function InterazioniFilterDrawer({
               type="date"
               className="input input-bordered input-sm"
               value={filterDateFrom}
-              onChange={(e) =>
-                setFilterDateFrom(e.target.value || null, { history: "push" })
-              }
+              onChange={(e) => {
+                setFilterDateFrom(e.target.value || null, { history: "push" });
+                setPage(1, { history: "push" });
+              }}
             />
           </div>
           <div className="form-control mb-2">
@@ -186,9 +202,10 @@ function InterazioniFilterDrawer({
               type="date"
               className="input input-bordered input-sm"
               value={filterDateTo}
-              onChange={(e) =>
-                setFilterDateTo(e.target.value || null, { history: "push" })
-              }
+              onChange={(e) => {
+                setFilterDateTo(e.target.value || null, { history: "push" });
+                setPage(1, { history: "push" });
+              }}
             />
           </div>
         </div>
@@ -461,7 +478,7 @@ export default function InterazioniTable({
                     <td>
                       <Link
                         href={`/attivita/${i.attivita.external_id}`}
-                        className="block link link-primary"
+                        className="block link"
                       >
                         {new Date(i.attivita.date).toLocaleDateString("it-IT")}
                       </Link>
@@ -503,6 +520,7 @@ export default function InterazioniTable({
           setFilterMezzo={setFilterMezzo}
           users={users}
           mezzi={mezzi}
+          setPage={setPage}
         />
       </div>
 
@@ -556,7 +574,6 @@ export default function InterazioniTable({
       {selectedInterazioneForEdit && (
         <ModificaInterazioneModal
           interazione={selectedInterazioneForEdit}
-          users={users}
           mezzi={mezzi}
           attivita={attivita}
           onClose={() => setSelectedInterazioneForEdit(null)}

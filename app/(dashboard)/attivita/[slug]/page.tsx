@@ -11,9 +11,9 @@ import {
   getAttivitaByExternalId,
   getInterazioniByAttivitaId,
 } from "@/lib/data/attivita.data";
+import { getCantieriByUserId } from "@/lib/data/cantieri.data";
 import { getMezzi } from "@/lib/data/mezzi.data";
 import { getUsersNotBanned } from "@/lib/data/users.data";
-import prisma from "@/lib/prisma";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -42,13 +42,14 @@ export default async function AttivitaDetailPage({ params }: PageProps) {
     getInterazioniByAttivitaId(attivita.id),
     getUsersNotBanned(),
     getMezzi(),
-    prisma.cantieri.findMany({
-      select: {
-        id: true,
-        nome: true,
-      },
-    }),
+    getCantieriByUserId(attivita.user_id),
   ]);
+
+  // Map cantieri to match expected format for the modal
+  const cantieriForModal = cantieri.map((c) => ({
+    id: c.id,
+    nome: c.nome,
+  }));
 
   return (
     <div className="mx-auto px-6 py-8">
@@ -71,7 +72,7 @@ export default async function AttivitaDetailPage({ params }: PageProps) {
         interazioni={interazioni}
         users={users}
         mezzi={mezzi}
-        cantieri={cantieri}
+        cantieri={cantieriForModal}
       />
     </div>
   );

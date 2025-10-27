@@ -55,6 +55,7 @@ export const createInterazione = actionClientWithAuth
 
         revalidateTag("interazioni");
         revalidateTag("cantieri");
+        revalidateTag("attivita");
         return { success: true };
       } catch (error) {
         console.log(error);
@@ -77,9 +78,6 @@ export const updateInterazione = actionClientWithAuth
       minuti: zfd
         .numeric(z.number().min(0).max(59, "I minuti devono essere tra 0 e 59"))
         .optional(),
-      user_id: zfd
-        .text(z.string().min(1, "L'utente è obbligatorio"))
-        .optional(),
       mezzi_id: zfd.numeric(z.number().optional()).optional(),
       attivita_id: zfd
         .numeric(z.number().min(1, "L'attività è obbligatoria"))
@@ -95,7 +93,7 @@ export const updateInterazione = actionClientWithAuth
   .action(
     async ({
       bindArgsParsedInputs: [id],
-      parsedInput: { ore, minuti, user_id, mezzi_id, attivita_id },
+      parsedInput: { ore, minuti, mezzi_id, attivita_id },
       ctx: { userId },
     }) => {
       try {
@@ -125,7 +123,6 @@ export const updateInterazione = actionClientWithAuth
 
         if (ore !== undefined) updateData.ore = ore;
         if (minuti !== undefined) updateData.minuti = minuti;
-        if (user_id !== undefined) updateData.user_id = user_id;
         if (mezzi_id !== undefined) updateData.mezzi_id = mezzi_id || null;
         if (attivita_id !== undefined) updateData.attivita_id = attivita_id;
 
@@ -136,6 +133,7 @@ export const updateInterazione = actionClientWithAuth
 
         revalidateTag("interazioni");
         revalidateTag("cantieri");
+        revalidateTag("attivita");
         return { success: true };
       } catch (error) {
         console.log(error);
@@ -162,6 +160,7 @@ export const deleteInterazione = actionClientWithAuth
       await prisma.interazioni.delete({ where: { id } });
       revalidateTag("interazioni");
       revalidateTag("cantieri");
+      revalidateTag("attivita");
       return { success: true };
     } catch (error) {
       console.log(error);

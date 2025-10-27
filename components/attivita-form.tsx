@@ -9,6 +9,7 @@ import { ValidationErrors } from "@/components/validation-errors";
 import { createAttivitaWithInterazioni } from "@/lib/actions/attivita.actions";
 import { getCantieriForUser } from "@/lib/actions/cantieri.actions";
 import { getMezziForUser } from "@/lib/actions/mezzi.actions";
+import AggiungiInterazioneModalForm from "@/components/aggiungi-interazione-modal-form";
 
 import type { UserNotBanned } from "@/lib/data/users.data";
 
@@ -54,12 +55,6 @@ function AttivitaForm({ users }: AttivitaFormProps) {
   // Available options
   const [availableCantieri, setAvailableCantieri] = useState<Cantiere[]>([]);
   const [availableMezzi, setAvailableMezzi] = useState<Mezzo[]>([]);
-
-  // Current form state
-  const [currentCantiereId, setCurrentCantiereId] = useState("");
-  const [currentMezzoId, setCurrentMezzoId] = useState("");
-  const [currentOre, setCurrentOre] = useState(0);
-  const [currentMinuti, setCurrentMinuti] = useState(0);
 
   // Loading states
   const [loadingCantieri, setLoadingCantieri] = useState(false);
@@ -119,24 +114,21 @@ function AttivitaForm({ users }: AttivitaFormProps) {
     }
   }, [selectedUserId, fetchUserResources]);
 
-  const addInterazione = () => {
-    if (
-      !currentCantiereId ||
-      currentOre < 0 ||
-      currentMinuti < 0 ||
-      currentMinuti > 59
-    ) {
+  const addInterazione = (
+    cantiereId: number,
+    mezziId: number | null,
+    ore: number,
+    minuti: number,
+  ) => {
+    if (ore < 0 || minuti < 0 || minuti > 59) {
       toast.error("Compila tutti i campi correttamente");
       return;
     }
 
-    const cantiereId = parseInt(currentCantiereId, 10);
-    const mezziId = currentMezzoId ? parseInt(currentMezzoId, 10) : null;
-
     const newInterazione: Interazione = {
       mezziId,
-      ore: currentOre,
-      minuti: currentMinuti,
+      ore,
+      minuti,
     };
 
     // Check if cantiere already exists
@@ -162,11 +154,6 @@ function AttivitaForm({ users }: AttivitaFormProps) {
         },
       ]);
     }
-
-    // Reset current form
-    setCurrentMezzoId("");
-    setCurrentOre(0);
-    setCurrentMinuti(0);
   };
 
   const removeInterazione = (
@@ -211,10 +198,6 @@ function AttivitaForm({ users }: AttivitaFormProps) {
       user_id: selectedUserId,
       interazioni: allInterazioni,
     });
-  };
-
-  const getAvailableCantieriForSelection = () => {
-    return availableCantieri;
   };
 
   const getTotalHours = () => {
@@ -285,103 +268,15 @@ function AttivitaForm({ users }: AttivitaFormProps) {
           {/* Step 3: Add Cantieri and Interazioni */}
           {selectedUserId && (
             <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">Interazioni</h2>
-
-              {/* Add new interazione form */}
-              <div className="card bg-base-200 p-4 mb-4">
-                <h3 className="font-semibold mb-3">Aggiungi Interazione</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="form-control">
-                    <label htmlFor="cantiere-select" className="label">
-                      <span className="label-text">Cantiere</span>
-                    </label>
-                    <select
-                      id="cantiere-select"
-                      className="select select-bordered"
-                      value={currentCantiereId}
-                      onChange={(e) => setCurrentCantiereId(e.target.value)}
-                      disabled={loadingCantieri}
-                    >
-                      <option value="">Seleziona cantiere</option>
-                      {getAvailableCantieriForSelection().map((cantiere) => (
-                        <option key={cantiere.id} value={cantiere.id}>
-                          {cantiere.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-control">
-                    <label htmlFor="mezzo-select" className="label">
-                      <span className="label-text">Mezzo (opzionale)</span>
-                    </label>
-                    <select
-                      id="mezzo-select"
-                      className="select select-bordered"
-                      value={currentMezzoId}
-                      onChange={(e) => setCurrentMezzoId(e.target.value)}
-                      disabled={loadingMezzi}
-                    >
-                      <option value="">Nessuno</option>
-                      {availableMezzi.map((mezzo) => (
-                        <option key={mezzo.id} value={mezzo.id}>
-                          {mezzo.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-control">
-                    <label htmlFor="ore-input" className="label">
-                      <span className="label-text">Ore</span>
-                    </label>
-                    <select
-                      id="ore-input"
-                      className="select select-bordered"
-                      value={currentOre}
-                      onChange={(e) =>
-                        setCurrentOre(parseInt(e.target.value, 10) || 0)
-                      }
-                    >
-                      {Array.from({ length: 13 }, (_, i) => (
-                        <option key={`hour-${i.toString()}`} value={i}>
-                          {i}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-control">
-                    <label htmlFor="minuti-input" className="label">
-                      <span className="label-text">Minuti</span>
-                    </label>
-                    <select
-                      id="minuti-input"
-                      className="select select-bordered"
-                      value={currentMinuti}
-                      onChange={(e) =>
-                        setCurrentMinuti(parseInt(e.target.value, 10) || 0)
-                      }
-                    >
-                      <option value={0}>00</option>
-                      <option value={15}>15</option>
-                      <option value={30}>30</option>
-                      <option value={45}>45</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={addInterazione}
-                    disabled={!currentCantiereId || loadingCantieri}
-                  >
-                    Aggiungi Interazione
-                  </button>
-                </div>
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="text-xl font-semibold">Interazioni</h2>
+                <AggiungiInterazioneModalForm
+                  availableCantieri={availableCantieri}
+                  availableMezzi={availableMezzi}
+                  loadingCantieri={loadingCantieri}
+                  loadingMezzi={loadingMezzi}
+                  onAddInterazione={addInterazione}
+                />
               </div>
 
               {/* Display added cantieri and interazioni */}

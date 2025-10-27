@@ -92,7 +92,6 @@ export default function InterazioniTableAttivita({
       {selectedInterazioneForEdit && (
         <ModificaInterazioneModal
           interazione={selectedInterazioneForEdit}
-          users={[]} // Not needed for this context
           mezzi={mezzi}
           attivita={[
             {

@@ -10,8 +10,6 @@ export const auth = betterAuth({
     provider: "mysql",
   }),
   session: {
-    expiresIn: 60 * 60 * 10,
-    updateAge: 60 * 60,
     cookieCache: {
       enabled: true,
       maxAge: 5 * 60,

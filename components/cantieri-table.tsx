@@ -32,10 +32,12 @@ function CantieriFilterDrawer({
   drawerId,
   filterStatus,
   setFilterStatus,
+  setPage,
 }: {
   drawerId: string;
   filterStatus: string;
   setFilterStatus: (val: string | null, options?: { history: "push" }) => void;
+  setPage: (val: number, options?: { history: "push" }) => void;
 }) {
   return (
     <div className="drawer-side">
@@ -71,7 +73,10 @@ function CantieriFilterDrawer({
                 name="status-filter"
                 className="radio radio-sm"
                 checked={filterStatus === "all"}
-                onChange={() => setFilterStatus("all", { history: "push" })}
+                onChange={() => {
+                  setFilterStatus("all", { history: "push" });
+                  setPage(1, { history: "push" });
+                }}
               />
               <span className="label-text">Tutti gli stati</span>
             </label>
@@ -83,7 +88,10 @@ function CantieriFilterDrawer({
                 name="status-filter"
                 className="radio radio-sm"
                 checked={filterStatus === "open"}
-                onChange={() => setFilterStatus("open", { history: "push" })}
+                onChange={() => {
+                  setFilterStatus("open", { history: "push" });
+                  setPage(1, { history: "push" });
+                }}
               />
               <span className="label-text">Aperti</span>
             </label>
@@ -95,7 +103,10 @@ function CantieriFilterDrawer({
                 name="status-filter"
                 className="radio radio-sm"
                 checked={filterStatus === "closed"}
-                onChange={() => setFilterStatus("closed", { history: "push" })}
+                onChange={() => {
+                  setFilterStatus("closed", { history: "push" });
+                  setPage(1, { history: "push" });
+                }}
               />
               <span className="label-text">Chiusi</span>
             </label>
@@ -386,6 +397,7 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
           drawerId={drawerId}
           filterStatus={filterStatus}
           setFilterStatus={setFilterStatus}
+          setPage={setPage}
         />
       </div>
 
