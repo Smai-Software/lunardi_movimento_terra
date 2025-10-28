@@ -28,14 +28,17 @@ export default function UserAttivitaTable({
   };
 
   return (
-    <div>
-      <div className="overflow-x-auto rounded-lg shadow">
+    <div className="max-w-4xl mx-auto">
+      <p className="text-sm text-base-content/70">
+        Visualizza le tue attività inserite negli ultimi 7 giorni
+      </p>
+      <div className="overflow-x-auto rounded-lg shadow mt-2">
         <table className="table w-full">
           <thead className="bg-base-200">
             <tr>
               <th>Data</th>
-              <th># Cantieri</th>
-              <th># Mezzi</th>
+              <th className="hidden md:table-cell"># Cantieri</th>
+              <th className="hidden md:table-cell"># Mezzi</th>
               <th>Totale ore</th>
               <th></th>
             </tr>
@@ -54,8 +57,8 @@ export default function UserAttivitaTable({
               paginated.map((a) => (
                 <tr key={a.id}>
                   <td>{new Date(a.date).toLocaleDateString("it-IT")}</td>
-                  <td>{a.cantieriCount}</td>
-                  <td>{a.mezziCount}</td>
+                  <td className="hidden md:table-cell">{a.cantieriCount}</td>
+                  <td className="hidden md:table-cell">{a.mezziCount}</td>
                   <td>
                     {(() => {
                       const totalMinutes = Math.floor(

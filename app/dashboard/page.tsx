@@ -32,9 +32,6 @@ export default async function DashboardPage({
 
   return (
     <div className="mx-auto px-2 md:px-6 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-      </div>
       <div className="mx-auto w-fit">
         <TabsClient tab={tab} />
       </div>
