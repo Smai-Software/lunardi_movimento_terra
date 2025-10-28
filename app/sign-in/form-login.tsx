@@ -6,6 +6,7 @@ import { useState } from "react";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidationErrors } from "@/components/validation-errors";
 import { loginUser } from "@/lib/actions/users.actions";
+import { toast } from "sonner";
 
 export default function FormLogin() {
   const [email, setEmail] = useState("");
@@ -17,6 +18,9 @@ export default function FormLogin() {
           setEmail(emailEntry);
         }
       }
+    },
+    onNavigation() {
+      toast.success("Login effettuato con successo");
     },
   });
 
@@ -31,7 +35,7 @@ export default function FormLogin() {
             type="email"
             placeholder="Email"
             name="email"
-            className="input input-md input-primary w-full"
+            className="input input-md w-full"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -40,7 +44,7 @@ export default function FormLogin() {
         <div className="fieldset">
           <label className="label flex justify-between" htmlFor="password">
             <span>Password</span>
-            <Link href="/recovery-password" className="link link-primary">
+            <Link href="/recovery-password" className="link">
               Password dimenticata?
             </Link>
           </label>
@@ -48,7 +52,7 @@ export default function FormLogin() {
             type="password"
             placeholder="Password"
             name="password"
-            className="input input-md input-primary w-full"
+            className="input input-md w-full"
             required
           />
         </div>

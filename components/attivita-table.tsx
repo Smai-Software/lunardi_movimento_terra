@@ -390,7 +390,7 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
                     </td>
                     <td>
                       <Link
-                        href={`/attivita/${a.external_id}`}
+                        href={`/admin/attivita/${a.external_id}`}
                         className="btn btn-sm btn-ghost"
                       >
                         <ChevronRight className="size-4" />

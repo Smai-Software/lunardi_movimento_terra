@@ -37,20 +37,22 @@ export default function DashboardLayout({
           className="drawer-overlay"
         ></label>
         <ul className="menu bg-base-200 text-base-content min-h-full w-fit p-4 space-y-2 text-base">
-          <li className="ml-4 mt-1 font-semibold text-lg">L.M.T</li>
-          <NavigationItem href="/" iconName="home" className="mt-8">
+          <li className="mt-1 font-semibold text-sm">
+            Lunardi Movimento Terra
+          </li>
+          <NavigationItem href="/admin" iconName="home" className="mt-8">
             Dashboard
           </NavigationItem>
-          <NavigationItem href="/attivita" iconName="building2">
+          <NavigationItem href="/admin/attivita" iconName="building2">
             Attività
           </NavigationItem>
-          <NavigationItem href="/cantieri" iconName="hardhat">
+          <NavigationItem href="/admin/cantieri" iconName="hardhat">
             Cantieri
           </NavigationItem>
-          <NavigationItem href="/mezzi" iconName="forklift">
+          <NavigationItem href="/admin/mezzi" iconName="forklift">
             Mezzi
           </NavigationItem>
-          <NavigationItem href="/utenti" iconName="users">
+          <NavigationItem href="/admin/utenti" iconName="users">
             Utenti
           </NavigationItem>
         </ul>

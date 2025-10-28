@@ -9,7 +9,7 @@ export default async function ResetPassword() {
   });
 
   if (session) {
-    redirect("/");
+    redirect("/admin");
   }
 
   return (

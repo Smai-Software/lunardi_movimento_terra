@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import AggiungiCantiereModal from "@/components/aggiungi-cantiere-modal";
 import CantieriTable from "@/components/cantieri-table";
 import { auth } from "@/lib/auth";
@@ -12,6 +12,11 @@ export default async function CantieriPage() {
 
   if (!session) {
     redirect("/sign-in");
+  }
+
+  // Check if user has admin role
+  if (session.user.role !== "admin") {
+    notFound();
   }
 
   const cantieriData = await getCantieri();

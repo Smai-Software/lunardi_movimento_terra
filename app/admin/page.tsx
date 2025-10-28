@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getDashboardData } from "@/lib/data/dashboard.data";
 import { getUsersNotBanned } from "@/lib/data/users.data";
@@ -12,6 +12,11 @@ export default async function DashboardPage() {
 
   if (!session) {
     redirect("/sign-in");
+  }
+
+  // Check if user has admin role
+  if (session.user.role !== "admin") {
+    notFound();
   }
 
   const dashboardData = await getDashboardData(30);

@@ -9,7 +9,7 @@ export default async function SignIn() {
   });
 
   if (session) {
-    redirect("/");
+    redirect("/admin");
   }
 
   return (

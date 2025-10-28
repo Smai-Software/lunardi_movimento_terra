@@ -31,7 +31,7 @@ export default function FormRecoveryPassword() {
                 type="email"
                 name="email"
                 placeholder="Email"
-                className="input input-md input-primary w-full"
+                className="input input-md w-full"
                 required
               />
             </div>

@@ -6,12 +6,11 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidationErrors } from "@/components/validation-errors";
-import { createAttivitaWithInterazioni } from "@/lib/actions/attivita.actions";
+import { createUserAttivitaWithInterazioni } from "@/lib/actions/user-attivita.actions";
 import { getCantieriForUser } from "@/lib/actions/cantieri.actions";
 import { getMezziForUser } from "@/lib/actions/mezzi.actions";
 import AggiungiInterazioneModalForm from "@/components/aggiungi-interazione-modal-form";
-
-import type { UserNotBanned } from "@/lib/data/users.data";
+import { Loader2Icon, TrashIcon } from "lucide-react";
 
 type Cantiere = {
   id: number;
@@ -40,16 +39,17 @@ type CantiereWithInterazioni = {
   interazioni: Interazione[];
 };
 
-type AttivitaFormProps = {
-  users: UserNotBanned[];
+type UserAttivitaFormProps = {
+  userId: string;
 };
 
-function AttivitaForm({ users }: AttivitaFormProps) {
+function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
   const router = useRouter();
 
   // Form state
-  const [selectedUserId, setSelectedUserId] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
   const [cantieri, setCantieri] = useState<CantiereWithInterazioni[]>([]);
 
   // Available options
@@ -61,15 +61,13 @@ function AttivitaForm({ users }: AttivitaFormProps) {
   const [loadingMezzi, setLoadingMezzi] = useState(false);
 
   const fetchUserResources = useCallback(async () => {
-    if (!selectedUserId) return;
-
     setLoadingCantieri(true);
     setLoadingMezzi(true);
 
     try {
       const [cantieriResult, mezziResult] = await Promise.all([
-        getCantieriForUser({ userId: selectedUserId }),
-        getMezziForUser({ userId: selectedUserId }),
+        getCantieriForUser({ userId }),
+        getMezziForUser({ userId }),
       ]);
 
       if (cantieriResult?.data?.success) {
@@ -93,26 +91,29 @@ function AttivitaForm({ users }: AttivitaFormProps) {
       setLoadingCantieri(false);
       setLoadingMezzi(false);
     }
-  }, [selectedUserId]);
+  }, [userId]);
 
-  const { execute, result } = useAction(createAttivitaWithInterazioni, {
-    onSuccess: () => {
-      if (result.data?.success) {
-        toast.success("Attività creata con successo!");
-        router.push("/admin/attivita");
-      }
+  const { execute, result, isExecuting } = useAction(
+    createUserAttivitaWithInterazioni,
+    {
+      onSuccess: () => {
+        if (result.data?.success) {
+          toast.success("Attività creata con successo!");
+          router.push("/dashboard?tab=list");
+        }
+      },
     },
-  });
+  );
 
-  // Fetch cantieri and mezzi when user is selected
+  // Fetch cantieri and mezzi on mount
   useEffect(() => {
-    if (selectedUserId) {
+    if (userId) {
       fetchUserResources();
     } else {
       setAvailableCantieri([]);
       setAvailableMezzi([]);
     }
-  }, [selectedUserId, fetchUserResources]);
+  }, [userId, fetchUserResources]);
 
   const addInterazione = (
     cantiereId: number,
@@ -171,14 +172,8 @@ function AttivitaForm({ users }: AttivitaFormProps) {
     setCantieri(updatedCantieri);
   };
 
-  const _removeCantiere = (cantiereIndex: number) => {
-    const updatedCantieri = [...cantieri];
-    updatedCantieri.splice(cantiereIndex, 1);
-    setCantieri(updatedCantieri);
-  };
-
   const handleSubmit = () => {
-    if (!selectedUserId || !selectedDate || cantieri.length === 0) {
+    if (!selectedDate || cantieri.length === 0) {
       toast.error("Compila tutti i campi obbligatori");
       return;
     }
@@ -195,7 +190,6 @@ function AttivitaForm({ users }: AttivitaFormProps) {
 
     execute({
       date: selectedDate,
-      user_id: selectedUserId,
       interazioni: allInterazioni,
     });
   };
@@ -224,6 +218,7 @@ function AttivitaForm({ users }: AttivitaFormProps) {
           <p className="text-gray-600">
             Crea una nuova attività con interazioni per cantieri e mezzi
           </p>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div className="mb-6">
               <div className="form-control">
@@ -240,126 +235,98 @@ function AttivitaForm({ users }: AttivitaFormProps) {
                 />
               </div>
             </div>
-
-            <div className="mb-6">
-              <div className="form-control">
-                <label htmlFor="user-select" className="label">
-                  <span className="font-medium">Operatore</span>
-                </label>
-                <select
-                  id="user-select"
-                  className="select select-bordered w-full"
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  required
-                  disabled={selectedDate === ""}
-                >
-                  <option value="">Seleziona un operatore</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
           </div>
 
           {/* Step 3: Add Cantieri and Interazioni */}
-          {selectedUserId && (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-xl font-semibold">Interazioni</h2>
-                <AggiungiInterazioneModalForm
-                  availableCantieri={availableCantieri}
-                  availableMezzi={availableMezzi}
-                  loadingCantieri={loadingCantieri}
-                  loadingMezzi={loadingMezzi}
-                  onAddInterazione={addInterazione}
-                />
-              </div>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-xl font-semibold">Interazioni</h2>
+              <AggiungiInterazioneModalForm
+                availableCantieri={availableCantieri}
+                availableMezzi={availableMezzi}
+                loadingCantieri={loadingCantieri}
+                loadingMezzi={loadingMezzi}
+                onAddInterazione={addInterazione}
+              />
+            </div>
 
-              {/* Display added cantieri and interazioni */}
-              {cantieri.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="font-semibold">Interazioni Aggiunte</h3>
-                  <div className="overflow-x-auto">
-                    <table className="table table-zebra w-full">
-                      <thead>
-                        <tr>
-                          <th>Cantiere</th>
-                          <th>Mezzo</th>
-                          <th>Tempo</th>
-                          <th>Azioni</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {cantieri.flatMap((cantiere, cantiereIndex) =>
-                          cantiere.interazioni.map(
-                            (interazione, interazioneIndex) => (
-                              <tr
-                                key={`${cantiere.cantiereId}-${interazioneIndex}`}
-                              >
-                                <td className="font-medium">
-                                  {cantiere.cantiereNome}
-                                </td>
-                                <td>
-                                  {interazione.mezziId
-                                    ? availableMezzi.find(
-                                        (m) => m.id === interazione.mezziId,
-                                      )?.nome || "N/A"
-                                    : "Nessuno"}
-                                </td>
-                                <td>
-                                  {interazione.ore}h {interazione.minuti}m
-                                </td>
-                                <td>
-                                  <button
-                                    type="button"
-                                    className="btn btn-sm btn-outline btn-error"
-                                    onClick={() =>
-                                      removeInterazione(
-                                        cantiereIndex,
-                                        interazioneIndex,
-                                      )
-                                    }
-                                  >
-                                    Rimuovi
-                                  </button>
-                                </td>
-                              </tr>
-                            ),
+            {/* Display added cantieri and interazioni */}
+            {cantieri.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="font-semibold">Interazioni Aggiunte</h3>
+                <div className="overflow-x-auto">
+                  <table className="table table-zebra w-full">
+                    <thead>
+                      <tr>
+                        <th>Cantiere</th>
+                        <th>Mezzo</th>
+                        <th>Tempo</th>
+                        <th>Azioni</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cantieri.flatMap((cantiere, cantiereIndex) =>
+                        cantiere.interazioni.map(
+                          (interazione, interazioneIndex) => (
+                            <tr
+                              key={`${cantiere.cantiereId}-${interazioneIndex}`}
+                            >
+                              <td className="font-medium">
+                                {cantiere.cantiereNome}
+                              </td>
+                              <td>
+                                {interazione.mezziId
+                                  ? availableMezzi.find(
+                                      (m) => m.id === interazione.mezziId,
+                                    )?.nome || "N/A"
+                                  : "Nessuno"}
+                              </td>
+                              <td>
+                                {interazione.ore}h {interazione.minuti}m
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline btn-error"
+                                  onClick={() =>
+                                    removeInterazione(
+                                      cantiereIndex,
+                                      interazioneIndex,
+                                    )
+                                  }
+                                >
+                                  <TrashIcon className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
                           ),
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                        ),
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-                  {/* Total Hours Summary */}
-                  {cantieri.length > 0 && (
-                    <div className="mt-4">
-                      <div className="card bg-primary text-primary-content">
-                        <div className="card-body py-3">
-                          <div className="flex justify-between items-center">
-                            <span className="font-semibold">Totale Ore:</span>
-                            <span className="text-lg font-bold">
-                              {getTotalHours()
-                                .hours.toString()
-                                .padStart(2, "0")}
-                              :
-                              {getTotalHours()
-                                .minutes.toString()
-                                .padStart(2, "0")}
-                            </span>
-                          </div>
+                {/* Total Hours Summary */}
+                {cantieri.length > 0 && (
+                  <div className="mt-4">
+                    <div className="card bg-primary text-primary-content">
+                      <div className="card-body py-3">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold">Totale Ore:</span>
+                          <span className="text-lg font-bold">
+                            {getTotalHours().hours.toString().padStart(2, "0")}:
+                            {getTotalHours()
+                              .minutes.toString()
+                              .padStart(2, "0")}
+                          </span>
                         </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Submit */}
           <div className="card-actions justify-end">
@@ -367,19 +334,22 @@ function AttivitaForm({ users }: AttivitaFormProps) {
             <button
               type="button"
               className="btn btn-outline"
-              onClick={() => router.push("/admin/attivita")}
+              onClick={() => router.push("/dashboard?tab=list")}
             >
               Annulla
             </button>
-            <SubmitButton
+            <button
+              type="submit"
               className="btn btn-primary"
               onClick={handleSubmit}
-              disabled={
-                !selectedUserId || !selectedDate || cantieri.length === 0
-              }
+              disabled={!selectedDate || cantieri.length === 0}
             >
-              Crea Attività
-            </SubmitButton>
+              {isExecuting ? (
+                <Loader2Icon className="w-4 h-4 animate-spin" />
+              ) : (
+                "Crea Attività"
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -387,4 +357,4 @@ function AttivitaForm({ users }: AttivitaFormProps) {
   );
 }
 
-export default AttivitaForm;
+export default UserAttivitaForm;

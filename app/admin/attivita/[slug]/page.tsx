@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-import AttivitaDetailClient from "@/app/(dashboard)/attivita/[slug]/attivita-detail-client";
+import AttivitaDetailClient from "@/app/admin/attivita/[slug]/attivita-detail-client";
 import AttivitaInfoCard from "@/components/attivita-info-card";
 import StatsCardSkeleton from "@/components/stats-card-skeleton";
 import TotalHoursCardAttivita from "@/components/total-hours-card-attivita";
@@ -28,6 +28,11 @@ export default async function AttivitaDetailPage({ params }: PageProps) {
 
   if (!session) {
     redirect("/sign-in");
+  }
+
+  // Check if user has admin role
+  if (session.user.role !== "admin") {
+    notFound();
   }
 
   // Fetch attivita by external_id

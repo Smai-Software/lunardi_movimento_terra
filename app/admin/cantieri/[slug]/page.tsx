@@ -33,6 +33,11 @@ export default async function CantiereDetailPage({ params }: PageProps) {
     redirect("/sign-in");
   }
 
+  // Check if user has admin role
+  if (session.user.role !== "admin") {
+    notFound();
+  }
+
   // Fetch cantiere by external_id
   const cantiere = await prisma.cantieri.findUnique({
     where: {

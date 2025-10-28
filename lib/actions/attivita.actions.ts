@@ -35,7 +35,7 @@ export const createAttivita = actionClientWithAuth
           external_id: randomUUID(),
         },
       });
-      revalidatePath("/attivita");
+      revalidatePath("/admin/attivita");
       revalidateTag("attivita");
       return { success: true };
     } catch (error) {
@@ -91,7 +91,7 @@ export const updateAttivita = actionClientWithAuth
           data: updateData,
         });
 
-        revalidatePath("/attivita", "page");
+        revalidatePath("/admin/attivita", "page");
         revalidateTag("attivita");
         return { success: true };
       } catch (error) {
@@ -175,7 +175,7 @@ export const createAttivitaWithInterazioni = actionClientWithAuth
           return attivita;
         });
 
-        revalidatePath("/attivita");
+        revalidatePath("/admin/attivita");
         revalidateTag("attivita");
         revalidateTag("interazioni");
         revalidateTag("cantieri");
@@ -267,7 +267,7 @@ export const updateAttivitaWithInterazioni = actionClientWithAuth
           });
         });
 
-        revalidatePath("/attivita");
+        revalidatePath("/admin/attivita");
         revalidateTag("attivita");
         revalidateTag("interazioni");
         revalidateTag("cantieri");
@@ -306,5 +306,5 @@ export const deleteAttivita = actionClientWithAuth
         error: "Errore durante l'eliminazione dell'attività",
       };
     }
-    redirect("/attivita");
+    redirect("/admin/attivita");
   });

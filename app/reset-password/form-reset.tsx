@@ -32,7 +32,7 @@ export default function FormResetPassword() {
                 type="password"
                 name="password"
                 placeholder="Password"
-                className="input input-md input-primary w-full"
+                className="input input-md w-full"
                 required
               />
             </div>

@@ -381,7 +381,7 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
                     </td>
                     <td>
                       <Link
-                        href={`/cantieri/${c.external_id}`}
+                        href={`/admin/cantieri/${c.external_id}`}
                         className="btn btn-sm btn-ghost"
                       >
                         <ChevronRight className="w-4 h-4" />

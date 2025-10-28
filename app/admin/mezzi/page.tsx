@@ -1,6 +1,6 @@
 import { CheckIcon, XIcon } from "lucide-react";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import AggiungiMezzoModal from "@/components/aggiungi-mezzo-modal";
 import AssegnaUtenteMezzoModal from "@/components/assegna-utente-mezzo-modal";
 import EliminaMezzoModal from "@/components/elimina-mezzo-modal";
@@ -16,6 +16,11 @@ export default async function MezziPage() {
 
   if (!session) {
     redirect("/sign-in");
+  }
+
+  // Check if user has admin role
+  if (session.user.role !== "admin") {
+    notFound();
   }
 
   const [mezziData, usersData] = await Promise.all([

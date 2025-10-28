@@ -477,7 +477,7 @@ export default function InterazioniTable({
                     <td>{i.mezzi?.nome || "Nessuno"}</td>
                     <td>
                       <Link
-                        href={`/attivita/${i.attivita.external_id}`}
+                        href={`/admin/attivita/${i.attivita.external_id}`}
                         className="block link"
                       >
                         {new Date(i.attivita.date).toLocaleDateString("it-IT")}

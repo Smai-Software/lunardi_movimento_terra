@@ -10,6 +10,8 @@ import { auth, getErrorMessage } from "@/lib/auth";
 import { actionClient, actionClientWithAuth } from "@/lib/safe-action";
 import { transporter } from "../email";
 import prisma from "../prisma";
+import { User } from "better-auth";
+import { Route } from "next";
 
 // --- CREA UTENTE ---
 export const createUser = actionClientWithAuth
@@ -91,7 +93,7 @@ export const createUser = actionClientWithAuth
         `,
           });
         }
-        revalidatePath("/utenti");
+        revalidatePath("/admin/utenti");
 
         return { success: true };
       } catch (error) {
@@ -288,7 +290,7 @@ export const banUser = actionClientWithAuth
         },
         headers,
       });
-      revalidatePath("/utenti");
+      revalidatePath("/admin/utenti");
       return { success: true };
     } catch (error) {
       console.log(error);
@@ -326,7 +328,7 @@ export const unbanUser = actionClientWithAuth
         },
         headers,
       });
-      revalidatePath("/utenti");
+      revalidatePath("/admin/utenti");
       return { success: true };
     } catch (error) {
       console.log(error);
@@ -376,7 +378,7 @@ export const updateUser = actionClientWithAuth
             name: name || "",
           },
         });
-        revalidatePath("/utenti");
+        revalidatePath("/admin/utenti");
         return { success: true };
       } catch (error) {
         console.log(error);
@@ -446,8 +448,8 @@ export const createUserMezzo = actionClientWithAuth
         },
       });
 
-      revalidatePath("/utenti");
-      revalidatePath("/mezzi");
+      revalidatePath("/admin/utenti");
+      revalidatePath("/admin/mezzi");
       return { success: true };
     } catch (error) {
       console.log(error);
@@ -489,8 +491,8 @@ export const deleteUserMezzo = actionClientWithAuth
         where: { id: association.id },
       });
 
-      revalidatePath("/utenti");
-      revalidatePath("/mezzi");
+      revalidatePath("/admin/utenti");
+      revalidatePath("/admin/mezzi");
       return { success: true };
     } catch (error) {
       console.log(error);
@@ -553,8 +555,8 @@ export const createUserCantiere = actionClientWithAuth
         },
       });
 
-      revalidatePath("/utenti");
-      revalidatePath("/cantieri");
+      revalidatePath("/admin/utenti");
+      revalidatePath("/admin/cantieri");
       return { success: true };
     } catch (error) {
       console.log(error);
@@ -596,8 +598,8 @@ export const deleteUserCantiere = actionClientWithAuth
         where: { id: association.id },
       });
 
-      revalidatePath("/utenti");
-      revalidatePath("/cantieri");
+      revalidatePath("/admin/utenti");
+      revalidatePath("/admin/cantieri");
       return { success: true };
     } catch (error) {
       console.log(error);

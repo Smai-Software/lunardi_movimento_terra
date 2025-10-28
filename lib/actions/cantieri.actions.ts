@@ -39,7 +39,7 @@ export const createCantiere = actionClientWithAuth
             external_id: randomUUID(),
           },
         });
-        revalidatePath("/cantieri");
+        revalidatePath("/admin/cantieri");
         return { success: true };
       } catch (error) {
         console.log(error);
@@ -85,7 +85,7 @@ export const updateCantiere = actionClientWithAuth
           },
         });
 
-        revalidatePath("/cantieri", "page");
+        revalidatePath("/admin/cantieri", "page");
         return { success: true };
       } catch (error) {
         console.log(error);
@@ -161,7 +161,7 @@ export const deleteCantiere = actionClientWithAuth
         error: "Errore durante l'eliminazione del cantiere",
       };
     }
-    redirect("/cantieri");
+    redirect("/admin/cantieri");
   });
 
 // --- AGGIUNGI UTENTE CANTIERE ---
@@ -202,7 +202,7 @@ export const addUtenteCantiere = actionClientWithAuth
         },
       });
 
-      revalidatePath("/cantieri", "page");
+      revalidatePath("/admin/cantieri", "page");
       return { success: true };
     } catch (error) {
       console.log(error);
@@ -242,7 +242,7 @@ export const removeUtenteCantiere = actionClientWithAuth
         };
       }
 
-      revalidatePath("/cantieri", "page");
+      revalidatePath("/admin/cantieri", "page");
       return { success: true };
     } catch (error) {
       console.log(error);

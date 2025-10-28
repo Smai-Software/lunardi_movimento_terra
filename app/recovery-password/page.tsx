@@ -8,7 +8,7 @@ export default async function RecoveryPassword() {
     headers: await headers(),
   });
   if (session) {
-    redirect("/");
+    redirect("/admin");
   }
 
   return (

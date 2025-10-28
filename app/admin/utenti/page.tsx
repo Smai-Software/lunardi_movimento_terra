@@ -1,6 +1,6 @@
 import { CheckIcon, XIcon } from "lucide-react";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import AggiungiUtenteModal from "@/components/aggiungi-utente-modal";
 import BanUserDialog from "@/components/ban-user-dialog";
 import ModificaUtenteModal from "@/components/modifica-utente-modal";
@@ -14,6 +14,11 @@ export default async function UtentiPage() {
 
   if (!session) {
     redirect("/sign-in");
+  }
+
+  // Check if user has admin role
+  if (session.user.role !== "admin") {
+    notFound();
   }
 
   const users = await getUsers();

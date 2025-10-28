@@ -2,10 +2,11 @@
 
 import { Building2, Forklift, HardHat, Home, Users } from "lucide-react";
 import Link from "next/link";
+import type { Route } from "next";
 import { usePathname } from "next/navigation";
 
 interface NavigationItemProps {
-  href: string;
+  href: string & Route;
   iconName: "home" | "building2" | "hardhat" | "forklift" | "users";
   children: React.ReactNode;
   className?: string;
@@ -26,7 +27,8 @@ export default function NavigationItem({
   className = "",
 }: NavigationItemProps) {
   const pathname = usePathname();
-  const isActive = href === "/" ? pathname === href : pathname.startsWith(href);
+  const isActive =
+    href === "/admin" ? pathname === href : pathname.startsWith(href);
   const Icon = iconMap[iconName];
 
   return (

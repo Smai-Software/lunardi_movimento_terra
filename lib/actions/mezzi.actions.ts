@@ -48,7 +48,7 @@ export const createMezzo = actionClientWithAuth
             external_id: randomUUID(),
           },
         });
-        revalidatePath("/mezzi");
+        revalidatePath("/admin/mezzi");
         return { success: true };
       } catch (error) {
         console.log(error);
@@ -100,7 +100,7 @@ export const updateMezzo = actionClientWithAuth
             last_update_by: userId,
           },
         });
-        revalidatePath("/mezzi");
+        revalidatePath("/admin/mezzi");
         return { success: true };
       } catch (error) {
         console.log(error);
@@ -125,7 +125,7 @@ export const deleteMezzo = actionClientWithAuth
   .action(async ({ bindArgsParsedInputs: [id] }) => {
     try {
       await prisma.mezzi.delete({ where: { id } });
-      revalidatePath("/mezzi");
+      revalidatePath("/admin/mezzi");
       return { success: true };
     } catch (error) {
       console.log(error);
@@ -228,7 +228,7 @@ export const assignUtentiMezzo = actionClientWithAuth
           });
         }
 
-        revalidatePath("/mezzi");
+        revalidatePath("/admin/mezzi");
         return { success: true };
       } catch (error) {
         console.log(error);
@@ -278,7 +278,7 @@ export const addUtenteMezzo = actionClientWithAuth
         },
       });
 
-      revalidatePath("/mezzi");
+      revalidatePath("/admin/mezzi");
       return { success: true };
     } catch (error) {
       console.log(error);
@@ -363,7 +363,7 @@ export const removeUtenteMezzo = actionClientWithAuth
         };
       }
 
-      revalidatePath("/mezzi");
+      revalidatePath("/admin/mezzi");
       return { success: true };
     } catch (error) {
       console.log(error);
