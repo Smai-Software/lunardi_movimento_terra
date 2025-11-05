@@ -12,6 +12,7 @@ import { getMezziForUser } from "@/lib/actions/mezzi.actions";
 import AggiungiInterazioneModalForm from "@/components/aggiungi-interazione-modal-form";
 
 import type { UserNotBanned } from "@/lib/data/users.data";
+import { TrashIcon } from "lucide-react";
 
 type Cantiere = {
   id: number;
@@ -32,6 +33,7 @@ type Interazione = {
   mezziId: number | null;
   ore: number;
   minuti: number;
+  note: string;
 };
 
 type CantiereWithInterazioni = {
@@ -119,6 +121,7 @@ function AttivitaForm({ users }: AttivitaFormProps) {
     mezziId: number | null,
     ore: number,
     minuti: number,
+    note: string,
   ) => {
     if (ore < 0 || minuti < 0 || minuti > 59) {
       toast.error("Compila tutti i campi correttamente");
@@ -129,6 +132,7 @@ function AttivitaForm({ users }: AttivitaFormProps) {
       mezziId,
       ore,
       minuti,
+      note,
     };
 
     // Check if cantiere already exists
@@ -171,12 +175,6 @@ function AttivitaForm({ users }: AttivitaFormProps) {
     setCantieri(updatedCantieri);
   };
 
-  const _removeCantiere = (cantiereIndex: number) => {
-    const updatedCantieri = [...cantieri];
-    updatedCantieri.splice(cantiereIndex, 1);
-    setCantieri(updatedCantieri);
-  };
-
   const handleSubmit = () => {
     if (!selectedUserId || !selectedDate || cantieri.length === 0) {
       toast.error("Compila tutti i campi obbligatori");
@@ -190,6 +188,7 @@ function AttivitaForm({ users }: AttivitaFormProps) {
         mezzi_id: interazione.mezziId,
         ore: interazione.ore,
         minuti: interazione.minuti,
+        note: interazione.note,
       })),
     );
 
@@ -287,10 +286,12 @@ function AttivitaForm({ users }: AttivitaFormProps) {
                     <table className="table table-zebra w-full">
                       <thead>
                         <tr>
+                          <th className="md:hidden"></th>
                           <th>Cantiere</th>
                           <th>Mezzo</th>
                           <th>Tempo</th>
-                          <th>Azioni</th>
+                          <th>Note</th>
+                          <th className="hidden md:table-cell">Azioni</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -300,6 +301,20 @@ function AttivitaForm({ users }: AttivitaFormProps) {
                               <tr
                                 key={`${cantiere.cantiereId}-${interazioneIndex}`}
                               >
+                                <td className="md:hidden">
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline btn-error"
+                                    onClick={() =>
+                                      removeInterazione(
+                                        cantiereIndex,
+                                        interazioneIndex,
+                                      )
+                                    }
+                                  >
+                                    <TrashIcon className="size-4" />
+                                  </button>
+                                </td>
                                 <td className="font-medium">
                                   {cantiere.cantiereNome}
                                 </td>
@@ -312,6 +327,11 @@ function AttivitaForm({ users }: AttivitaFormProps) {
                                 </td>
                                 <td>
                                   {interazione.ore}h {interazione.minuti}m
+                                </td>
+                                <td>
+                                  <div className="max-w-[100px] truncate">
+                                    {interazione.note || ""}
+                                  </div>
                                 </td>
                                 <td>
                                   <button

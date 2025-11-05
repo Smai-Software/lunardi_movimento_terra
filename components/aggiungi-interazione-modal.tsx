@@ -27,6 +27,7 @@ export default function AggiungiInterazioneModal({
   const [selectedMezzoId, setSelectedMezzoId] = useState("");
   const [selectedOre, setSelectedOre] = useState(0);
   const [selectedMinuti, setSelectedMinuti] = useState(0);
+  const [note, setNote] = useState("");
 
   const { execute, result, reset } = useAction(createInterazione, {
     onSuccess: () => {
@@ -146,6 +147,21 @@ export default function AggiungiInterazioneModal({
               </select>
             </div>
           </div>
+          <div className="form-control">
+            <label
+              htmlFor="note-input"
+              className="block font-medium mb-1 text-sm"
+            >
+              Note
+            </label>
+            <textarea
+              id="note-input"
+              className="textarea textarea-bordered w-full h-24"
+              value={note}
+              name="note"
+              onChange={(e) => setNote(e.target.value)}
+            ></textarea>
+          </div>
 
           <ValidationErrors result={result} />
           <div className="modal-action">
@@ -157,7 +173,7 @@ export default function AggiungiInterazioneModal({
               Annulla
             </button>
             <SubmitButton className="btn btn-primary">
-              Salva modifiche
+              Aggiungi interazione
             </SubmitButton>
           </div>
         </form>

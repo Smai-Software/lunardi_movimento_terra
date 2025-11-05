@@ -19,6 +19,7 @@ export const createInterazione = actionClientWithAuth
       mezzi_id: zfd.numeric(z.number().optional()).optional(),
       cantieri_id: zfd.numeric(z.number().min(1, "Il cantiere è obbligatorio")),
       attivita_id: zfd.numeric(z.number().min(1, "L'attività è obbligatoria")),
+      note: zfd.text(z.string().optional()),
     }),
   )
   .outputSchema(
@@ -29,7 +30,15 @@ export const createInterazione = actionClientWithAuth
   )
   .action(
     async ({
-      parsedInput: { ore, minuti, user_id, mezzi_id, cantieri_id, attivita_id },
+      parsedInput: {
+        ore,
+        minuti,
+        user_id,
+        mezzi_id,
+        cantieri_id,
+        attivita_id,
+        note,
+      },
       ctx: { userId },
     }) => {
       try {
@@ -41,6 +50,7 @@ export const createInterazione = actionClientWithAuth
             ore,
             minuti,
             tempo_totale,
+            note,
             user_id,
             mezzi_id: mezzi_id || null,
             cantieri_id,
@@ -82,6 +92,7 @@ export const updateInterazione = actionClientWithAuth
       attivita_id: zfd
         .numeric(z.number().min(1, "L'attività è obbligatoria"))
         .optional(),
+      note: zfd.text(z.string().optional()),
     }),
   )
   .outputSchema(
@@ -93,7 +104,7 @@ export const updateInterazione = actionClientWithAuth
   .action(
     async ({
       bindArgsParsedInputs: [id],
-      parsedInput: { ore, minuti, mezzi_id, attivita_id },
+      parsedInput: { ore, minuti, mezzi_id, attivita_id, note },
       ctx: { userId },
     }) => {
       try {
@@ -119,6 +130,7 @@ export const updateInterazione = actionClientWithAuth
           last_update_at: new Date(),
           last_update_by: userId,
           tempo_totale,
+          note,
         };
 
         if (ore !== undefined) updateData.ore = ore;

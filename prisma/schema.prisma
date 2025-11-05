@@ -162,7 +162,8 @@ model interazioni {
   id                              Int      @id @default(autoincrement())
   ore                             Int
   minuti                          Int
-  tempo_totale                    BigInt  
+  tempo_totale                    BigInt
+  note                            String?   @db.Text
   user_id                         String
   mezzi_id                        Int?
   cantieri_id                     Int

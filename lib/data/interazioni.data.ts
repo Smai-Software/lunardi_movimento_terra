@@ -15,6 +15,7 @@ export const getInterazioniByCantiereId = unstable_cache(
         ore: true,
         minuti: true,
         tempo_totale: true,
+        note: true,
         external_id: true,
         created_at: true,
         last_update_at: true,
@@ -82,6 +83,7 @@ export const getInterazioni = unstable_cache(
         ore: true,
         minuti: true,
         tempo_totale: true,
+        note: true,
         external_id: true,
         created_at: true,
         last_update_at: true,
@@ -140,38 +142,9 @@ export const getInterazioni = unstable_cache(
   { tags: ["interazioni", "all"], revalidate: 60 },
 );
 
-export const getAttivita = unstable_cache(
-  async () => {
-    const attivita = await prisma.attivita.findMany({
-      relationLoadStrategy: "join",
-      select: {
-        id: true,
-        date: true,
-        external_id: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        date: "desc",
-      },
-    });
-
-    return attivita;
-  },
-  ["attivita"],
-  { tags: ["attivita", "all"], revalidate: 60 },
-);
-
 export type Interazione = NonNullable<
   Awaited<ReturnType<typeof getInterazioniByCantiereId>>
 >[number];
 export type InterazioneAll = NonNullable<
   Awaited<ReturnType<typeof getInterazioni>>
->[number];
-export type Attivita = NonNullable<
-  Awaited<ReturnType<typeof getAttivita>>
 >[number];

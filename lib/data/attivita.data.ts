@@ -133,6 +133,7 @@ export const getInterazioniByAttivitaId = unstable_cache(
         ore: true,
         minuti: true,
         tempo_totale: true,
+        note: true,
         external_id: true,
         created_at: true,
         last_update_at: true,

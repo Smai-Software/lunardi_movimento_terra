@@ -12,6 +12,7 @@ type ModificaInterazioneModalProps = {
     id: number;
     ore: number;
     minuti: number;
+    note: string | null;
     user: {
       id: string;
       name: string;
@@ -39,6 +40,7 @@ export default function ModificaInterazioneModal({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [ore, setOre] = useState(interazione.ore);
   const [minuti, setMinuti] = useState(interazione.minuti);
+  const [note, setNote] = useState(interazione.note ?? "");
   const [mezziId, setMezziId] = useState<number | null>(
     interazione.mezzi?.id || null,
   );
@@ -179,6 +181,22 @@ export default function ModificaInterazioneModal({
                 <option value={45}>45</option>
               </select>
             </div>
+          </div>
+
+          <div className="form-control">
+            <label
+              htmlFor="note-input"
+              className="block font-medium mb-1 text-sm"
+            >
+              Note
+            </label>
+            <textarea
+              id="note-input"
+              className="textarea textarea-bordered w-full h-24"
+              value={note}
+              name="note"
+              onChange={(e) => setNote(e.target.value)}
+            ></textarea>
           </div>
 
           <ValidationErrors result={result} />

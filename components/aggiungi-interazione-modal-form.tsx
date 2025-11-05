@@ -23,6 +23,7 @@ type AggiungiInterazioneModalFormProps = {
     mezzoId: number | null,
     ore: number,
     minuti: number,
+    note: string,
   ) => void;
 };
 
@@ -38,6 +39,7 @@ export default function AggiungiInterazioneModalForm({
   const [currentMezzoId, setCurrentMezzoId] = useState("");
   const [currentOre, setCurrentOre] = useState(0);
   const [currentMinuti, setCurrentMinuti] = useState(0);
+  const [currentNote, setCurrentNote] = useState("");
 
   const openModal = () => {
     dialogRef.current?.showModal();
@@ -49,6 +51,7 @@ export default function AggiungiInterazioneModalForm({
     setCurrentMezzoId("");
     setCurrentOre(0);
     setCurrentMinuti(0);
+    setCurrentNote("");
     dialogRef.current?.close();
   };
 
@@ -65,12 +68,19 @@ export default function AggiungiInterazioneModalForm({
     const cantiereId = parseInt(currentCantiereId, 10);
     const mezziId = currentMezzoId ? parseInt(currentMezzoId, 10) : null;
 
-    onAddInterazione(cantiereId, mezziId, currentOre, currentMinuti);
+    onAddInterazione(
+      cantiereId,
+      mezziId,
+      currentOre,
+      currentMinuti,
+      currentNote,
+    );
 
     // Reset all fields except cantiere, then close
     setCurrentMezzoId("");
     setCurrentOre(0);
     setCurrentMinuti(0);
+    setCurrentNote("");
     dialogRef.current?.close();
   };
 
@@ -170,6 +180,18 @@ export default function AggiungiInterazioneModalForm({
                   <option value={45}>45</option>
                 </select>
               </div>
+            </div>
+            <div className="form-control">
+              <label htmlFor="note-input" className="label">
+                <span className="label-text">Note</span>
+              </label>
+              <textarea
+                id="note-input"
+                className="textarea textarea-bordered w-full"
+                value={currentNote}
+                onChange={(e) => setCurrentNote(e.target.value)}
+                name="note"
+              ></textarea>
             </div>
           </div>
 

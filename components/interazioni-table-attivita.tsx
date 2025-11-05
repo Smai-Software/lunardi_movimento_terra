@@ -34,6 +34,7 @@ export default function InterazioniTableAttivita({
               <th>Mezzo</th>
               <th>Tempo</th>
               <th>Data creazione</th>
+              <th>Note</th>
               <th>Azioni</th>
             </tr>
           </thead>
@@ -41,7 +42,7 @@ export default function InterazioniTableAttivita({
             {interazioni.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="text-center text-base-content/60 py-8"
                 >
                   Nessuna interazione trovata.
@@ -59,6 +60,11 @@ export default function InterazioniTableAttivita({
                     {new Date(interazione.created_at).toLocaleDateString(
                       "it-IT",
                     )}
+                  </td>
+                  <td>
+                    <div className="max-w-xs truncate">
+                      {interazione.note || ""}
+                    </div>
                   </td>
                   <td>
                     <div className="flex gap-2">

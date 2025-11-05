@@ -457,6 +457,7 @@ export default function InterazioniTable({
                   sortDir={sortDir}
                   onSort={handleSort}
                 />
+                <th>Note</th>
                 <th>Azioni</th>
               </tr>
             </thead>
@@ -484,6 +485,7 @@ export default function InterazioniTable({
                       </Link>
                     </td>
                     <td>{formatTime(i.ore, i.minuti)}</td>
+                    <td className="max-w-xs truncate">{i.note || ""}</td>
                     <td>
                       <div className="flex gap-2">
                         <button

@@ -32,16 +32,14 @@ export default function NavigationItem({
   const Icon = iconMap[iconName];
 
   return (
-    <li>
-      <Link
-        href={href}
-        className={`hover:bg-base-300 rounded-md flex items-center gap-2 ${
-          isActive ? "bg-base-300 text-primary-content" : ""
-        } ${className}`}
-      >
-        <Icon className="size-6" />
-        {children}
-      </Link>
-    </li>
+    <Link
+      href={href}
+      className={`hover:bg-base-300 rounded-md flex items-center gap-2 p-2 ${
+        isActive ? "bg-base-300 text-primary-content" : ""
+      } ${className}`}
+    >
+      <Icon className="size-6" />
+      {children}
+    </Link>
   );
 }

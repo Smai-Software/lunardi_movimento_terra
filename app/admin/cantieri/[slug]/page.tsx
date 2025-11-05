@@ -7,10 +7,8 @@ import TotalHoursCard from "@/components/total-hours-card";
 import TotalInterazioniCard from "@/components/total-interazioni-card";
 import { auth } from "@/lib/auth";
 import { getUserCantieriByCantiereId } from "@/lib/data/cantieri.data";
-import {
-  getAttivita,
-  getInterazioniByCantiereId,
-} from "@/lib/data/interazioni.data";
+import { getInterazioniByCantiereId } from "@/lib/data/interazioni.data";
+import { getAttivita } from "@/lib/data/attivita.data";
 import { getMezzi } from "@/lib/data/mezzi.data";
 import { getUsersNotBanned } from "@/lib/data/users.data";
 import prisma from "@/lib/prisma";

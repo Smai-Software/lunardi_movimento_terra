@@ -120,6 +120,7 @@ export const createAttivitaWithInterazioni = actionClientWithAuth
               .number()
               .min(0)
               .max(59, "I minuti devono essere tra 0 e 59"),
+            note: z.string().optional(),
           }),
         )
         .min(1, "Almeno un'interazione è richiesta"),
@@ -169,6 +170,7 @@ export const createAttivitaWithInterazioni = actionClientWithAuth
               last_update_at: new Date(),
               created_by: userId,
               last_update_by: userId,
+              note: interazione.note || null,
             })),
           });
 
@@ -211,6 +213,7 @@ export const updateAttivitaWithInterazioni = actionClientWithAuth
               .number()
               .min(0)
               .max(59, "I minuti devono essere tra 0 e 59"),
+            note: z.string().optional(),
           }),
         )
         .min(1, "Almeno un'interazione è richiesta"),
@@ -263,6 +266,7 @@ export const updateAttivitaWithInterazioni = actionClientWithAuth
               last_update_at: new Date(),
               created_by: userId,
               last_update_by: userId,
+              note: interazione.note || null,
             })),
           });
         });
