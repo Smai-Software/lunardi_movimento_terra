@@ -79,7 +79,6 @@ export default function AggiungiMezzoModal() {
                 value={descrizione}
                 onChange={(e) => setDescrizione(e.target.value)}
                 placeholder="Inserisci la descrizione"
-                required
               />
             </div>
             <div className="mb-4">

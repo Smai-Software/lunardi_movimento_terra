@@ -98,7 +98,6 @@ export default function AggiungiUtenteModal() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Inserisci il telefono"
-                required
               />
             </div>
             <div className="mb-4">

@@ -10,8 +10,6 @@ import { auth, getErrorMessage } from "@/lib/auth";
 import { actionClient, actionClientWithAuth } from "@/lib/safe-action";
 import { transporter } from "../email";
 import prisma from "../prisma";
-import { User } from "better-auth";
-import { Route } from "next";
 
 // --- CREA UTENTE ---
 export const createUser = actionClientWithAuth
@@ -19,7 +17,7 @@ export const createUser = actionClientWithAuth
     zfd.formData({
       name: zfd.text(z.string().min(1, "Il nome è obbligatorio")),
       email: zfd.text(z.email("Email non valida").min(1, "Email obbligatoria")),
-      phone: zfd.text(z.string().optional()),
+      phone: zfd.text(z.string().optional()).optional(),
       licenseCamion: zfd.checkbox(),
       licenseEscavatore: zfd.checkbox(),
     }),

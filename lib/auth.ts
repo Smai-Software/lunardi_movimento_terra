@@ -109,6 +109,7 @@ export const errorCodes = {
   USER_ALREADY_HAS_PASSWORD: "L'utente ha già una password",
   INVALID_OTP: "Codice OTP non valido",
   TOO_MANY_ATTEMPTS: "Hai effettuato troppi tentativi. Riprova tra 15 minuti",
+  BAD_REQUEST: "Richiesta non valida",
 } as const;
 
 export function getErrorMessage(code: string): string {

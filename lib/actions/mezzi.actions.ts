@@ -13,7 +13,7 @@ export const createMezzo = actionClientWithAuth
   .inputSchema(
     zfd.formData({
       nome: zfd.text(z.string().min(1, "Il nome è obbligatorio")),
-      descrizione: zfd.text(z.string().min(1, "La descrizione è obbligatoria")),
+      descrizione: zfd.text(z.string().optional()).optional(),
       has_license_camion: zfd.checkbox(),
       has_license_escavatore: zfd.checkbox(),
     }),
@@ -38,7 +38,7 @@ export const createMezzo = actionClientWithAuth
         await prisma.mezzi.create({
           data: {
             nome,
-            descrizione,
+            descrizione: descrizione || "",
             has_license_camion: has_license_camion || false,
             has_license_escavatore: has_license_escavatore || false,
             created_at: new Date(),
@@ -93,7 +93,7 @@ export const updateMezzo = actionClientWithAuth
           where: { id },
           data: {
             nome,
-            descrizione,
+            descrizione: descrizione || "",
             has_license_camion: has_license_camion || false,
             has_license_escavatore: has_license_escavatore || false,
             last_update_at: new Date(),

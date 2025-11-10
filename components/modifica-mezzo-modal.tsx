@@ -85,6 +85,7 @@ export default function ModificaMezzoModal({ mezzo }: ModificaMezzoModalProps) {
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 placeholder="Inserisci il nome"
+                required
               />
             </div>
             <div className="mb-4">
