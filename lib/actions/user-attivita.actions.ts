@@ -16,6 +16,7 @@ export const createUserAttivitaWithInterazioni = actionClientWithAuth
           z.object({
             cantieri_id: z.number().min(1, "Il cantiere è obbligatorio"),
             mezzi_id: z.number().nullable().optional(),
+            note: z.string().optional(),
             ore: z.number().min(0, "Le ore devono essere >= 0"),
             minuti: z
               .number()
@@ -52,6 +53,7 @@ export const createUserAttivitaWithInterazioni = actionClientWithAuth
         // Create all interazioni records
         await tx.interazioni.createMany({
           data: interazioni.map((interazione) => ({
+            note: interazione.note || null,
             ore: interazione.ore,
             minuti: interazione.minuti,
             tempo_totale: BigInt(

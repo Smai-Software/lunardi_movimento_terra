@@ -153,7 +153,7 @@ export default function ModificaInterazioneModal({
                 onChange={(e) => setOre(Number(e.target.value))}
                 required
               >
-                {Array.from({ length: 13 }, (_, i) => (
+                {Array.from({ length: 24 }, (_, i) => (
                   <option key={`hour-${i.toString()}`} value={i}>
                     {i}
                   </option>

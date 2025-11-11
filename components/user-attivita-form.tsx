@@ -31,6 +31,7 @@ type Interazione = {
   mezziId: number | null;
   ore: number;
   minuti: number;
+  note: string;
 };
 
 type CantiereWithInterazioni = {
@@ -120,6 +121,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     mezziId: number | null,
     ore: number,
     minuti: number,
+    note: string,
   ) => {
     if (ore < 0 || minuti < 0 || minuti > 59) {
       toast.error("Compila tutti i campi correttamente");
@@ -130,6 +132,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
       mezziId,
       ore,
       minuti,
+      note,
     };
 
     // Check if cantiere already exists
@@ -185,6 +188,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
         mezzi_id: interazione.mezziId,
         ore: interazione.ore,
         minuti: interazione.minuti,
+        note: interazione.note,
       })),
     );
 
