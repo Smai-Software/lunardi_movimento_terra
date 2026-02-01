@@ -7,8 +7,8 @@ import {
   parseAsString,
   useQueryState,
 } from "nuqs";
-import { useMemo } from "react";
-import AggiungiMezzoModal from "@/components/aggiungi-mezzo-modal";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useDebounceValue } from "usehooks-ts";
 import AssegnaUtenteMezzoModal from "@/components/assegna-utente-mezzo-modal";
 import EliminaMezzoModal from "@/components/elimina-mezzo-modal";
 import ModificaMezzoModal from "@/components/modifica-mezzo-modal";
@@ -36,12 +36,32 @@ interface UsersResponse {
   total: number;
 }
 
+const SEARCH_DEBOUNCE_MS = 400;
+
 export default function MezziTable() {
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [search, setSearch] = useQueryState(
     "q",
-    parseAsString.withDefault("").withOptions({ throttleMs: 300 }),
+    parseAsString.withDefault(""),
   );
+  const [inputValue, setInputValue] = useState(search);
+  const [debouncedValue] = useDebounceValue(inputValue, SEARCH_DEBOUNCE_MS);
+  const lastSearchFromDebounceRef = useRef(search);
+
+  useEffect(() => {
+    if (debouncedValue !== search) {
+      lastSearchFromDebounceRef.current = debouncedValue;
+      setSearch(debouncedValue, { history: "push" });
+      if (page > 1) setPage(1, { history: "push" });
+    }
+  }, [debouncedValue, search, setSearch, setPage, page]);
+
+  useEffect(() => {
+    if (search !== lastSearchFromDebounceRef.current) {
+      lastSearchFromDebounceRef.current = search;
+      setInputValue(search);
+    }
+  }, [search]);
 
   const apiUrl = useMemo(() => {
     const params = new URLSearchParams();
@@ -67,11 +87,6 @@ export default function MezziTable() {
   const total = data?.total ?? 0;
   const users = usersData?.users ?? [];
 
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    if (page > 1) setPage(1);
-  };
-
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
@@ -79,8 +94,8 @@ export default function MezziTable() {
           <input
             type="text"
             placeholder="Cerca per nome o descrizione"
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
             className="input input-bordered w-full max-w-md"
           />
         </div>

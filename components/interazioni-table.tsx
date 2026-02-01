@@ -16,7 +16,8 @@ import {
   parseAsStringLiteral,
   useQueryState,
 } from "nuqs";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useDebounceValue } from "usehooks-ts";
 import EliminaInterazioneModal from "@/components/elimina-interazione-modal";
 import ModificaInterazioneModal from "@/components/modifica-interazione-modal";
 
@@ -267,6 +268,25 @@ export default function InterazioniTable({
 }: InterazioniTableProps) {
   const [search, setSearch] = useQueryState("q", parseAsString.withDefault(""));
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [inputValue, setInputValue] = useState(search);
+  const [debouncedValue] = useDebounceValue(inputValue, 400);
+  const lastSearchFromDebounceRef = useRef(search);
+
+  useEffect(() => {
+    if (debouncedValue !== search) {
+      lastSearchFromDebounceRef.current = debouncedValue;
+      setSearch(debouncedValue, { history: "push" });
+      if (page > 1) setPage(1, { history: "push" });
+    }
+  }, [debouncedValue, search, setSearch, setPage, page]);
+
+  useEffect(() => {
+    if (search !== lastSearchFromDebounceRef.current) {
+      lastSearchFromDebounceRef.current = search;
+      setInputValue(search);
+    }
+  }, [search]);
+
   const [sortBy, setSortBy] = useQueryState(
     "sortBy",
     parseAsStringLiteral(["user", "mezzi", "attivita", "tempo"]).withDefault(
@@ -346,8 +366,8 @@ export default function InterazioniTable({
     }
 
     // Filter by search text
-    if (search) {
-      const s = search.toLowerCase();
+    if (debouncedValue) {
+      const s = debouncedValue.toLowerCase();
       arr = arr.filter(
         (i) =>
           i.user.name.toLowerCase().includes(s) ||
@@ -358,7 +378,7 @@ export default function InterazioniTable({
 
     return arr;
   }, [
-    search,
+    debouncedValue,
     interazioni,
     filterUser,
     filterDateFrom,
@@ -415,11 +435,8 @@ export default function InterazioniTable({
             <input
               type="text"
               placeholder="Cerca per utente, mezzo o creatore"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value, { history: "push" });
-                setPage(1, { history: "push" });
-              }}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
               className="input input-bordered grow join-item"
             />
             <button type="button" className="btn join-item">

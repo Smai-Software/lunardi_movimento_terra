@@ -19,7 +19,8 @@ import {
   parseAsStringLiteral,
   useQueryState,
 } from "nuqs";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useDebounceValue } from "usehooks-ts";
 import ModificaCantiereModal from "@/components/modifica-cantiere-modal";
 import { fetcher } from "@/lib/api-fetcher";
 
@@ -168,12 +169,33 @@ function SortHeader({
   );
 }
 
+const SEARCH_DEBOUNCE_MS = 400;
+
 export default function CantieriTable() {
   const [search, setSearch] = useQueryState(
     "q",
-    parseAsString.withDefault("").withOptions({ throttleMs: 300 }),
+    parseAsString.withDefault(""),
   );
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [inputValue, setInputValue] = useState(search);
+  const [debouncedValue] = useDebounceValue(inputValue, SEARCH_DEBOUNCE_MS);
+  const lastSearchFromDebounceRef = useRef(search);
+
+  useEffect(() => {
+    if (debouncedValue !== search) {
+      lastSearchFromDebounceRef.current = debouncedValue;
+      setSearch(debouncedValue, { history: "push" });
+      if (page > 1) setPage(1, { history: "push" });
+    }
+  }, [debouncedValue, search, setSearch, setPage, page]);
+
+  useEffect(() => {
+    if (search !== lastSearchFromDebounceRef.current) {
+      lastSearchFromDebounceRef.current = search;
+      setInputValue(search);
+    }
+  }, [search]);
+
   const [sortBy, setSortBy] = useQueryState(
     "sortBy",
     parseAsStringLiteral([
@@ -237,11 +259,6 @@ export default function CantieriTable() {
     setPage(1, { history: "push" });
   };
 
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    if (page > 1) setPage(1, { history: "push" });
-  };
-
   const cantieri = data?.cantieri ?? [];
   const totalPages = data?.totalPages ?? 0;
   const total = data?.total ?? 0;
@@ -254,8 +271,8 @@ export default function CantieriTable() {
             <input
               type="text"
               placeholder="Cerca per nome o descrizione"
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
               className="input input-bordered grow join-item"
             />
             <button type="button" className="btn join-item">

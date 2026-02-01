@@ -7,7 +7,8 @@ import {
   parseAsString,
   useQueryState,
 } from "nuqs";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useDebounceValue } from "usehooks-ts";
 import ModificaUtenteModal from "@/components/modifica-utente-modal";
 import BanUserDialog from "@/components/ban-user-dialog";
 import { fetcher } from "@/lib/api-fetcher";
@@ -38,8 +39,26 @@ export default function UtentiTable({
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [search, setSearch] = useQueryState(
     "q",
-    parseAsString.withDefault("").withOptions({ throttleMs: 300 }),
+    parseAsString.withDefault(""),
   );
+  const [inputValue, setInputValue] = useState(search);
+  const [debouncedValue] = useDebounceValue(inputValue, 400);
+  const lastSearchFromDebounceRef = useRef(search);
+
+  useEffect(() => {
+    if (debouncedValue !== search) {
+      lastSearchFromDebounceRef.current = debouncedValue;
+      setSearch(debouncedValue, { history: "push" });
+      if (page > 1) setPage(1, { history: "push" });
+    }
+  }, [debouncedValue, search, setSearch, setPage, page]);
+
+  useEffect(() => {
+    if (search !== lastSearchFromDebounceRef.current) {
+      lastSearchFromDebounceRef.current = search;
+      setInputValue(search);
+    }
+  }, [search]);
 
   const apiUrl = useMemo(() => {
     const params = new URLSearchParams();
@@ -59,19 +78,14 @@ export default function UtentiTable({
   const totalPages = data?.totalPages ?? 0;
   const total = data?.total ?? 0;
 
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    if (page > 1) setPage(1);
-  };
-
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
         <input
           type="text"
           placeholder="Cerca per nome o email"
-          value={search}
-          onChange={(e) => handleSearchChange(e.target.value)}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           className="input input-bordered w-full max-w-md"
         />
       </div>

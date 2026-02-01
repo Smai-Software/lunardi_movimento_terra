@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { toast } from "sonner";
+import { useMemo, useRef, useState } from "react";
+import { useDebounceValue } from "usehooks-ts";
 import UtenteCantiere from "@/components/utente-cantiere";
 
 interface UserCantiere {
@@ -25,41 +25,24 @@ export default function AssegnaUtenteCantiereModal({
   onSuccess,
 }: AssegnaUtenteCantiereModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [filteredUsers, setFilteredUsers] = useState<
-    Array<{ id: string; name: string }>
-  >([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm] = useDebounceValue(searchTerm, 300);
 
-  const openModal = async () => {
-    setLoading(true);
-    try {
-      setFilteredUsers(allUsers);
-    } catch (error) {
-      console.error("Errore nel caricamento dei dati:", error);
-      toast.error("Errore nel caricamento dei dati");
-    } finally {
-      setLoading(false);
-    }
+  const filteredUsers = useMemo(() => {
+    if (debouncedSearchTerm.trim() === "") return allUsers;
+    const term = debouncedSearchTerm.toLowerCase();
+    return allUsers.filter((user) =>
+      user.name.toLowerCase().includes(term),
+    );
+  }, [allUsers, debouncedSearchTerm]);
+
+  const openModal = () => {
     dialogRef.current?.showModal();
   };
 
   const handleClose = () => {
-    setFilteredUsers([]);
     setSearchTerm("");
     dialogRef.current?.close();
-  };
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    if (term.trim() === "") {
-      setFilteredUsers(allUsers);
-    } else {
-      const filtered = allUsers.filter((user) =>
-        user.name.toLowerCase().includes(term.toLowerCase()),
-      );
-      setFilteredUsers(filtered);
-    }
   };
 
   return (
@@ -81,12 +64,7 @@ export default function AssegnaUtenteCantiereModal({
             Gestisci utenti assegnati al cantiere: {cantiereNome}
           </h3>
 
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <span className="loading loading-spinner loading-lg"></span>
-            </div>
-          ) : (
-            <div>
+          <div>
               <div className="mb-6">
                 <p className="text-sm text-gray-600 mb-4">
                   Seleziona gli utenti da assegnare a questo cantiere. Le
@@ -100,7 +78,7 @@ export default function AssegnaUtenteCantiereModal({
                     placeholder="Cerca utenti..."
                     className="input input-bordered w-full"
                     value={searchTerm}
-                    onChange={(e) => handleSearch(e.target.value)}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
 
@@ -135,7 +113,6 @@ export default function AssegnaUtenteCantiereModal({
                 </button>
               </div>
             </div>
-          )}
         </div>
         <form method="dialog" className="modal-backdrop">
           <button tabIndex={-1} type="submit">
