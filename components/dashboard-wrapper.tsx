@@ -1,25 +1,73 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import useSWR from "swr";
 import DashboardChart from "@/components/dashboard-chart";
 import AttivitaTable from "@/components/attivita-table";
-import type { DashboardData } from "@/lib/data/dashboard.data";
-import type { UserNotBanned } from "@/lib/data/users.data";
 
-type DashboardWrapperProps = {
-  data: DashboardData;
-  users: UserNotBanned[];
+type DashboardApiResponse = {
+  attivita: Array<{
+    id: number;
+    date: string;
+    user_id: string;
+    external_id: string;
+    cantieriCount: number;
+    mezziCount: number;
+    totalMilliseconds: number;
+    interazioni: Array<{
+      cantieri_id: number;
+      mezzi_id: number | null;
+      tempo_totale: string;
+    }>;
+    user: { id: string; name: string };
+  }>;
+  attivitaCount: number;
+  cantieriCount: number;
+  mezziCount: number;
+  days: number;
+};
+
+type UsersApiResponse = {
+  users: Array<{ id: string; name: string }>;
 };
 
 type Intervallo = "7" | "15" | "30";
 
-export default function DashboardWrapper({
-  data,
-  users,
-}: DashboardWrapperProps) {
+const fetcher = async <T,>(url: string): Promise<T> => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { error?: string }).error || "Errore nel caricamento");
+  }
+  return res.json();
+};
+
+export default function DashboardWrapper() {
   const [interval, setInterval] = useState<Intervallo>("7");
 
+  const { data: dashboardData, error: dashboardError, isLoading: loadingDashboard } = useSWR<DashboardApiResponse>(
+    "/api/dashboard?days=30",
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const { error: usersError, isLoading: loadingUsers } = useSWR<UsersApiResponse>(
+    "/api/users?notBanned=true&limit=500",
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const data = dashboardData;
+
   const filteredData = useMemo(() => {
+    if (!data?.attivita) {
+      return {
+        attivita: [],
+        attivitaCount: 0,
+        cantieriCount: 0,
+        mezziCount: 0,
+      };
+    }
     const now = new Date();
     const intervalDays = parseInt(interval, 10);
     const startDate = new Date(now);
@@ -30,7 +78,6 @@ export default function DashboardWrapper({
       return attivitaDate >= startDate && attivitaDate <= now;
     });
 
-    // Calculate stats for the filtered period
     const uniqueCantieri = new Set<number>();
     const uniqueMezzi = new Set<number>();
 
@@ -49,11 +96,26 @@ export default function DashboardWrapper({
       cantieriCount: uniqueCantieri.size,
       mezziCount: uniqueMezzi.size,
     };
-  }, [data.attivita, interval]);
+  }, [data?.attivita, interval]);
+
+  if (loadingDashboard || loadingUsers) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <span className="loading loading-spinner loading-lg" />
+      </div>
+    );
+  }
+
+  if (dashboardError || usersError) {
+    return (
+      <div className="alert alert-error">
+        {dashboardError?.message ?? usersError?.message ?? "Errore nel caricamento"}
+      </div>
+    );
+  }
 
   return (
     <div>
-      {/* Interval Selection Tabs */}
       <div className="flex justify-end mb-4">
         <div className="join">
           <button
@@ -106,7 +168,7 @@ export default function DashboardWrapper({
       <DashboardChart attivita={filteredData.attivita} interval={interval} />
 
       <div className="mt-6">
-        <AttivitaTable attivita={filteredData.attivita} users={users} />
+        <AttivitaTable />
       </div>
     </div>
   );

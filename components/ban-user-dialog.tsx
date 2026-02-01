@@ -1,11 +1,8 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { banUser, unbanUser } from "@/lib/actions/users.actions";
+import { useSWRConfig } from "swr";
 
 type BanUserDialogProps = {
   user: {
@@ -13,67 +10,74 @@ type BanUserDialogProps = {
     name?: string | null;
     banned?: boolean | null | undefined;
   };
+  onSuccess?: () => void;
 };
 
-export default function BanUserDialog({ user }: BanUserDialogProps) {
+export default function BanUserDialog({
+  user,
+  onSuccess,
+}: BanUserDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [reason, setReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { mutate } = useSWRConfig();
 
   const isBanned = Boolean(user.banned);
 
-  const {
-    execute: executeBan,
-    result: resultBan,
-    reset: resetBan,
-  } = useAction(banUser, {
-    onExecute: () => {
-      // clear previous errors on new submit
-      resetUnban();
-    },
-    onSuccess: () => {
-      if (resultBan.data?.success) {
-        toast.success("Utente bloccato con successo");
-        handleClose();
-      }
-    },
-  });
-
-  const {
-    execute: executeUnban,
-    result: resultUnban,
-    reset: resetUnban,
-  } = useAction(unbanUser, {
-    onExecute: () => {
-      // clear previous errors on new submit
-      resetBan();
-    },
-    onSuccess: () => {
-      if (resultUnban.data?.success) {
-        toast.success("Utente sbloccato con successo");
-        handleClose();
-      }
-    },
-  });
-
   const openModal = () => {
-    resetBan();
-    resetUnban();
     setReason("");
+    setError(null);
     dialogRef.current?.showModal();
   };
 
   const handleClose = () => {
-    resetBan();
-    resetUnban();
     setReason("");
+    setError(null);
     dialogRef.current?.close();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      if (isBanned) {
+        const res = await fetch(`/api/users/${user.id}/ban`, {
+          method: "DELETE",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error((data as { error?: string }).error || "Errore nello sblocco");
+        }
+        toast.success("Utente sbloccato con successo");
+      } else {
+        const res = await fetch(`/api/users/${user.id}/ban`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error((data as { error?: string }).error || "Errore nel blocco");
+        }
+        toast.success("Utente bloccato con successo");
+      }
+      handleClose();
+      mutate((key) => typeof key === "string" && key.startsWith("/api/users"));
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <>
       <button
         type="button"
-        className={`btn btn-sm btn-outline`}
+        className="btn btn-sm btn-outline"
         onClick={openModal}
       >
         {isBanned ? "Sblocca" : "Blocca"}
@@ -81,13 +85,12 @@ export default function BanUserDialog({ user }: BanUserDialogProps) {
       <dialog ref={dialogRef} className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-2">Conferma</h3>
-          <form action={isBanned ? executeUnban : executeBan}>
+          <form onSubmit={handleSubmit}>
             <p className="mb-3 text-base">
               {isBanned
                 ? `Vuoi sbloccare ${user.name ?? "questo utente"}?`
                 : `Vuoi bloccare ${user.name ?? "questo utente"}?`}
             </p>
-            <input type="hidden" name="userId" value={user.id} />
             {!isBanned && (
               <div className="mb-3">
                 <label
@@ -98,7 +101,6 @@ export default function BanUserDialog({ user }: BanUserDialogProps) {
                 </label>
                 <textarea
                   id={`ban-reason-${user.id}`}
-                  name="reason"
                   className="textarea textarea-bordered w-full"
                   placeholder="Inserisci un motivo (opzionale)"
                   value={reason}
@@ -107,14 +109,33 @@ export default function BanUserDialog({ user }: BanUserDialogProps) {
                 />
               </div>
             )}
-            <ValidationErrors result={isBanned ? resultUnban : resultBan} />
+            {error && (
+              <div className="alert alert-error mb-4">
+                <span>{error}</span>
+              </div>
+            )}
             <div className="modal-action">
-              <button type="button" className="btn" onClick={handleClose}>
+              <button
+                type="button"
+                className="btn"
+                onClick={handleClose}
+                disabled={isSubmitting}
+              >
                 Annulla
               </button>
-              <SubmitButton className="btn btn-primary">
-                {isBanned ? "Conferma sblocco" : "Conferma blocco"}
-              </SubmitButton>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : isBanned ? (
+                  "Conferma sblocco"
+                ) : (
+                  "Conferma blocco"
+                )}
+              </button>
             </div>
           </form>
         </div>

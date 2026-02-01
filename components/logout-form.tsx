@@ -1,14 +1,26 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
-import { logoutUser } from "@/lib/actions/users.actions";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 import { SubmitButton } from "./submit-button";
 
 export default function LogoutForm() {
-  const { execute } = useAction(logoutUser);
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/sign-in");
+          router.refresh();
+        },
+      },
+    });
+  };
 
   return (
-    <form action={execute}>
+    <form onSubmit={handleSubmit}>
       <SubmitButton className="btn btn-outline">Logout</SubmitButton>
     </form>
   );

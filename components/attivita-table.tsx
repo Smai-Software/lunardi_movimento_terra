@@ -11,6 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import Link from "next/link";
+import useSWR from "swr";
 import {
   parseAsInteger,
   parseAsString,
@@ -20,15 +21,31 @@ import {
 import { useMemo, useState } from "react";
 import EliminaAttivitaModal from "@/components/elimina-attivita-modal";
 import ModificaAttivitaModal from "@/components/modifica-attivita-modal";
-import type { Attivita } from "@/lib/data/attivita.data";
-import type { UserNotBanned } from "@/lib/data/users.data";
+import { fetcher } from "@/lib/api-fetcher";
 
-type AttivitaTableProps = {
-  attivita: Attivita[];
-  users: UserNotBanned[];
-};
+interface AttivitaItem {
+  id: number;
+  date: string;
+  user_id: string;
+  external_id: string;
+  cantieriCount: number;
+  mezziCount: number;
+  totalMilliseconds: number;
+  user: { id: string; name: string };
+}
 
-const PAGE_SIZE = 10;
+interface AttivitaResponse {
+  attivita: AttivitaItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+interface UsersResponse {
+  users: { id: string; name: string }[];
+  total: number;
+}
 
 function AttivitaFilterDrawer({
   drawerId,
@@ -60,25 +77,19 @@ function AttivitaFilterDrawer({
         type="button"
         className="drawer-overlay"
         onClick={() => {
-          const checkbox = document.getElementById(
-            drawerId,
-          ) as HTMLInputElement;
+          const checkbox = document.getElementById(drawerId) as HTMLInputElement;
           if (checkbox) checkbox.checked = false;
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
-            const checkbox = document.getElementById(
-              drawerId,
-            ) as HTMLInputElement;
+            const checkbox = document.getElementById(drawerId) as HTMLInputElement;
             if (checkbox) checkbox.checked = false;
           }
         }}
         aria-label="Chiudi filtro"
-      ></button>
+      />
       <div className="menu p-4 w-80 min-h-full bg-base-100">
         <h2 className="text-lg font-bold mb-4">Filtra attività</h2>
-
-        {/* Filtro Utente */}
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-2">Utente</h3>
           <div className="form-control mb-2">
@@ -114,8 +125,6 @@ function AttivitaFilterDrawer({
             </div>
           ))}
         </div>
-
-        {/* Filtro Data */}
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-2">Periodo</h3>
           <div className="form-control mb-2">
@@ -185,8 +194,11 @@ function SortHeader({
   );
 }
 
-export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
-  const [search, setSearch] = useQueryState("q", parseAsString.withDefault(""));
+export default function AttivitaTable() {
+  const [search, setSearch] = useQueryState(
+    "q",
+    parseAsString.withDefault("").withOptions({ throttleMs: 300 }),
+  );
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [sortBy, setSortBy] = useQueryState(
     "sortBy",
@@ -211,12 +223,41 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
     parseAsString.withDefault(""),
   );
   const [selectedAttivitaForEdit, setSelectedAttivitaForEdit] =
-    useState<Attivita | null>(null);
+    useState<AttivitaItem | null>(null);
   const [selectedAttivitaForDelete, setSelectedAttivitaForDelete] =
-    useState<Attivita | null>(null);
+    useState<AttivitaItem | null>(null);
   const drawerId = "attivita-filter-drawer";
 
-  // Use users from props for filter
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    params.set("limit", "10");
+    if (search) params.set("search", search);
+    params.set("sortBy", sortBy);
+    params.set("sortOrder", sortDir);
+    if (filterUser !== "all") params.set("userId", filterUser);
+    if (filterDateFrom) params.set("dateFrom", filterDateFrom);
+    if (filterDateTo) params.set("dateTo", filterDateTo);
+    return `/api/attivita?${params.toString()}`;
+  }, [
+    page,
+    search,
+    sortBy,
+    sortDir,
+    filterUser,
+    filterDateFrom,
+    filterDateTo,
+  ]);
+
+  const { data, error, isLoading } = useSWR<AttivitaResponse>(apiUrl, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+  });
+
+  const { data: usersData } = useSWR<UsersResponse>(
+    "/api/users?notBanned=true&limit=1000",
+    fetcher,
+  );
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -233,71 +274,18 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
       setSortBy(col, { history: "push" });
       setSortDir("asc", { history: "push" });
     }
-    setPage(1, { history: "push" }); // Reset to first page when sorting changes
+    setPage(1, { history: "push" });
   };
 
-  const filtered = useMemo(() => {
-    let arr = attivita;
-
-    // Filter by user
-    if (filterUser !== "all") {
-      arr = arr.filter((a) => a.user.id === filterUser);
-    }
-
-    // Filter by date range
-    if (filterDateFrom) {
-      const fromDate = new Date(filterDateFrom);
-      arr = arr.filter((a) => new Date(a.date) >= fromDate);
-    }
-    if (filterDateTo) {
-      const toDate = new Date(filterDateTo);
-      arr = arr.filter((a) => new Date(a.date) <= toDate);
-    }
-
-    // Filter by search text
-    if (search) {
-      const s = search.toLowerCase();
-      arr = arr.filter(
-        (a) =>
-          a.user.name.toLowerCase().includes(s) ||
-          new Date(a.date).toLocaleDateString("it-IT").includes(s),
-      );
-    }
-
-    return arr;
-  }, [search, attivita, filterUser, filterDateFrom, filterDateTo]);
-
-  const sorted = useMemo(() => {
-    const arr = [...filtered];
-    arr.sort((a, b) => {
-      let vA: string = "";
-      let vB: string = "";
-      if (sortBy === "date") {
-        vA = new Date(a.date).toISOString();
-        vB = new Date(b.date).toISOString();
-      } else if (sortBy === "user") {
-        vA = a.user.name.toLowerCase();
-        vB = b.user.name.toLowerCase();
-      } else if (sortBy === "totalMilliseconds") {
-        vA = a.totalMilliseconds.toString();
-        vB = b.totalMilliseconds.toString();
-      }
-      if (vA < vB) return sortDir === "asc" ? -1 : 1;
-      if (vA > vB) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-    return arr;
-  }, [filtered, sortBy, sortDir]);
-
-  const pageCount = Math.ceil(sorted.length / PAGE_SIZE);
-  const paginated = useMemo(
-    () => sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [page, sorted],
-  );
-
-  const handlePage = (newPage: number) => {
-    setPage(newPage, { history: "push" });
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    if (page > 1) setPage(1, { history: "push" });
   };
+
+  const attivita = data?.attivita ?? [];
+  const totalPages = data?.totalPages ?? 0;
+  const total = data?.total ?? 0;
+  const users = usersData?.users ?? [];
 
   return (
     <div>
@@ -308,10 +296,7 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
               type="text"
               placeholder="Cerca per utente o data"
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value, { history: "push" });
-                setPage(1, { history: "push" });
-              }}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="input input-bordered grow join-item"
             />
             <button type="button" className="btn join-item">
@@ -358,23 +343,37 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
                   sortDir={sortDir}
                   onSort={handleSort}
                 />
-                <th></th>
+                <th />
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8">
+                    <span className="loading loading-spinner loading-lg" />
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8 text-error">
+                    Errore nel caricamento dei dati
+                  </td>
+                </tr>
+              ) : attivita.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={6}
                     className="text-center text-base-content/60 py-8"
                   >
                     Nessuna attività trovata.
                   </td>
                 </tr>
               ) : (
-                paginated.map((a) => (
+                attivita.map((a) => (
                   <tr key={a.id}>
-                    <td>{new Date(a.date).toLocaleDateString("it-IT")}</td>
+                    <td>
+                      {new Date(a.date).toLocaleDateString("it-IT")}
+                    </td>
                     <td>{a.user.name}</td>
                     <td>{a.cantieriCount}</td>
                     <td>{a.mezziCount}</td>
@@ -390,8 +389,9 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
                     </td>
                     <td>
                       <Link
-                        href={`/admin/attivita/${a.external_id}`}
+                        href={`/admin/attivita/${a.id}`}
                         className="btn btn-sm btn-ghost"
+                        aria-label={`Dettaglio attività ${a.id}`}
                       >
                         <ChevronRight className="size-4" />
                       </Link>
@@ -415,17 +415,16 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
         />
       </div>
 
-      {/* Paginazione */}
-      {pageCount > 1 && (
+      {totalPages > 1 && (
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-base-content/70">
-            Pagina {page} di {pageCount}
+            Pagina {page} di {totalPages} ({total} attività totali)
           </div>
           <div className="flex gap-1">
             <button
               type="button"
               className="btn btn-sm btn-ghost"
-              onClick={() => handlePage(1)}
+              onClick={() => setPage(1, { history: "push" })}
               disabled={page === 1}
               title="Prima pagina"
             >
@@ -434,7 +433,7 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
             <button
               type="button"
               className="btn btn-sm btn-ghost"
-              onClick={() => handlePage(page - 1)}
+              onClick={() => setPage(Math.max(1, page - 1), { history: "push" })}
               disabled={page === 1}
               title="Pagina precedente"
             >
@@ -443,8 +442,10 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
             <button
               type="button"
               className="btn btn-sm btn-ghost"
-              onClick={() => handlePage(page + 1)}
-              disabled={page === pageCount}
+              onClick={() =>
+                setPage(Math.min(totalPages, page + 1), { history: "push" })
+              }
+              disabled={page === totalPages}
               title="Pagina successiva"
             >
               <ChevronRight className="size-4" />
@@ -452,8 +453,8 @@ export default function AttivitaTable({ attivita, users }: AttivitaTableProps) {
             <button
               type="button"
               className="btn btn-sm btn-ghost"
-              onClick={() => handlePage(pageCount)}
-              disabled={page === pageCount}
+              onClick={() => setPage(totalPages, { history: "push" })}
+              disabled={page === totalPages}
               title="Ultima pagina"
             >
               <ChevronsRight className="size-4" />

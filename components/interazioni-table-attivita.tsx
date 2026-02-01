@@ -4,21 +4,33 @@ import { useState } from "react";
 import EliminaInterazioneModal from "@/components/elimina-interazione-modal";
 import ModificaInterazioneModal from "@/components/modifica-interazione-modal";
 
-import type { InterazioneAll } from "@/lib/data/interazioni.data";
+type InterazioneRow = {
+  id: number;
+  ore: number;
+  minuti: number;
+  note: string | null;
+  created_at: string;
+  cantieri: { id: number; nome: string };
+  mezzi: { id: number; nome: string } | null;
+  attivita: { id: number; date: string };
+  user: { id: string; name: string };
+};
 
 type InterazioniTableAttivitaProps = {
-  interazioni: InterazioneAll[];
+  interazioni: InterazioneRow[];
   mezzi: Array<{ id: number; nome: string }>;
+  onSuccess?: () => void;
 };
 
 export default function InterazioniTableAttivita({
   interazioni,
   mezzi,
+  onSuccess,
 }: InterazioniTableAttivitaProps) {
   const [selectedInterazioneForEdit, setSelectedInterazioneForEdit] =
-    useState<InterazioneAll | null>(null);
+    useState<InterazioneRow | null>(null);
   const [selectedInterazioneForDelete, setSelectedInterazioneForDelete] =
-    useState<InterazioneAll | null>(null);
+    useState<InterazioneRow | null>(null);
 
   const formatTime = (ore: number, minuti: number) => {
     return `${ore}h ${minuti}m`;
@@ -102,16 +114,18 @@ export default function InterazioniTableAttivita({
           attivita={[
             {
               id: selectedInterazioneForEdit.attivita.id,
-              date: new Date(selectedInterazioneForEdit.attivita.date),
+              date: selectedInterazioneForEdit.attivita.date,
             },
-          ]} // Simplified
+          ]}
           onClose={() => setSelectedInterazioneForEdit(null)}
+          onSuccess={onSuccess}
         />
       )}
       {selectedInterazioneForDelete && (
         <EliminaInterazioneModal
           interazione={selectedInterazioneForDelete}
           onClose={() => setSelectedInterazioneForDelete(null)}
+          onSuccess={onSuccess}
         />
       )}
     </div>

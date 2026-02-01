@@ -1,11 +1,7 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { createInterazione } from "@/lib/actions/interazioni.actions";
 
 type AggiungiInterazioneModalProps = {
   attivitaId: number;
@@ -13,6 +9,7 @@ type AggiungiInterazioneModalProps = {
   cantieri: Array<{ id: number; nome: string }>;
   mezzi: Array<{ id: number; nome: string }>;
   onClose: () => void;
+  onSuccess?: () => void;
 };
 
 export default function AggiungiInterazioneModal({
@@ -21,6 +18,7 @@ export default function AggiungiInterazioneModal({
   cantieri,
   mezzi,
   onClose,
+  onSuccess,
 }: AggiungiInterazioneModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedCantiereId, setSelectedCantiereId] = useState("");
@@ -28,19 +26,49 @@ export default function AggiungiInterazioneModal({
   const [selectedOre, setSelectedOre] = useState(0);
   const [selectedMinuti, setSelectedMinuti] = useState(0);
   const [note, setNote] = useState("");
-
-  const { execute, result, reset } = useAction(createInterazione, {
-    onSuccess: () => {
-      if (result.data?.success) {
-        toast.success("Interazione aggiunta con successo!");
-        onClose();
-      }
-    },
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleClose = () => {
-    reset();
+    setError(null);
     onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cantiereId = selectedCantiereId ? Number(selectedCantiereId) : null;
+    if (!cantiereId) {
+      setError("Seleziona un cantiere");
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/interazioni", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attivita_id: attivitaId,
+          user_id: userId,
+          cantieri_id: cantiereId,
+          mezzi_id: selectedMezzoId ? Number(selectedMezzoId) : null,
+          ore: selectedOre,
+          minuti: selectedMinuti,
+          note: note.trim() || null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nell'aggiunta");
+      }
+      toast.success("Interazione aggiunta con successo!");
+      handleClose();
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -51,10 +79,7 @@ export default function AggiungiInterazioneModal({
     <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Aggiungi interazione</h3>
-        <form action={execute}>
-          <input type="hidden" name="attivita_id" value={attivitaId} />
-          <input type="hidden" name="user_id" value={userId} />
-
+        <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label
               className="block font-medium mb-1 text-sm"
@@ -163,7 +188,9 @@ export default function AggiungiInterazioneModal({
             ></textarea>
           </div>
 
-          <ValidationErrors result={result} />
+          {error && (
+            <p className="mt-2 text-sm text-error">{error}</p>
+          )}
           <div className="modal-action">
             <button
               type="button"
@@ -172,9 +199,16 @@ export default function AggiungiInterazioneModal({
             >
               Annulla
             </button>
-            <SubmitButton className="btn btn-primary">
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting && (
+                <span className="loading loading-spinner loading-xs" />
+              )}
               Aggiungi interazione
-            </SubmitButton>
+            </button>
           </div>
         </form>
       </div>

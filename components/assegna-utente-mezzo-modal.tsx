@@ -4,8 +4,6 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import UtenteMezzo from "@/components/utente-mezzo";
 
-import type { UserNotBanned } from "@/lib/data/users.data";
-
 interface MezzoLicenze {
   has_license_camion: boolean;
   has_license_escavatore: boolean;
@@ -16,12 +14,20 @@ interface UserMezzo {
   mezzi_id: number;
 }
 
+interface UserForMezzo {
+  id: string;
+  name: string;
+  licenseCamion?: boolean | null;
+  licenseEscavatore?: boolean | null;
+}
+
 interface AssegnaUtenteMezzoModalProps {
   mezzoId: number;
   mezzoNome: string;
   mezzoLicenze: MezzoLicenze;
-  users: UserNotBanned[];
+  users: UserForMezzo[];
   userMezzi: UserMezzo[];
+  onSuccess?: () => void;
 }
 
 export default function AssegnaUtenteMezzoModal({
@@ -30,16 +36,16 @@ export default function AssegnaUtenteMezzoModal({
   mezzoLicenze,
   users: allUsers,
   userMezzi,
+  onSuccess,
 }: AssegnaUtenteMezzoModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [compatibleUsers, setCompatibleUsers] = useState<UserNotBanned[]>([]);
+  const [compatibleUsers, setCompatibleUsers] = useState<UserForMezzo[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Filtra gli utenti compatibili lato client
   const filterCompatibleUsers = (
-    users: UserNotBanned[],
+    users: UserForMezzo[],
     licenze: MezzoLicenze,
-  ): UserNotBanned[] => {
+  ): UserForMezzo[] => {
     return users.filter((user) => {
       // Se il mezzo richiede licenza camion, l'utente deve averla
       if (licenze.has_license_camion && !user.licenseCamion) {
@@ -110,9 +116,10 @@ export default function AssegnaUtenteMezzoModal({
                     {compatibleUsers.map((user) => (
                       <UtenteMezzo
                         key={user.id}
-                        user={user}
+                        user={{ id: user.id, name: user.name }}
                         mezzoId={mezzoId}
                         userMezzi={userMezzi}
+                        onSuccess={onSuccess}
                       />
                     ))}
                   </div>

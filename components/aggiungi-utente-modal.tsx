@@ -1,11 +1,8 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { createUser } from "@/lib/actions/users.actions";
+import { useSWRConfig } from "swr";
 
 export default function AggiungiUtenteModal() {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -14,17 +11,17 @@ export default function AggiungiUtenteModal() {
   const [phone, setPhone] = useState("");
   const [licenseCamion, setLicenseCamion] = useState(false);
   const [licenseEscavatore, setLicenseEscavatore] = useState(false);
-  const { execute, result, reset } = useAction(createUser, {
-    onSuccess: () => {
-      if (result.data?.success) {
-        toast.success("Utente creato con successo!");
-        handleClose();
-      }
-    },
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { mutate } = useSWRConfig();
 
   const openModal = () => {
-    reset();
+    setName("");
+    setEmail("");
+    setPhone("");
+    setLicenseCamion(false);
+    setLicenseEscavatore(false);
+    setError(null);
     dialogRef.current?.showModal();
   };
 
@@ -34,8 +31,38 @@ export default function AggiungiUtenteModal() {
     setPhone("");
     setLicenseCamion(false);
     setLicenseEscavatore(false);
-    reset();
+    setError(null);
     dialogRef.current?.close();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim() || undefined,
+          licenseCamion,
+          licenseEscavatore,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nella creazione");
+      }
+      toast.success("Utente creato con successo!");
+      handleClose();
+      mutate((key) => typeof key === "string" && key.startsWith("/api/users"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -46,7 +73,7 @@ export default function AggiungiUtenteModal() {
       <dialog ref={dialogRef} className="modal" id="aggiungi-utente-modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-2">Aggiungi nuovo utente</h3>
-          <form action={execute}>
+          <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label
                 className="block font-medium mb-1 text-sm"
@@ -58,7 +85,6 @@ export default function AggiungiUtenteModal() {
                 id="nome-utente"
                 className="input input-bordered w-full"
                 type="text"
-                name="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Inserisci il nome"
@@ -76,7 +102,6 @@ export default function AggiungiUtenteModal() {
                 id="email-utente"
                 className="input input-bordered w-full"
                 type="email"
-                name="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Inserisci l'email"
@@ -94,7 +119,6 @@ export default function AggiungiUtenteModal() {
                 id="telefono-utente"
                 className="input input-bordered w-full"
                 type="tel"
-                name="phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Inserisci il telefono"
@@ -111,7 +135,6 @@ export default function AggiungiUtenteModal() {
                 id="patente-camion-utente"
                 className="toggle toggle-success"
                 type="checkbox"
-                name="licenseCamion"
                 checked={licenseCamion}
                 onChange={(e) => setLicenseCamion(e.target.checked)}
               />
@@ -127,23 +150,35 @@ export default function AggiungiUtenteModal() {
                 id="patente-escavatore-utente"
                 className="toggle toggle-success"
                 type="checkbox"
-                name="licenseEscavatore"
                 checked={licenseEscavatore}
                 onChange={(e) => setLicenseEscavatore(e.target.checked)}
               />
             </div>
-            <ValidationErrors result={result} />
+            {error && (
+              <div className="alert alert-error mb-4">
+                <span>{error}</span>
+              </div>
+            )}
             <div className="modal-action">
               <button
                 type="button"
                 className="btn btn-outline"
                 onClick={handleClose}
+                disabled={isSubmitting}
               >
                 Annulla
               </button>
-              <SubmitButton className="btn btn-primary">
-                Crea utente
-              </SubmitButton>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
+                  "Crea utente"
+                )}
+              </button>
             </div>
           </form>
         </div>

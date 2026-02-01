@@ -3,9 +3,6 @@
 import { useState } from "react";
 import AggiungiInterazioneModal from "@/components/aggiungi-interazione-modal";
 import InterazioniTableAttivita from "@/components/interazioni-table-attivita";
-import type { Interazione } from "@/lib/data/interazioni.data";
-import type { UserNotBanned } from "@/lib/data/users.data";
-
 type AttivitaDetailClientProps = {
   attivita: {
     id: number;
@@ -29,10 +26,21 @@ type AttivitaDetailClientProps = {
       name: string;
     };
   };
-  interazioni: Interazione[];
-  users: UserNotBanned[];
+  interazioni: Array<{
+    id: number;
+    ore: number;
+    minuti: number;
+    note: string | null;
+    created_at: string;
+    user: { id: string; name: string };
+    cantieri: { id: number; nome: string };
+    mezzi: { id: number; nome: string } | null;
+    attivita: { id: number; date: string };
+  }>;
+  users: Array<{ id: string; name: string }>;
   mezzi: Array<{ id: number; nome: string }>;
   cantieri: Array<{ id: number; nome: string }>;
+  onInterazioniChange?: () => void;
 };
 
 export default function AttivitaDetailClient({
@@ -40,6 +48,7 @@ export default function AttivitaDetailClient({
   interazioni,
   mezzi,
   cantieri,
+  onInterazioniChange,
 }: AttivitaDetailClientProps) {
   const [showAggiungiInterazione, setShowAggiungiInterazione] = useState(false);
 
@@ -58,7 +67,11 @@ export default function AttivitaDetailClient({
       </div>
 
       {/* Interazioni Table */}
-      <InterazioniTableAttivita interazioni={interazioni} mezzi={mezzi} />
+      <InterazioniTableAttivita
+        interazioni={interazioni}
+        mezzi={mezzi}
+        onSuccess={onInterazioniChange}
+      />
 
       {/* Aggiungi Interazione Modal */}
       {showAggiungiInterazione && (
@@ -68,6 +81,7 @@ export default function AttivitaDetailClient({
           cantieri={cantieri}
           mezzi={mezzi}
           onClose={() => setShowAggiungiInterazione(false)}
+          onSuccess={onInterazioniChange}
         />
       )}
     </>

@@ -4,20 +4,53 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { parseAsInteger, useQueryState } from "nuqs";
 import { useMemo } from "react";
-import type { UserAttivita } from "@/lib/data/user-attivita.data";
+import useSWR from "swr";
+import { fetcher } from "@/lib/api-fetcher";
+import { subDays } from "date-fns";
 
 type UserAttivitaTableProps = {
-  attivita: UserAttivita[];
+  userId: string;
 };
+
+interface AttivitaItem {
+  id: number;
+  date: string;
+  user_id: string;
+  external_id: string;
+  cantieriCount: number;
+  mezziCount: number;
+  totalMilliseconds: number;
+  user: { id: string; name: string };
+}
+
+interface AttivitaResponse {
+  attivita: AttivitaItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 const PAGE_SIZE = 10;
 
-export default function UserAttivitaTable({
-  attivita,
-}: UserAttivitaTableProps) {
+export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
 
-  const pageCount = Math.ceil(attivita.length / PAGE_SIZE);
+  const endDate = new Date();
+  const startDate = subDays(endDate, 7);
+  const dateFrom = startDate.toISOString().split("T")[0];
+  const dateTo = endDate.toISOString().split("T")[0];
+
+  const { data, error, isLoading } = useSWR<AttivitaResponse>(
+    userId
+      ? `/api/attivita?userId=${userId}&dateFrom=${dateFrom}&dateTo=${dateTo}&limit=500`
+      : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const attivita = data?.attivita ?? [];
+  const pageCount = Math.max(1, Math.ceil(attivita.length / PAGE_SIZE));
   const paginated = useMemo(
     () => attivita.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     [page, attivita],
@@ -26,6 +59,22 @@ export default function UserAttivitaTable({
   const handlePage = (newPage: number) => {
     setPage(newPage, { history: "push" });
   };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto flex justify-center py-12">
+        <span className="loading loading-spinner loading-lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto alert alert-error">
+        {error.message}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -71,7 +120,7 @@ export default function UserAttivitaTable({
                   </td>
                   <td>
                     <Link
-                      href={`/dashboard/attivita/${a.external_id}`}
+                      href={`/dashboard/attivita/${a.id}`}
                       className="btn btn-sm btn-ghost"
                     >
                       <ChevronRight className="size-4" />
@@ -84,7 +133,6 @@ export default function UserAttivitaTable({
         </table>
       </div>
 
-      {/* Pagination */}
       {pageCount > 1 && (
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-base-content/70">

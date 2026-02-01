@@ -1,53 +1,97 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { deleteCantiere } from "@/lib/actions/cantieri.actions";
+import { useSWRConfig } from "swr";
+import { useRouter } from "next/navigation";
 
 type EliminaCantiereModalProps = {
   cantiere: {
     id: number;
     nome: string;
   };
+  onClose?: () => void;
+  onSuccess?: () => void;
 };
 
 export default function EliminaCantiereModal({
   cantiere,
+  onClose,
+  onSuccess,
 }: EliminaCantiereModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-
-  const { execute, result, reset } = useAction(
-    deleteCantiere.bind(null, cantiere.id),
-    {
-      onNavigation: () => {
-        toast.success("Cantiere eliminato con successo!");
-      },
-    },
-  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { mutate } = useSWRConfig();
+  const router = useRouter();
 
   useEffect(() => {
     dialogRef.current?.showModal();
   }, []);
 
+  const handleClose = () => {
+    setError(null);
+    dialogRef.current?.close();
+    onClose?.();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/cantieri/${cantiere.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nell'eliminazione");
+      }
+      toast.success("Cantiere eliminato con successo!");
+      handleClose();
+      mutate((key) => typeof key === "string" && key.startsWith("/api/cantieri"));
+      onSuccess?.();
+      router.push("/admin/cantieri");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Conferma eliminazione</h3>
-        <form action={execute}>
+        <form onSubmit={handleSubmit}>
           <p className="mb-3">
             Sei sicuro di voler eliminare &quot;{cantiere.nome}&quot;?
           </p>
-          <ValidationErrors result={result} />
+          {error && (
+            <div className="alert alert-error mb-4">
+              <span>{error}</span>
+            </div>
+          )}
           <div className="modal-action">
-            <button type="button" className="btn" onClick={() => reset()}>
+            <button
+              type="button"
+              className="btn"
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
               Annulla
             </button>
-            <SubmitButton className="btn btn-error">
-              Elimina cantiere
-            </SubmitButton>
+            <button
+              type="submit"
+              className="btn btn-error"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                "Elimina cantiere"
+              )}
+            </button>
           </div>
         </form>
       </div>

@@ -8,8 +8,11 @@ export default async function SignIn() {
     headers: await headers(),
   });
 
-  if (session) {
+  if (session?.user?.role === "admin") {
     redirect("/admin");
+  }
+  if (session?.user?.role === "user") {
+    redirect("/dashboard");
   }
 
   return (

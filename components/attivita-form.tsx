@@ -1,17 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAction } from "next-safe-action/hooks";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { createAttivitaWithInterazioni } from "@/lib/actions/attivita.actions";
-import { getCantieriForUser } from "@/lib/actions/cantieri.actions";
-import { getMezziForUser } from "@/lib/actions/mezzi.actions";
 import AggiungiInterazioneModalForm from "@/components/aggiungi-interazione-modal-form";
 
-import type { UserNotBanned } from "@/lib/data/users.data";
 import { TrashIcon } from "lucide-react";
 
 type Cantiere = {
@@ -43,10 +36,10 @@ type CantiereWithInterazioni = {
 };
 
 type AttivitaFormProps = {
-  users: UserNotBanned[];
+  users?: Array<{ id: string; name: string }>;
 };
 
-function AttivitaForm({ users }: AttivitaFormProps) {
+function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
   const router = useRouter();
 
   // Form state
@@ -54,13 +47,35 @@ function AttivitaForm({ users }: AttivitaFormProps) {
   const [selectedDate, setSelectedDate] = useState("");
   const [cantieri, setCantieri] = useState<CantiereWithInterazioni[]>([]);
 
-  // Available options
+  // Available options (users from API when not passed)
+  const [users, setUsers] = useState<Array<{ id: string; name: string }>>(
+    usersProp ?? [],
+  );
+  const [loadingUsers, setLoadingUsers] = useState(!usersProp);
   const [availableCantieri, setAvailableCantieri] = useState<Cantiere[]>([]);
   const [availableMezzi, setAvailableMezzi] = useState<Mezzo[]>([]);
 
   // Loading states
   const [loadingCantieri, setLoadingCantieri] = useState(false);
   const [loadingMezzi, setLoadingMezzi] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch users when not passed (e.g. after cleanup of lib/data)
+  useEffect(() => {
+    if (usersProp !== undefined) return;
+    let cancelled = false;
+    setLoadingUsers(true);
+    fetch("/api/users?notBanned=true&limit=500")
+      .then((res) => res.json())
+      .then((data: { users?: Array<{ id: string; name: string }> }) => {
+        if (!cancelled && Array.isArray(data.users)) setUsers(data.users);
+      })
+      .finally(() => setLoadingUsers(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [usersProp]);
 
   const fetchUserResources = useCallback(async () => {
     if (!selectedUserId) return;
@@ -69,24 +84,27 @@ function AttivitaForm({ users }: AttivitaFormProps) {
     setLoadingMezzi(true);
 
     try {
-      const [cantieriResult, mezziResult] = await Promise.all([
-        getCantieriForUser({ userId: selectedUserId }),
-        getMezziForUser({ userId: selectedUserId }),
+      const [cantieriRes, mezziRes] = await Promise.all([
+        fetch(`/api/cantieri?userId=${selectedUserId}&limit=500`),
+        fetch(`/api/mezzi?userId=${selectedUserId}&limit=500`),
       ]);
 
-      if (cantieriResult?.data?.success) {
-        setAvailableCantieri(cantieriResult.data.cantieri);
+      const cantieriData = await cantieriRes.json().catch(() => ({}));
+      const mezziData = await mezziRes.json().catch(() => ({}));
+
+      if (cantieriRes.ok && Array.isArray(cantieriData.cantieri)) {
+        setAvailableCantieri(cantieriData.cantieri);
       } else {
         toast.error(
-          cantieriResult?.data?.error || "Errore nel caricamento dei cantieri",
+          (cantieriData as { error?: string }).error || "Errore nel caricamento dei cantieri",
         );
       }
 
-      if (mezziResult?.data?.success) {
-        setAvailableMezzi(mezziResult.data.mezzi);
+      if (mezziRes.ok && Array.isArray(mezziData.mezzi)) {
+        setAvailableMezzi(mezziData.mezzi);
       } else {
         toast.error(
-          mezziResult?.data?.error || "Errore nel caricamento dei mezzi",
+          (mezziData as { error?: string }).error || "Errore nel caricamento dei mezzi",
         );
       }
     } catch {
@@ -96,15 +114,6 @@ function AttivitaForm({ users }: AttivitaFormProps) {
       setLoadingMezzi(false);
     }
   }, [selectedUserId]);
-
-  const { execute, result } = useAction(createAttivitaWithInterazioni, {
-    onSuccess: () => {
-      if (result.data?.success) {
-        toast.success("Attività creata con successo!");
-        router.push("/admin/attivita");
-      }
-    },
-  });
 
   // Fetch cantieri and mezzi when user is selected
   useEffect(() => {
@@ -135,18 +144,15 @@ function AttivitaForm({ users }: AttivitaFormProps) {
       note,
     };
 
-    // Check if cantiere already exists
     const existingCantiereIndex = cantieri.findIndex(
       (c) => c.cantiereId === cantiereId,
     );
 
     if (existingCantiereIndex >= 0) {
-      // Add interazione to existing cantiere
       const updatedCantieri = [...cantieri];
       updatedCantieri[existingCantiereIndex].interazioni.push(newInterazione);
       setCantieri(updatedCantieri);
     } else {
-      // Create new cantiere with interazione
       const cantiereNome =
         availableCantieri.find((c) => c.id === cantiereId)?.nome || "";
       setCantieri([
@@ -167,7 +173,6 @@ function AttivitaForm({ users }: AttivitaFormProps) {
     const updatedCantieri = [...cantieri];
     updatedCantieri[cantiereIndex].interazioni.splice(interazioneIndex, 1);
 
-    // Remove cantiere if no more interazioni
     if (updatedCantieri[cantiereIndex].interazioni.length === 0) {
       updatedCantieri.splice(cantiereIndex, 1);
     }
@@ -175,13 +180,12 @@ function AttivitaForm({ users }: AttivitaFormProps) {
     setCantieri(updatedCantieri);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedUserId || !selectedDate || cantieri.length === 0) {
       toast.error("Compila tutti i campi obbligatori");
       return;
     }
 
-    // Flatten all interazioni
     const allInterazioni = cantieri.flatMap((cantiere) =>
       cantiere.interazioni.map((interazione) => ({
         cantieri_id: cantiere.cantiereId,
@@ -192,11 +196,29 @@ function AttivitaForm({ users }: AttivitaFormProps) {
       })),
     );
 
-    execute({
-      date: selectedDate,
-      user_id: selectedUserId,
-      interazioni: allInterazioni,
-    });
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/attivita", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: selectedDate,
+          user_id: selectedUserId,
+          interazioni: allInterazioni,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nella creazione");
+      }
+      toast.success("Attività creata con successo!");
+      router.push("/admin/attivita");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getTotalHours = () => {
@@ -251,9 +273,11 @@ function AttivitaForm({ users }: AttivitaFormProps) {
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
                   required
-                  disabled={selectedDate === ""}
+                  disabled={selectedDate === "" || loadingUsers}
                 >
-                  <option value="">Seleziona un operatore</option>
+                  <option value="">
+                    {loadingUsers ? "Caricamento..." : "Seleziona un operatore"}
+                  </option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.name}
@@ -264,7 +288,6 @@ function AttivitaForm({ users }: AttivitaFormProps) {
             </div>
           </div>
 
-          {/* Step 3: Add Cantieri and Interazioni */}
           {selectedUserId && (
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4">
@@ -278,7 +301,6 @@ function AttivitaForm({ users }: AttivitaFormProps) {
                 />
               </div>
 
-              {/* Display added cantieri and interazioni */}
               {cantieri.length > 0 && (
                 <div className="space-y-4">
                   <h3 className="font-semibold">Interazioni Aggiunte</h3>
@@ -312,7 +334,7 @@ function AttivitaForm({ users }: AttivitaFormProps) {
                                       )
                                     }
                                   >
-                                    <TrashIcon className="size-4" />
+                                    <TrashIcon className="w-4 h-4" />
                                   </button>
                                 </td>
                                 <td className="font-medium">
@@ -328,12 +350,10 @@ function AttivitaForm({ users }: AttivitaFormProps) {
                                 <td>
                                   {interazione.ore}h {interazione.minuti}m
                                 </td>
-                                <td>
-                                  <div className="max-w-[100px] truncate">
-                                    {interazione.note || ""}
-                                  </div>
+                                <td className="max-w-[120px] truncate">
+                                  {interazione.note || "-"}
                                 </td>
-                                <td>
+                                <td className="hidden md:table-cell">
                                   <button
                                     type="button"
                                     className="btn btn-sm btn-outline btn-error"
@@ -344,7 +364,7 @@ function AttivitaForm({ users }: AttivitaFormProps) {
                                       )
                                     }
                                   >
-                                    Rimuovi
+                                    <TrashIcon className="w-4 h-4" />
                                   </button>
                                 </td>
                               </tr>
@@ -354,36 +374,25 @@ function AttivitaForm({ users }: AttivitaFormProps) {
                       </tbody>
                     </table>
                   </div>
-
-                  {/* Total Hours Summary */}
-                  {cantieri.length > 0 && (
-                    <div className="mt-4">
-                      <div className="card bg-primary text-primary-content">
-                        <div className="card-body py-3">
-                          <div className="flex justify-between items-center">
-                            <span className="font-semibold">Totale Ore:</span>
-                            <span className="text-lg font-bold">
-                              {getTotalHours()
-                                .hours.toString()
-                                .padStart(2, "0")}
-                              :
-                              {getTotalHours()
-                                .minutes.toString()
-                                .padStart(2, "0")}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">Totale ore:</span>
+                      <span>
+                        {getTotalHours().hours}h{" "}
+                        {getTotalHours()
+                          .minutes.toString()
+                          .padStart(2, "0")}
+                        m
+                      </span>
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* Submit */}
           <div className="card-actions justify-end">
-            <ValidationErrors result={result} />
+            {error && <p className="text-sm text-error">{error}</p>}
             <button
               type="button"
               className="btn btn-outline"
@@ -391,15 +400,22 @@ function AttivitaForm({ users }: AttivitaFormProps) {
             >
               Annulla
             </button>
-            <SubmitButton
+            <button
+              type="button"
               className="btn btn-primary"
               onClick={handleSubmit}
               disabled={
-                !selectedUserId || !selectedDate || cantieri.length === 0
+                !selectedUserId ||
+                !selectedDate ||
+                cantieri.length === 0 ||
+                isSubmitting
               }
             >
+              {isSubmitting && (
+                <span className="loading loading-spinner loading-xs" />
+              )}
               Crea Attività
-            </SubmitButton>
+            </button>
           </div>
         </div>
       </div>

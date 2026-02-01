@@ -1,42 +1,57 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { deleteMezzo } from "@/lib/actions/mezzi.actions";
+import { useSWRConfig } from "swr";
 
 type EliminaMezzoModalProps = {
   mezzo: {
     id: number;
     nome: string;
   };
+  onSuccess?: () => void;
 };
 
-export default function EliminaMezzoModal({ mezzo }: EliminaMezzoModalProps) {
+export default function EliminaMezzoModal({
+  mezzo,
+  onSuccess,
+}: EliminaMezzoModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-
-  const { execute, result, reset } = useAction(
-    deleteMezzo.bind(null, mezzo.id),
-    {
-      onSuccess: () => {
-        if (result.data?.success) {
-          toast.success("Mezzo eliminato con successo!");
-          handleClose();
-        }
-      },
-    },
-  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { mutate } = useSWRConfig();
 
   const openModal = () => {
-    reset();
+    setError(null);
     dialogRef.current?.showModal();
   };
 
   const handleClose = () => {
-    reset();
+    setError(null);
     dialogRef.current?.close();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/mezzi/${mezzo.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nell'eliminazione");
+      }
+      toast.success("Mezzo eliminato con successo!");
+      handleClose();
+      mutate((key) => typeof key === "string" && key.startsWith("/api/mezzi"));
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -51,18 +66,35 @@ export default function EliminaMezzoModal({ mezzo }: EliminaMezzoModalProps) {
       <dialog ref={dialogRef} className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-2">Conferma eliminazione</h3>
-          <form action={execute}>
+          <form onSubmit={handleSubmit}>
             <p className="mb-3">
               Sei sicuro di voler eliminare &quot;{mezzo.nome}&quot;?
             </p>
-            <ValidationErrors result={result} />
+            {error && (
+              <div className="alert alert-error mb-4">
+                <span>{error}</span>
+              </div>
+            )}
             <div className="modal-action">
-              <button type="button" className="btn" onClick={handleClose}>
+              <button
+                type="button"
+                className="btn"
+                onClick={handleClose}
+                disabled={isSubmitting}
+              >
                 Annulla
               </button>
-              <SubmitButton className="btn btn-error">
-                Conferma eliminazione
-              </SubmitButton>
+              <button
+                type="submit"
+                className="btn btn-error"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
+                  "Conferma eliminazione"
+                )}
+              </button>
             </div>
           </form>
         </div>

@@ -1,11 +1,8 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { updateAttivita } from "@/lib/actions/attivita.actions";
+import { useSWRConfig } from "swr";
 
 type ModificaAttivitaModalProps = {
   attivita: {
@@ -14,42 +11,66 @@ type ModificaAttivitaModalProps = {
     user_id: string;
   };
   onClose: () => void;
+  onSuccess?: () => void;
 };
 
 export default function ModificaAttivitaModal({
   attivita,
   onClose,
+  onSuccess,
 }: ModificaAttivitaModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedDate, setSelectedDate] = useState(attivita.date);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { mutate } = useSWRConfig();
 
-  const { execute, result, reset } = useAction(
-    updateAttivita.bind(null, attivita.id),
-    {
-      onSuccess: () => {
-        if (result.data?.success) {
-          toast.success("Attività aggiornata con successo!");
-          onClose();
-        }
-      },
-    },
-  );
-
-  const handleClose = () => {
-    reset();
-    onClose();
-  };
+  useEffect(() => {
+    setSelectedDate(attivita.date);
+  }, [attivita]);
 
   useEffect(() => {
     dialogRef.current?.showModal();
   }, []);
 
+  const handleClose = () => {
+    setError(null);
+    onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/attivita/${attivita.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: selectedDate,
+          user_id: attivita.user_id,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nell'aggiornamento");
+      }
+      toast.success("Attività aggiornata con successo!");
+      handleClose();
+      mutate((key) => typeof key === "string" && key.startsWith("/api/attivita"));
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Modifica data</h3>
-        <form action={execute}>
-          <input type="hidden" name="user_id" value={attivita.user_id} />
+        <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label
               className="block font-medium mb-1 text-sm"
@@ -61,30 +82,41 @@ export default function ModificaAttivitaModal({
               id={`date-attivita-${attivita.id}`}
               type="date"
               className="input input-bordered w-full"
-              name="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               required
             />
           </div>
-
-          <ValidationErrors result={result} />
+          {error && (
+            <div className="alert alert-error mb-4">
+              <span>{error}</span>
+            </div>
+          )}
           <div className="modal-action">
             <button
               type="button"
               className="btn btn-outline"
               onClick={handleClose}
+              disabled={isSubmitting}
             >
               Annulla
             </button>
-            <SubmitButton className="btn btn-primary">
-              Salva modifiche
-            </SubmitButton>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                "Salva modifiche"
+              )}
+            </button>
           </div>
         </form>
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button tabIndex={-1} type="submit">
+        <button type="button" tabIndex={-1} onClick={handleClose}>
           Annulla
         </button>
       </form>

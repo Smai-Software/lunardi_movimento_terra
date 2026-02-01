@@ -1,11 +1,8 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { updateCantiere } from "@/lib/actions/cantieri.actions";
+import { useRouter } from "next/navigation";
 
 type ModificaCantiereModalProps = {
   cantiere: {
@@ -15,43 +12,69 @@ type ModificaCantiereModalProps = {
     open: boolean;
   };
   onClose: () => void;
+  onSuccess?: () => void;
 };
 
 export default function ModificaCantiereModal({
   cantiere,
   onClose,
+  onSuccess,
 }: ModificaCantiereModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [nome, setNome] = useState(cantiere.nome);
   const [descrizione, setDescrizione] = useState(cantiere.descrizione);
   const [open, setOpen] = useState(cantiere.open);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { execute, result, reset } = useAction(
-    updateCantiere.bind(null, cantiere.id),
-    {
-      onSuccess: () => {
-        if (result.data?.success) {
-          toast.success("Cantiere aggiornato con successo!");
-          onClose();
-        }
-      },
-    },
-  );
-
-  const handleClose = () => {
-    reset();
-    onClose();
-  };
+  useEffect(() => {
+    setNome(cantiere.nome);
+    setDescrizione(cantiere.descrizione);
+    setOpen(cantiere.open);
+  }, [cantiere]);
 
   useEffect(() => {
     dialogRef.current?.showModal();
   }, []);
 
+  const handleClose = () => {
+    setError(null);
+    onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/cantieri/${cantiere.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: nome.trim(),
+          descrizione: descrizione.trim(),
+          open,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nell'aggiornamento");
+      }
+      toast.success("Cantiere aggiornato con successo!");
+      handleClose();
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Modifica cantiere</h3>
-        <form action={execute}>
+        <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label
               className="block font-medium mb-1 text-sm"
@@ -63,10 +86,10 @@ export default function ModificaCantiereModal({
               id={`nome-cantiere-${cantiere.id}`}
               className="input input-bordered w-full"
               type="text"
-              name="nome"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Inserisci il nome"
+              required
             />
           </div>
           <div className="mb-4">
@@ -79,7 +102,6 @@ export default function ModificaCantiereModal({
             <textarea
               id={`descrizione-cantiere-${cantiere.id}`}
               className="textarea textarea-bordered w-full"
-              name="descrizione"
               value={descrizione}
               onChange={(e) => setDescrizione(e.target.value)}
               placeholder="Inserisci la descrizione"
@@ -97,25 +119,37 @@ export default function ModificaCantiereModal({
                 id={`open-cantiere-${cantiere.id}`}
                 className="toggle toggle-success"
                 type="checkbox"
-                name="open"
                 checked={open}
                 onChange={(e) => setOpen(e.target.checked)}
               />
               <span className="text-sm">{open ? "Aperto" : "Chiuso"}</span>
             </div>
           </div>
-          <ValidationErrors result={result} />
+          {error && (
+            <div className="alert alert-error mb-4">
+              <span>{error}</span>
+            </div>
+          )}
           <div className="modal-action">
             <button
               type="button"
               className="btn btn-outline"
               onClick={handleClose}
+              disabled={isSubmitting}
             >
               Annulla
             </button>
-            <SubmitButton className="btn btn-primary">
-              Salva modifiche
-            </SubmitButton>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                "Salva modifiche"
+              )}
+            </button>
           </div>
         </form>
       </div>

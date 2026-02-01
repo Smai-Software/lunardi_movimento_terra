@@ -1,11 +1,8 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { createMezzo } from "@/lib/actions/mezzi.actions";
+import { useSWRConfig } from "swr";
 
 export default function AggiungiMezzoModal() {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -13,18 +10,16 @@ export default function AggiungiMezzoModal() {
   const [descrizione, setDescrizione] = useState("");
   const [hasLicenseCamion, setHasLicenseCamion] = useState(false);
   const [hasLicenseEscavatore, setHasLicenseEscavatore] = useState(false);
-
-  const { execute, result, reset } = useAction(createMezzo, {
-    onSuccess: () => {
-      if (result.data?.success) {
-        toast.success("Mezzo creato con successo!");
-        handleClose();
-      }
-    },
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { mutate } = useSWRConfig();
 
   const openModal = () => {
-    reset();
+    setNome("");
+    setDescrizione("");
+    setHasLicenseCamion(false);
+    setHasLicenseEscavatore(false);
+    setError(null);
     dialogRef.current?.showModal();
   };
 
@@ -33,8 +28,37 @@ export default function AggiungiMezzoModal() {
     setDescrizione("");
     setHasLicenseCamion(false);
     setHasLicenseEscavatore(false);
-    reset();
+    setError(null);
     dialogRef.current?.close();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/mezzi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: nome.trim(),
+          descrizione: descrizione.trim(),
+          has_license_camion: hasLicenseCamion,
+          has_license_escavatore: hasLicenseEscavatore,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nella creazione");
+      }
+      toast.success("Mezzo creato con successo!");
+      handleClose();
+      mutate((key) => typeof key === "string" && key.startsWith("/api/mezzi"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -45,7 +69,7 @@ export default function AggiungiMezzoModal() {
       <dialog ref={dialogRef} className="modal" id="aggiungi-veicolo-modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-2">Aggiungi nuovo mezzo</h3>
-          <form action={execute}>
+          <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label
                 className="block font-medium mb-1 text-sm"
@@ -57,7 +81,6 @@ export default function AggiungiMezzoModal() {
                 id="nome-mezzo"
                 className="input input-bordered w-full"
                 type="text"
-                name="nome"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 placeholder="Inserisci il nome"
@@ -75,7 +98,6 @@ export default function AggiungiMezzoModal() {
                 id="descrizione-mezzo"
                 className="input input-bordered w-full"
                 type="text"
-                name="descrizione"
                 value={descrizione}
                 onChange={(e) => setDescrizione(e.target.value)}
                 placeholder="Inserisci la descrizione"
@@ -92,7 +114,6 @@ export default function AggiungiMezzoModal() {
                 id="patente-camion-mezzo"
                 className="toggle toggle-success"
                 type="checkbox"
-                name="has_license_camion"
                 checked={hasLicenseCamion}
                 onChange={(e) => setHasLicenseCamion(e.target.checked)}
               />
@@ -108,23 +129,35 @@ export default function AggiungiMezzoModal() {
                 id="patente-escavatore-mezzo"
                 className="toggle toggle-success"
                 type="checkbox"
-                name="has_license_escavatore"
                 checked={hasLicenseEscavatore}
                 onChange={(e) => setHasLicenseEscavatore(e.target.checked)}
               />
             </div>
-            <ValidationErrors result={result} />
+            {error && (
+              <div className="alert alert-error mb-4">
+                <span>{error}</span>
+              </div>
+            )}
             <div className="modal-action">
               <button
                 type="button"
                 className="btn btn-outline"
                 onClick={handleClose}
+                disabled={isSubmitting}
               >
                 Annulla
               </button>
-              <SubmitButton className="btn btn-primary">
-                Crea mezzo
-              </SubmitButton>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
+                  "Crea mezzo"
+                )}
+              </button>
             </div>
           </form>
         </div>

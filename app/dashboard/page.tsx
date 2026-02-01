@@ -1,7 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getUserAttivitaLast7Days } from "@/lib/data/user-attivita.data";
 import UserAttivitaForm from "@/components/user-attivita-form";
 import UserAttivitaTable from "@/components/user-attivita-table";
 import { TabsClient } from "@/components/tabs-client";
@@ -19,16 +18,13 @@ export default async function DashboardPage({
     redirect("/sign-in");
   }
 
-  // Check if user has user role
   if (session.user.role !== "user") {
     redirect("/admin");
   }
 
   const params = await searchParams;
   const tab = params.tab || "insert";
-
   const userId = session.user.id;
-  const attivita = await getUserAttivitaLast7Days(userId);
 
   return (
     <div className="mx-auto px-2 md:px-6 py-8">
@@ -42,7 +38,7 @@ export default async function DashboardPage({
             <UserAttivitaForm userId={userId} />
           </div>
         ) : (
-          <UserAttivitaTable attivita={attivita} />
+          <UserAttivitaTable userId={userId} />
         )}
       </div>
     </div>

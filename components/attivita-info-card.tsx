@@ -3,13 +3,21 @@
 import { useState } from "react";
 import EliminaAttivitaModal from "@/components/elimina-attivita-modal";
 import ModificaAttivitaModal from "@/components/modifica-attivita-modal";
-import type { AttivitaDetail } from "@/lib/data/attivita.data";
 
 type AttivitaInfoCardProps = {
-  attivita: AttivitaDetail;
+  attivita: {
+    id: number;
+    date: Date | string;
+    user_id: string;
+    user: { id: string; name: string };
+  };
+  onAttivitaUpdated?: () => void;
 };
 
-export default function AttivitaInfoCard({ attivita }: AttivitaInfoCardProps) {
+export default function AttivitaInfoCard({
+  attivita,
+  onAttivitaUpdated,
+}: AttivitaInfoCardProps) {
   const [showModificaAttivita, setShowModificaAttivita] = useState(false);
   const [showEliminaAttivita, setShowEliminaAttivita] = useState(false);
 
@@ -47,6 +55,7 @@ export default function AttivitaInfoCard({ attivita }: AttivitaInfoCardProps) {
             user_id: attivita.user_id,
           }}
           onClose={() => setShowModificaAttivita(false)}
+          onSuccess={onAttivitaUpdated}
         />
       )}
 
@@ -58,6 +67,7 @@ export default function AttivitaInfoCard({ attivita }: AttivitaInfoCardProps) {
             user: attivita.user.name,
           }}
           onClose={() => setShowEliminaAttivita(false)}
+          onSuccess={onAttivitaUpdated}
         />
       )}
     </>

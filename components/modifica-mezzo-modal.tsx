@@ -1,11 +1,8 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { updateMezzo } from "@/lib/actions/mezzi.actions";
+import { useSWRConfig } from "swr";
 
 type ModificaMezzoModalProps = {
   mezzo: {
@@ -15,9 +12,13 @@ type ModificaMezzoModalProps = {
     has_license_camion: boolean;
     has_license_escavatore: boolean;
   };
+  onSuccess?: () => void;
 };
 
-export default function ModificaMezzoModal({ mezzo }: ModificaMezzoModalProps) {
+export default function ModificaMezzoModal({
+  mezzo,
+  onSuccess,
+}: ModificaMezzoModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [nome, setNome] = useState(mezzo.nome);
   const [descrizione, setDescrizione] = useState(mezzo.descrizione);
@@ -27,34 +28,59 @@ export default function ModificaMezzoModal({ mezzo }: ModificaMezzoModalProps) {
   const [hasLicenseEscavatore, setHasLicenseEscavatore] = useState(
     mezzo.has_license_escavatore,
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { mutate } = useSWRConfig();
 
-  const { execute, result, reset } = useAction(
-    updateMezzo.bind(null, mezzo.id),
-    {
-      onExecute: () => {
-        // noop
-      },
-      onSuccess: () => {
-        if (result.data?.success) {
-          toast.success("Mezzo aggiornato con successo!");
-          handleClose();
-        }
-      },
-    },
-  );
-
-  const openModal = () => {
-    reset();
+  useEffect(() => {
     setNome(mezzo.nome);
     setDescrizione(mezzo.descrizione);
     setHasLicenseCamion(mezzo.has_license_camion);
     setHasLicenseEscavatore(mezzo.has_license_escavatore);
+  }, [mezzo]);
+
+  const openModal = () => {
+    setNome(mezzo.nome);
+    setDescrizione(mezzo.descrizione);
+    setHasLicenseCamion(mezzo.has_license_camion);
+    setHasLicenseEscavatore(mezzo.has_license_escavatore);
+    setError(null);
     dialogRef.current?.showModal();
   };
 
   const handleClose = () => {
-    reset();
+    setError(null);
     dialogRef.current?.close();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/mezzi/${mezzo.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: nome.trim(),
+          descrizione: descrizione.trim(),
+          has_license_camion: hasLicenseCamion,
+          has_license_escavatore: hasLicenseEscavatore,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nell'aggiornamento");
+      }
+      toast.success("Mezzo aggiornato con successo!");
+      handleClose();
+      mutate((key) => typeof key === "string" && key.startsWith("/api/mezzi"));
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -69,7 +95,7 @@ export default function ModificaMezzoModal({ mezzo }: ModificaMezzoModalProps) {
       <dialog ref={dialogRef} className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-2">Modifica veicolo</h3>
-          <form action={execute}>
+          <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label
                 className="block font-medium mb-1 text-sm"
@@ -81,7 +107,6 @@ export default function ModificaMezzoModal({ mezzo }: ModificaMezzoModalProps) {
                 id={`nome-veicolo-${mezzo.id}`}
                 className="input input-bordered w-full"
                 type="text"
-                name="nome"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 placeholder="Inserisci il nome"
@@ -99,7 +124,6 @@ export default function ModificaMezzoModal({ mezzo }: ModificaMezzoModalProps) {
                 id={`descrizione-veicolo-${mezzo.id}`}
                 className="input input-bordered w-full"
                 type="text"
-                name="descrizione"
                 value={descrizione}
                 onChange={(e) => setDescrizione(e.target.value)}
                 placeholder="Inserisci la descrizione"
@@ -116,7 +140,6 @@ export default function ModificaMezzoModal({ mezzo }: ModificaMezzoModalProps) {
                 id={`patente-camion-mezzo-${mezzo.id}`}
                 className="toggle toggle-success"
                 type="checkbox"
-                name="has_license_camion"
                 checked={hasLicenseCamion}
                 onChange={(e) => setHasLicenseCamion(e.target.checked)}
               />
@@ -132,23 +155,35 @@ export default function ModificaMezzoModal({ mezzo }: ModificaMezzoModalProps) {
                 id={`patente-escavatore-mezzo-${mezzo.id}`}
                 className="toggle toggle-success"
                 type="checkbox"
-                name="has_license_escavatore"
                 checked={hasLicenseEscavatore}
                 onChange={(e) => setHasLicenseEscavatore(e.target.checked)}
               />
             </div>
-            <ValidationErrors result={result} />
+            {error && (
+              <div className="alert alert-error mb-4">
+                <span>{error}</span>
+              </div>
+            )}
             <div className="modal-action">
               <button
                 type="button"
                 className="btn btn-outline"
                 onClick={handleClose}
+                disabled={isSubmitting}
               >
                 Annulla
               </button>
-              <SubmitButton className="btn btn-primary">
-                Salva modifiche
-              </SubmitButton>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
+                  "Salva modifiche"
+                )}
+              </button>
             </div>
           </form>
         </div>

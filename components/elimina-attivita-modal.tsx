@@ -1,11 +1,9 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { deleteAttivita } from "@/lib/actions/attivita.actions";
+import { useSWRConfig } from "swr";
 
 type EliminaAttivitaModalProps = {
   attivita: {
@@ -14,32 +12,52 @@ type EliminaAttivitaModalProps = {
     user: string;
   };
   onClose: () => void;
+  onSuccess?: () => void;
 };
 
 export default function EliminaAttivitaModal({
   attivita,
   onClose,
+  onSuccess,
 }: EliminaAttivitaModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { mutate } = useSWRConfig();
+  const router = useRouter();
 
-  const { execute, result, reset } = useAction(
-    deleteAttivita.bind(null, attivita.id),
-    {
-      onNavigation: () => {
-        toast.success("Attività eliminata con successo!");
-      },
-    },
-  );
-
-  // Open modal when component mounts
   useEffect(() => {
     dialogRef.current?.showModal();
   }, []);
 
   const handleClose = () => {
-    reset();
+    setError(null);
     dialogRef.current?.close();
     onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/attivita/${attivita.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nell'eliminazione");
+      }
+      toast.success("Attività eliminata con successo!");
+      handleClose();
+      mutate((key) => typeof key === "string" && key.startsWith("/api/attivita"));
+      onSuccess?.();
+      router.push("/admin/attivita");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -47,26 +65,36 @@ export default function EliminaAttivitaModal({
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Elimina attività</h3>
         <p className="mb-4">
-          Sei sicuro di voler eliminare l'attività del{" "}
+          Sei sicuro di voler eliminare l&apos;attività del{" "}
           <strong>{new Date(attivita.date).toLocaleDateString("it-IT")}</strong>{" "}
-          per l'utente <strong>{attivita.user}</strong>?
+          per l&apos;utente <strong>{attivita.user}</strong>?
         </p>
-        <p className="text-sm text-warning mb-4">
-          Questa azione non può essere annullata.
-        </p>
-        <form action={execute}>
-          <ValidationErrors result={result} />
+        <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="alert alert-error mb-4">
+              <span>{error}</span>
+            </div>
+          )}
           <div className="modal-action">
             <button
               type="button"
               className="btn btn-outline"
               onClick={handleClose}
+              disabled={isSubmitting}
             >
               Annulla
             </button>
-            <SubmitButton className="btn btn-error">
-              Elimina attività
-            </SubmitButton>
+            <button
+              type="submit"
+              className="btn btn-error"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                "Elimina attività"
+              )}
+            </button>
           </div>
         </form>
       </div>

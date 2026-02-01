@@ -1,11 +1,8 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { updateUser } from "@/lib/actions/users.actions";
+import { useSWRConfig } from "swr";
 
 type ModificaUtenteModalProps = {
   utente: {
@@ -15,10 +12,12 @@ type ModificaUtenteModalProps = {
     licenseCamion: boolean | null | undefined;
     licenseEscavatore: boolean | null | undefined;
   };
+  onSuccess?: () => void;
 };
 
 export default function ModificaUtenteModal({
   utente,
+  onSuccess,
 }: ModificaUtenteModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [name, setName] = useState(utente.name || "");
@@ -29,31 +28,59 @@ export default function ModificaUtenteModal({
   const [licenseEscavatore, setLicenseEscavatore] = useState(
     utente.licenseEscavatore || false,
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { mutate } = useSWRConfig();
 
-  const { execute, result, reset } = useAction(
-    updateUser.bind(null, utente.id),
-    {
-      onSuccess: () => {
-        if (result.data?.success) {
-          toast.success("Utente aggiornato con successo!");
-          handleClose();
-        }
-      },
-    },
-  );
-
-  const openModal = () => {
-    reset();
+  useEffect(() => {
     setName(utente.name || "");
     setPhone(utente.phone || "");
     setLicenseCamion(utente.licenseCamion || false);
     setLicenseEscavatore(utente.licenseEscavatore || false);
+  }, [utente]);
+
+  const openModal = () => {
+    setName(utente.name || "");
+    setPhone(utente.phone || "");
+    setLicenseCamion(utente.licenseCamion || false);
+    setLicenseEscavatore(utente.licenseEscavatore || false);
+    setError(null);
     dialogRef.current?.showModal();
   };
 
   const handleClose = () => {
-    reset();
+    setError(null);
     dialogRef.current?.close();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/users/${utente.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: phone.trim() || "",
+          licenseCamion,
+          licenseEscavatore,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nell'aggiornamento");
+      }
+      toast.success("Utente aggiornato con successo!");
+      handleClose();
+      mutate((key) => typeof key === "string" && key.startsWith("/api/users"));
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -68,8 +95,7 @@ export default function ModificaUtenteModal({
       <dialog ref={dialogRef} className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-2">Modifica utente</h3>
-          <form action={execute}>
-            <input type="hidden" name="userId" value={utente.id} />
+          <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label
                 className="block font-medium mb-1 text-sm"
@@ -81,7 +107,6 @@ export default function ModificaUtenteModal({
                 id={`nome-utente-${utente.id}`}
                 className="input input-bordered w-full"
                 type="text"
-                name="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Inserisci il nome"
@@ -99,7 +124,6 @@ export default function ModificaUtenteModal({
                 id={`telefono-utente-${utente.id}`}
                 className="input input-bordered w-full"
                 type="tel"
-                name="phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Inserisci il telefono"
@@ -116,7 +140,6 @@ export default function ModificaUtenteModal({
                 id={`patente-camion-utente-${utente.id}`}
                 className="toggle toggle-success"
                 type="checkbox"
-                name="licenseCamion"
                 checked={licenseCamion}
                 onChange={(e) => setLicenseCamion(e.target.checked)}
               />
@@ -132,23 +155,35 @@ export default function ModificaUtenteModal({
                 id={`patente-escavatore-utente-${utente.id}`}
                 className="toggle toggle-success"
                 type="checkbox"
-                name="licenseEscavatore"
                 checked={licenseEscavatore}
                 onChange={(e) => setLicenseEscavatore(e.target.checked)}
               />
             </div>
-            <ValidationErrors result={result} />
+            {error && (
+              <div className="alert alert-error mb-4">
+                <span>{error}</span>
+              </div>
+            )}
             <div className="modal-action">
               <button
                 type="button"
                 className="btn btn-outline"
                 onClick={handleClose}
+                disabled={isSubmitting}
               >
                 Annulla
               </button>
-              <SubmitButton className="btn btn-primary">
-                Salva modifiche
-              </SubmitButton>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
+                  "Salva modifiche"
+                )}
+              </button>
             </div>
           </form>
         </div>

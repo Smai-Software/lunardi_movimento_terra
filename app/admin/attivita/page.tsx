@@ -3,8 +3,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import AttivitaTable from "@/components/attivita-table";
 import { auth } from "@/lib/auth";
-import { getAttivita } from "@/lib/data/attivita.data";
-import { getUsersNotBanned } from "@/lib/data/users.data";
 
 export default async function AttivitaPage() {
   const session = await auth.api.getSession({
@@ -15,15 +13,9 @@ export default async function AttivitaPage() {
     redirect("/sign-in");
   }
 
-  // Check if user has admin role
   if (session.user.role !== "admin") {
     notFound();
   }
-
-  const [attivitaData, usersData] = await Promise.all([
-    getAttivita(),
-    getUsersNotBanned(),
-  ]);
 
   return (
     <div className="mx-auto px-6 py-8">
@@ -33,7 +25,7 @@ export default async function AttivitaPage() {
           Aggiungi attività
         </Link>
       </div>
-      <AttivitaTable attivita={attivitaData} users={usersData} />
+      <AttivitaTable />
     </div>
   );
 }

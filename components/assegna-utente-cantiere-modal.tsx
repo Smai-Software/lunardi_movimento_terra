@@ -4,8 +4,6 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import UtenteCantiere from "@/components/utente-cantiere";
 
-import type { UserNotBanned } from "@/lib/data/users.data";
-
 interface UserCantiere {
   user_id: string;
   cantieri_id: number;
@@ -14,8 +12,9 @@ interface UserCantiere {
 interface AssegnaUtenteCantiereModalProps {
   cantiereId: number;
   cantiereNome: string;
-  users: UserNotBanned[];
+  users: Array<{ id: string; name: string }>;
   userCantieri: UserCantiere[];
+  onSuccess?: () => void;
 }
 
 export default function AssegnaUtenteCantiereModal({
@@ -23,9 +22,12 @@ export default function AssegnaUtenteCantiereModal({
   cantiereNome,
   users: allUsers,
   userCantieri,
+  onSuccess,
 }: AssegnaUtenteCantiereModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [filteredUsers, setFilteredUsers] = useState<UserNotBanned[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -116,6 +118,7 @@ export default function AssegnaUtenteCantiereModal({
                         user={user}
                         cantiereId={cantiereId}
                         userCantieri={userCantieri}
+                        onSuccess={onSuccess}
                       />
                     ))}
                   </div>

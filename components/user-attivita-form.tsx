@@ -1,14 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAction } from "next-safe-action/hooks";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { createUserAttivitaWithInterazioni } from "@/lib/actions/user-attivita.actions";
-import { getCantieriForUser } from "@/lib/actions/cantieri.actions";
-import { getMezziForUser } from "@/lib/actions/mezzi.actions";
 import AggiungiInterazioneModalForm from "@/components/aggiungi-interazione-modal-form";
 import { Loader2Icon, TrashIcon } from "lucide-react";
 
@@ -47,43 +41,45 @@ type UserAttivitaFormProps = {
 function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
   const router = useRouter();
 
-  // Form state
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0],
   );
   const [cantieri, setCantieri] = useState<CantiereWithInterazioni[]>([]);
 
-  // Available options
   const [availableCantieri, setAvailableCantieri] = useState<Cantiere[]>([]);
   const [availableMezzi, setAvailableMezzi] = useState<Mezzo[]>([]);
 
-  // Loading states
   const [loadingCantieri, setLoadingCantieri] = useState(false);
   const [loadingMezzi, setLoadingMezzi] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchUserResources = useCallback(async () => {
     setLoadingCantieri(true);
     setLoadingMezzi(true);
 
     try {
-      const [cantieriResult, mezziResult] = await Promise.all([
-        getCantieriForUser({ userId }),
-        getMezziForUser({ userId }),
+      const [cantieriRes, mezziRes] = await Promise.all([
+        fetch(`/api/cantieri?userId=${userId}&limit=500`),
+        fetch(`/api/mezzi?userId=${userId}&limit=500`),
       ]);
 
-      if (cantieriResult?.data?.success) {
-        setAvailableCantieri(cantieriResult.data.cantieri);
+      const cantieriData = await cantieriRes.json().catch(() => ({}));
+      const mezziData = await mezziRes.json().catch(() => ({}));
+
+      if (cantieriRes.ok && Array.isArray(cantieriData.cantieri)) {
+        setAvailableCantieri(cantieriData.cantieri);
       } else {
         toast.error(
-          cantieriResult?.data?.error || "Errore nel caricamento dei cantieri",
+          (cantieriData as { error?: string }).error || "Errore nel caricamento dei cantieri",
         );
       }
 
-      if (mezziResult?.data?.success) {
-        setAvailableMezzi(mezziResult.data.mezzi);
+      if (mezziRes.ok && Array.isArray(mezziData.mezzi)) {
+        setAvailableMezzi(mezziData.mezzi);
       } else {
         toast.error(
-          mezziResult?.data?.error || "Errore nel caricamento dei mezzi",
+          (mezziData as { error?: string }).error || "Errore nel caricamento dei mezzi",
         );
       }
     } catch {
@@ -94,19 +90,6 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     }
   }, [userId]);
 
-  const { execute, result, isExecuting } = useAction(
-    createUserAttivitaWithInterazioni,
-    {
-      onSuccess: () => {
-        if (result.data?.success) {
-          toast.success("Attività creata con successo!");
-          router.push("/dashboard?tab=list");
-        }
-      },
-    },
-  );
-
-  // Fetch cantieri and mezzi on mount
   useEffect(() => {
     if (userId) {
       fetchUserResources();
@@ -135,18 +118,15 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
       note,
     };
 
-    // Check if cantiere already exists
     const existingCantiereIndex = cantieri.findIndex(
       (c) => c.cantiereId === cantiereId,
     );
 
     if (existingCantiereIndex >= 0) {
-      // Add interazione to existing cantiere
       const updatedCantieri = [...cantieri];
       updatedCantieri[existingCantiereIndex].interazioni.push(newInterazione);
       setCantieri(updatedCantieri);
     } else {
-      // Create new cantiere with interazione
       const cantiereNome =
         availableCantieri.find((c) => c.id === cantiereId)?.nome || "";
       setCantieri([
@@ -167,7 +147,6 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     const updatedCantieri = [...cantieri];
     updatedCantieri[cantiereIndex].interazioni.splice(interazioneIndex, 1);
 
-    // Remove cantiere if no more interazioni
     if (updatedCantieri[cantiereIndex].interazioni.length === 0) {
       updatedCantieri.splice(cantiereIndex, 1);
     }
@@ -175,13 +154,12 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     setCantieri(updatedCantieri);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedDate || cantieri.length === 0) {
       toast.error("Compila tutti i campi obbligatori");
       return;
     }
 
-    // Flatten all interazioni
     const allInterazioni = cantieri.flatMap((cantiere) =>
       cantiere.interazioni.map((interazione) => ({
         cantieri_id: cantiere.cantiereId,
@@ -192,10 +170,29 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
       })),
     );
 
-    execute({
-      date: selectedDate,
-      interazioni: allInterazioni,
-    });
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/attivita", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: selectedDate,
+          user_id: userId,
+          interazioni: allInterazioni,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nella creazione");
+      }
+      toast.success("Attività creata con successo!");
+      router.push("/dashboard?tab=list");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getTotalHours = () => {
@@ -241,7 +238,6 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
             </div>
           </div>
 
-          {/* Step 3: Add Cantieri and Interazioni */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
               <h2 className="text-xl font-semibold">Interazioni</h2>
@@ -254,7 +250,6 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
               />
             </div>
 
-            {/* Display added cantieri and interazioni */}
             {cantieri.length > 0 && (
               <div className="space-y-4">
                 <h3 className="font-semibold">Interazioni Aggiunte</h3>
@@ -310,7 +305,6 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
                   </table>
                 </div>
 
-                {/* Total Hours Summary */}
                 {cantieri.length > 0 && (
                   <div className="mt-4">
                     <div className="card bg-primary text-primary-content">
@@ -332,9 +326,8 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
             )}
           </div>
 
-          {/* Submit */}
           <div className="card-actions justify-end">
-            <ValidationErrors result={result} />
+            {error && <p className="text-sm text-error">{error}</p>}
             <button
               type="button"
               className="btn btn-outline"
@@ -343,12 +336,12 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
               Annulla
             </button>
             <button
-              type="submit"
+              type="button"
               className="btn btn-primary"
               onClick={handleSubmit}
-              disabled={!selectedDate || cantieri.length === 0}
+              disabled={!selectedDate || cantieri.length === 0 || isSubmitting}
             >
-              {isExecuting ? (
+              {isSubmitting ? (
                 <Loader2Icon className="w-4 h-4 animate-spin" />
               ) : (
                 "Crea Attività"

@@ -2,47 +2,85 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useAction } from "next-safe-action/hooks";
+import { useState } from "react";
+import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { resetPasswordWithToken } from "@/lib/actions/users.actions";
 
 export default function FormResetPassword() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
-  const { execute, result } = useAction(resetPasswordWithToken);
+  const [password, setPassword] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) {
+      setError("Link non valido o scaduto.");
+      return;
+    }
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      const { error: resetError } = await authClient.resetPassword({
+        newPassword: password,
+        token,
+      });
+      if (resetError) {
+        setError(resetError.message ?? "Errore nell'impostazione della password");
+        return;
+      }
+      setSuccess(true);
+      toast.success("Password aggiornata. Effettua il login.");
+    } catch {
+      setError("Errore di connessione. Riprova.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="flex flex-col items-center justify-center">
+        <div className="alert alert-success my-2">
+          Password aggiornata con successo.
+        </div>
+        <Link href="/sign-in" className="link link-primary">
+          Effettua il login
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <>
-      {result.data?.success ? (
-        <div className="flex flex-col items-center justify-center">
-          <div className="alert alert-success my-2">{result.data?.message}</div>
-          <Link href="/sign-in" className="link link-primary">
-            Effettua il login
-          </Link>
+      <form className="flex flex-col mt-4 gap-2" onSubmit={handleSubmit}>
+        <input type="hidden" name="token" value={token} />
+        <div className="fieldset">
+          <label className="label" htmlFor="password">
+            Nuova password
+          </label>
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            className="input input-md w-full"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
-      ) : (
-        <>
-          <form className="flex flex-col mt-4 gap-2" action={execute}>
-            <input type="hidden" name="token" value={token} />
-            <div className="fieldset">
-              <label className="label" htmlFor="password">
-                Nuova password
-              </label>
-              <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                className="input input-md w-full"
-                required
-              />
-            </div>
-            <SubmitButton className="btn btn-primary my-2">
-              Imposta password
-            </SubmitButton>
-          </form>
-          <ValidationErrors result={result} />
-        </>
-      )}
+        {error && <p className="text-sm text-error">{error}</p>}
+        <SubmitButton
+          className="btn btn-primary my-2"
+          isPending={isSubmitting}
+        >
+          Imposta password
+        </SubmitButton>
+      </form>
     </>
   );
 }

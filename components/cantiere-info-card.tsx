@@ -25,9 +25,13 @@ type CantiereInfoCardProps = {
       name: string;
     };
   };
+  onCantiereUpdated?: () => void;
 };
 
-export default function CantiereInfoCard({ cantiere }: CantiereInfoCardProps) {
+export default function CantiereInfoCard({
+  cantiere,
+  onCantiereUpdated,
+}: CantiereInfoCardProps) {
   const [showModificaCantiere, setShowModificaCantiere] = useState(false);
   const [showEliminaCantiere, setShowEliminaCantiere] = useState(false);
 
@@ -71,6 +75,7 @@ export default function CantiereInfoCard({ cantiere }: CantiereInfoCardProps) {
               open: cantiere.open,
             }}
             onClose={() => setShowModificaCantiere(false)}
+            onSuccess={onCantiereUpdated}
           />
         )}
 
@@ -80,6 +85,7 @@ export default function CantiereInfoCard({ cantiere }: CantiereInfoCardProps) {
               id: cantiere.id,
               nome: cantiere.nome,
             }}
+            onClose={() => setShowEliminaCantiere(false)}
           />
         )}
       </div>

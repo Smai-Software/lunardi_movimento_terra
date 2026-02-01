@@ -7,8 +7,11 @@ export default async function RecoveryPassword() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  if (session) {
+  if (session?.user?.role === "admin") {
     redirect("/admin");
+  }
+  if (session?.user?.role === "user") {
+    redirect("/dashboard");
   }
 
   return (

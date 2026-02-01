@@ -1,32 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { useAction } from "next-safe-action/hooks";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { loginUser } from "@/lib/actions/users.actions";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
+import { SubmitButton } from "@/components/submit-button";
 
 export default function FormLogin() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
-  const { execute, result, input } = useAction(loginUser, {
-    onExecute() {
-      if (result?.data?.success === false && input instanceof FormData) {
-        const emailEntry = input.get("email");
-        if (typeof emailEntry === "string") {
-          setEmail(emailEntry);
-        }
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      const { data, error: signInError } = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: "/admin",
+      });
+      if (signInError) {
+        setError(signInError.message ?? "Email o password non validi");
+        return;
       }
-    },
-    onNavigation() {
-      toast.success("Login effettuato con successo");
-    },
-  });
+      if (data) {
+        toast.success("Login effettuato con successo");
+        router.push(data.url ?? "/admin");
+        router.refresh();
+      }
+    } catch {
+      setError("Errore di connessione. Riprova.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <>
-      <form className="flex flex-col mt-4 gap-2" action={execute}>
+      <form
+        className="flex flex-col mt-4 gap-2"
+        onSubmit={handleSubmit}
+      >
         <div className="fieldset">
           <label className="label" htmlFor="email">
             Email
@@ -54,11 +73,18 @@ export default function FormLogin() {
             name="password"
             className="input input-md w-full"
             required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        <SubmitButton className="btn btn-primary my-2">Accedi</SubmitButton>
+        {error && <p className="text-sm text-error">{error}</p>}
+        <SubmitButton
+          className="btn btn-primary my-2"
+          isPending={isSubmitting}
+        >
+          Accedi
+        </SubmitButton>
       </form>
-      <ValidationErrors result={result} />
     </>
   );
 }

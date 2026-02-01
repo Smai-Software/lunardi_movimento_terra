@@ -1,11 +1,7 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { deleteInterazione } from "@/lib/actions/interazioni.actions";
 
 type EliminaInterazioneModalProps = {
   interazione: {
@@ -22,34 +18,47 @@ type EliminaInterazioneModalProps = {
     } | null;
     attivita: {
       id: number;
-      date: Date;
+      date: string;
     };
   };
   onClose: () => void;
+  onSuccess?: () => void;
 };
 
 export default function EliminaInterazioneModal({
   interazione,
   onClose,
+  onSuccess,
 }: EliminaInterazioneModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-
-  const { execute, result, reset } = useAction(
-    deleteInterazione.bind(null, interazione.id),
-    {
-      onError: () => {
-        toast.error("Errore durante l'eliminazione dell'interazione");
-      },
-      onSuccess: () => {
-        toast.success("Interazione eliminata con successo!");
-        onClose();
-      },
-    },
-  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleClose = () => {
-    reset();
+    setError(null);
     onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/interazioni/${interazione.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore durante l'eliminazione");
+      }
+      toast.success("Interazione eliminata con successo!");
+      handleClose();
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore durante l'eliminazione dell'interazione");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -64,7 +73,7 @@ export default function EliminaInterazioneModal({
     <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Conferma eliminazione</h3>
-        <form action={execute}>
+        <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <p className="mb-2">
               Sei sicuro di voler eliminare questa interazione?
@@ -74,7 +83,7 @@ export default function EliminaInterazioneModal({
                 <strong>Utente:</strong> {interazione.user.name}
               </p>
               <p>
-                <strong>Mezzo:</strong> {interazione.mezzi?.nome || "Nessuno"}
+                <strong>Mezzo:</strong> {interazione.mezzi?.nome ?? "Nessuno"}
               </p>
               <p>
                 <strong>Attività:</strong>{" "}
@@ -88,14 +97,23 @@ export default function EliminaInterazioneModal({
               </p>
             </div>
           </div>
-          <ValidationErrors result={result} />
+          {error && (
+            <p className="mt-2 text-sm text-error">{error}</p>
+          )}
           <div className="modal-action">
             <button type="button" className="btn" onClick={handleClose}>
               Annulla
             </button>
-            <SubmitButton className="btn btn-error">
+            <button
+              type="submit"
+              className="btn btn-error"
+              disabled={isSubmitting}
+            >
+              {isSubmitting && (
+                <span className="loading loading-spinner loading-xs" />
+              )}
               Conferma eliminazione
-            </SubmitButton>
+            </button>
           </div>
         </form>
       </div>

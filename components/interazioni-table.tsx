@@ -20,14 +20,27 @@ import { useMemo, useState } from "react";
 import EliminaInterazioneModal from "@/components/elimina-interazione-modal";
 import ModificaInterazioneModal from "@/components/modifica-interazione-modal";
 
-import type { InterazioneAll } from "@/lib/data/interazioni.data";
 import Link from "next/link";
 
+type InterazioneRow = {
+  id: number;
+  ore: number;
+  minuti: number;
+  note: string | null;
+  created_at: string;
+  user: { id: string; name: string };
+  mezzi: { id: number; nome: string } | null;
+  cantieri: { id: number; nome: string };
+  attivita: { id: number; date: string; external_id: string };
+  user_interazione_created_byTouser: { id: string; name: string };
+};
+
 type InterazioniTableProps = {
-  interazioni: InterazioneAll[];
+  interazioni: InterazioneRow[];
   users: Array<{ id: string; name: string }>;
   mezzi: Array<{ id: number; nome: string }>;
-  attivita: Array<{ id: number; date: Date; external_id: string }>;
+  attivita: Array<{ id: number; date: string }>;
+  onSuccess?: () => void;
 };
 
 const PAGE_SIZE = 10;
@@ -250,6 +263,7 @@ export default function InterazioniTable({
   users,
   mezzi,
   attivita,
+  onSuccess,
 }: InterazioniTableProps) {
   const [search, setSearch] = useQueryState("q", parseAsString.withDefault(""));
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
@@ -280,9 +294,9 @@ export default function InterazioniTable({
     parseAsString.withDefault("all"),
   );
   const [selectedInterazioneForEdit, setSelectedInterazioneForEdit] =
-    useState<InterazioneAll | null>(null);
+    useState<InterazioneRow | null>(null);
   const [selectedInterazioneForDelete, setSelectedInterazioneForDelete] =
-    useState<InterazioneAll | null>(null);
+    useState<InterazioneRow | null>(null);
   const drawerId = "interazioni-filter-drawer";
 
   const activeFilterCount = useMemo(() => {
@@ -478,7 +492,7 @@ export default function InterazioniTable({
                     <td>{i.mezzi?.nome || "Nessuno"}</td>
                     <td>
                       <Link
-                        href={`/admin/attivita/${i.attivita.external_id}`}
+                        href={`/admin/attivita/${i.attivita.id}`}
                         className="block link"
                       >
                         {new Date(i.attivita.date).toLocaleDateString("it-IT")}
@@ -579,12 +593,14 @@ export default function InterazioniTable({
           mezzi={mezzi}
           attivita={attivita}
           onClose={() => setSelectedInterazioneForEdit(null)}
+          onSuccess={onSuccess}
         />
       )}
       {selectedInterazioneForDelete && (
         <EliminaInterazioneModal
           interazione={selectedInterazioneForDelete}
           onClose={() => setSelectedInterazioneForDelete(null)}
+          onSuccess={onSuccess}
         />
       )}
     </div>

@@ -1,8 +1,7 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
+import { useState } from "react";
 import { toast } from "sonner";
-import { addUtenteMezzo, removeUtenteMezzo } from "@/lib/actions/mezzi.actions";
 
 interface User {
   id: string;
@@ -18,55 +17,55 @@ interface UtenteMezzoProps {
   user: User;
   mezzoId: number;
   userMezzi: UserMezzo[];
+  onSuccess?: () => void;
 }
 
 export default function UtenteMezzo({
   user,
   mezzoId,
   userMezzi,
+  onSuccess,
 }: UtenteMezzoProps) {
-  // Check if user is assigned to this mezzo
   const isAssigned = userMezzi.some(
     (assignment) =>
       assignment.user_id === user.id && assignment.mezzi_id === mezzoId,
   );
-  const { execute: executeAssign, isExecuting: isAssigning } = useAction(
-    addUtenteMezzo.bind(null, mezzoId, user.id),
-    {
-      onSuccess: (result) => {
-        if (!result.data?.success) {
-          toast.error(result.data?.error || "Errore durante l'assegnazione");
-        }
-      },
-      onError: () => {
-        toast.error("Errore durante l'assegnazione");
-      },
-    },
-  );
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { execute: executeRemove, isExecuting: isRemoving } = useAction(
-    removeUtenteMezzo.bind(null, mezzoId, user.id),
-    {
-      onSuccess: (result) => {
-        if (!result.data?.success) {
-          toast.error(result.data?.error || "Errore durante la rimozione");
+  const handleCheckboxChange = async (checked: boolean) => {
+    setIsLoading(true);
+    try {
+      if (checked) {
+        const res = await fetch(`/api/mezzi/${mezzoId}/users`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast.error((data as { error?: string }).error || "Errore durante l'assegnazione");
+          return;
         }
-      },
-      onError: () => {
-        toast.error("Errore durante la rimozione");
-      },
-    },
-  );
-
-  const handleCheckboxChange = (checked: boolean) => {
-    if (checked) {
-      executeAssign();
-    } else {
-      executeRemove();
+        toast.success("Utente assegnato con successo");
+      } else {
+        const res = await fetch(
+          `/api/mezzi/${mezzoId}/users?userId=${encodeURIComponent(user.id)}`,
+          { method: "DELETE" },
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast.error((data as { error?: string }).error || "Errore durante la rimozione");
+          return;
+        }
+        toast.success("Utente rimosso con successo");
+      }
+      onSuccess?.();
+    } catch {
+      toast.error("Errore di rete");
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const isLoading = isAssigning || isRemoving;
 
   return (
     <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
@@ -76,7 +75,7 @@ export default function UtenteMezzo({
       <div className="ml-4 flex items-center">
         {isLoading && (
           <div className="ml-2">
-            <span className="loading loading-spinner loading-sm text-gray-200"></span>
+            <span className="loading loading-spinner loading-sm text-gray-200" />
           </div>
         )}
         <input

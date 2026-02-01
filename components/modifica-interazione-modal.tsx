@@ -1,11 +1,7 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { SubmitButton } from "@/components/submit-button";
-import { ValidationErrors } from "@/components/validation-errors";
-import { updateInterazione } from "@/lib/actions/interazioni.actions";
 
 type ModificaInterazioneModalProps = {
   interazione: {
@@ -23,12 +19,13 @@ type ModificaInterazioneModalProps = {
     } | null;
     attivita: {
       id: number;
-      date: Date;
+      date: string;
     };
   };
   mezzi: Array<{ id: number; nome: string }>;
-  attivita: Array<{ id: number; date: Date }>;
+  attivita: Array<{ id: number; date: string }>;
   onClose: () => void;
+  onSuccess?: () => void;
 };
 
 export default function ModificaInterazioneModal({
@@ -36,31 +33,52 @@ export default function ModificaInterazioneModal({
   mezzi,
   attivita,
   onClose,
+  onSuccess,
 }: ModificaInterazioneModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [ore, setOre] = useState(interazione.ore);
   const [minuti, setMinuti] = useState(interazione.minuti);
   const [note, setNote] = useState(interazione.note ?? "");
   const [mezziId, setMezziId] = useState<number | null>(
-    interazione.mezzi?.id || null,
+    interazione.mezzi?.id ?? null,
   );
   const [attivitaId, setAttivitaId] = useState(interazione.attivita.id);
-
-  const { execute, result, reset } = useAction(
-    updateInterazione.bind(null, interazione.id),
-    {
-      onSuccess: () => {
-        if (result.data?.success) {
-          toast.success("Interazione aggiornata con successo!");
-          onClose();
-        }
-      },
-    },
-  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleClose = () => {
-    reset();
+    setError(null);
     onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/interazioni/${interazione.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ore,
+          minuti,
+          mezzi_id: mezziId,
+          attivita_id: attivitaId,
+          note: note.trim() || null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Errore nell'aggiornamento");
+      }
+      toast.success("Interazione aggiornata con successo!");
+      handleClose();
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore sconosciuto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -71,7 +89,7 @@ export default function ModificaInterazioneModal({
     <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Modifica interazione</h3>
-        <form action={execute}>
+        <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label
               className="block font-medium mb-1 text-sm"
@@ -99,7 +117,7 @@ export default function ModificaInterazioneModal({
               id={`mezzi-interazione-${interazione.id}`}
               className="select select-bordered w-full"
               name="mezzi_id"
-              value={mezziId || ""}
+              value={mezziId ?? ""}
               onChange={(e) =>
                 setMezziId(e.target.value ? Number(e.target.value) : null)
               }
@@ -199,7 +217,9 @@ export default function ModificaInterazioneModal({
             ></textarea>
           </div>
 
-          <ValidationErrors result={result} />
+          {error && (
+            <p className="mt-2 text-sm text-error">{error}</p>
+          )}
           <div className="modal-action">
             <button
               type="button"
@@ -208,9 +228,16 @@ export default function ModificaInterazioneModal({
             >
               Annulla
             </button>
-            <SubmitButton className="btn btn-primary">
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting && (
+                <span className="loading loading-spinner loading-xs" />
+              )}
               Salva modifiche
-            </SubmitButton>
+            </button>
           </div>
         </form>
       </div>

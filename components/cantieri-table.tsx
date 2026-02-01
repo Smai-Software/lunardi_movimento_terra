@@ -8,9 +8,11 @@ import {
   ChevronsRight,
   ChevronsUpDown,
   ChevronUp,
+  Pencil,
   Search,
 } from "lucide-react";
 import Link from "next/link";
+import useSWR from "swr";
 import {
   parseAsInteger,
   parseAsString,
@@ -19,14 +21,26 @@ import {
 } from "nuqs";
 import { useMemo, useState } from "react";
 import ModificaCantiereModal from "@/components/modifica-cantiere-modal";
+import { fetcher } from "@/lib/api-fetcher";
 
-import type { Cantiere } from "@/lib/data/cantieri.data";
+interface Cantiere {
+  id: number;
+  nome: string;
+  descrizione: string;
+  open: boolean;
+  external_id: string;
+  totalInterazioni: number;
+  totalMilliseconds: number;
+  user_cantieri_created_byTouser?: { id: string; name: string };
+}
 
-type CantieriTableProps = {
+interface CantieriResponse {
   cantieri: Cantiere[];
-};
-
-const PAGE_SIZE = 10;
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 function CantieriFilterDrawer({
   drawerId,
@@ -45,25 +59,19 @@ function CantieriFilterDrawer({
         type="button"
         className="drawer-overlay"
         onClick={() => {
-          const checkbox = document.getElementById(
-            drawerId,
-          ) as HTMLInputElement;
+          const checkbox = document.getElementById(drawerId) as HTMLInputElement;
           if (checkbox) checkbox.checked = false;
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
-            const checkbox = document.getElementById(
-              drawerId,
-            ) as HTMLInputElement;
+            const checkbox = document.getElementById(drawerId) as HTMLInputElement;
             if (checkbox) checkbox.checked = false;
           }
         }}
         aria-label="Chiudi filtro"
-      ></button>
+      />
       <div className="menu p-4 w-80 min-h-full bg-base-100">
         <h2 className="text-lg font-bold mb-4">Filtra cantieri</h2>
-
-        {/* Filtro Stato Cantiere */}
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-2">Stato Cantiere</h3>
           <div className="form-control mb-2">
@@ -160,8 +168,11 @@ function SortHeader({
   );
 }
 
-export default function CantieriTable({ cantieri }: CantieriTableProps) {
-  const [search, setSearch] = useQueryState("q", parseAsString.withDefault(""));
+export default function CantieriTable() {
+  const [search, setSearch] = useQueryState(
+    "q",
+    parseAsString.withDefault("").withOptions({ throttleMs: 300 }),
+  );
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [sortBy, setSortBy] = useQueryState(
     "sortBy",
@@ -185,6 +196,24 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
     useState<Cantiere | null>(null);
   const drawerId = "cantieri-filter-drawer";
 
+  const openParam =
+    filterStatus === "open" ? "true" : filterStatus === "closed" ? "false" : "";
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    params.set("limit", "10");
+    if (search) params.set("search", search);
+    params.set("sortBy", sortBy);
+    params.set("sortOrder", sortDir);
+    if (openParam) params.set("open", openParam);
+    return `/api/cantieri?${params.toString()}`;
+  }, [page, search, sortBy, sortDir, openParam]);
+
+  const { data, error, isLoading, mutate } = useSWR<CantieriResponse>(apiUrl, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+  });
+
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filterStatus !== "all") count++;
@@ -205,72 +234,17 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
       setSortBy(col, { history: "push" });
       setSortDir("asc", { history: "push" });
     }
-    setPage(1, { history: "push" }); // Reset to first page when sorting changes
+    setPage(1, { history: "push" });
   };
 
-  const filtered = useMemo(() => {
-    let arr = cantieri;
-
-    // Filter by status
-    if (filterStatus !== "all") {
-      if (filterStatus === "open") {
-        arr = arr.filter((c) => c.open === true);
-      } else if (filterStatus === "closed") {
-        arr = arr.filter((c) => c.open === false);
-      }
-    }
-
-    // Filter by search text
-    if (search) {
-      const s = search.toLowerCase();
-      arr = arr.filter(
-        (c) =>
-          c.nome.toLowerCase().includes(s) ||
-          c.descrizione.toLowerCase().includes(s) ||
-          c.user_cantieri_created_byTouser.name.toLowerCase().includes(s),
-      );
-    }
-
-    return arr;
-  }, [search, cantieri, filterStatus]);
-
-  const sorted = useMemo(() => {
-    const arr = [...filtered];
-    arr.sort((a, b) => {
-      let vA: string = "";
-      let vB: string = "";
-      if (sortBy === "nome") {
-        vA = a.nome.toLowerCase();
-        vB = b.nome.toLowerCase();
-      } else if (sortBy === "descrizione") {
-        vA = a.descrizione.toLowerCase();
-        vB = b.descrizione.toLowerCase();
-      } else if (sortBy === "open") {
-        vA = a.open ? "aperto" : "chiuso";
-        vB = b.open ? "aperto" : "chiuso";
-      } else if (sortBy === "totalInterazioni") {
-        vA = a.totalInterazioni.toString();
-        vB = b.totalInterazioni.toString();
-      } else if (sortBy === "totalMilliseconds") {
-        vA = a.totalMilliseconds.toString();
-        vB = b.totalMilliseconds.toString();
-      }
-      if (vA < vB) return sortDir === "asc" ? -1 : 1;
-      if (vA > vB) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-    return arr;
-  }, [filtered, sortBy, sortDir]);
-
-  const pageCount = Math.ceil(sorted.length / PAGE_SIZE);
-  const paginated = useMemo(
-    () => sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [page, sorted],
-  );
-
-  const handlePage = (newPage: number) => {
-    setPage(newPage, { history: "push" });
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    if (page > 1) setPage(1, { history: "push" });
   };
+
+  const cantieri = data?.cantieri ?? [];
+  const totalPages = data?.totalPages ?? 0;
+  const total = data?.total ?? 0;
 
   return (
     <div>
@@ -281,10 +255,7 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
               type="text"
               placeholder="Cerca per nome o descrizione"
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value, { history: "push" });
-                setPage(1, { history: "push" });
-              }}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="input input-bordered grow join-item"
             />
             <button type="button" className="btn join-item">
@@ -347,17 +318,29 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8">
+                    <span className="loading loading-spinner loading-lg" />
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8 text-error">
+                    Errore nel caricamento dei dati
+                  </td>
+                </tr>
+              ) : cantieri.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="text-center text-base-content/60 py-8"
                   >
                     Nessun cantiere trovato.
                   </td>
                 </tr>
               ) : (
-                paginated.map((c) => (
+                cantieri.map((c) => (
                   <tr key={c.id}>
                     <td>{c.nome}</td>
                     <td>{c.descrizione}</td>
@@ -380,12 +363,23 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
                       })()}
                     </td>
                     <td>
-                      <Link
-                        href={`/admin/cantieri/${c.external_id}`}
-                        className="btn btn-sm btn-ghost"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </Link>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-ghost"
+                          onClick={() => setSelectedCantiereForEdit(c)}
+                          aria-label={`Modifica ${c.nome}`}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <Link
+                          href={`/admin/cantieri/${c.id}`}
+                          className="btn btn-sm btn-ghost"
+                          aria-label={`Dettaglio ${c.nome}`}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -401,17 +395,16 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
         />
       </div>
 
-      {/* Paginazione */}
-      {pageCount > 1 && (
+      {totalPages > 1 && (
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-base-content/70">
-            Pagina {page} di {pageCount}
+            Pagina {page} di {totalPages} ({total} cantieri totali)
           </div>
           <div className="flex gap-1">
             <button
               type="button"
               className="btn btn-sm btn-ghost"
-              onClick={() => handlePage(1)}
+              onClick={() => setPage(1, { history: "push" })}
               disabled={page === 1}
               title="Prima pagina"
             >
@@ -420,7 +413,7 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
             <button
               type="button"
               className="btn btn-sm btn-ghost"
-              onClick={() => handlePage(page - 1)}
+              onClick={() => setPage(Math.max(1, page - 1), { history: "push" })}
               disabled={page === 1}
               title="Pagina precedente"
             >
@@ -429,8 +422,10 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
             <button
               type="button"
               className="btn btn-sm btn-ghost"
-              onClick={() => handlePage(page + 1)}
-              disabled={page === pageCount}
+              onClick={() =>
+                setPage(Math.min(totalPages, page + 1), { history: "push" })
+              }
+              disabled={page === totalPages}
               title="Pagina successiva"
             >
               <ChevronRight className="size-4" />
@@ -438,8 +433,8 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
             <button
               type="button"
               className="btn btn-sm btn-ghost"
-              onClick={() => handlePage(pageCount)}
-              disabled={page === pageCount}
+              onClick={() => setPage(totalPages, { history: "push" })}
+              disabled={page === totalPages}
               title="Ultima pagina"
             >
               <ChevronsRight className="size-4" />
@@ -457,6 +452,7 @@ export default function CantieriTable({ cantieri }: CantieriTableProps) {
             open: selectedCantiereForEdit.open,
           }}
           onClose={() => setSelectedCantiereForEdit(null)}
+          onSuccess={() => mutate()}
         />
       )}
     </div>
