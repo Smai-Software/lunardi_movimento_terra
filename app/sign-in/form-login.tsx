@@ -22,7 +22,6 @@ export default function FormLogin() {
       const { data, error: signInError } = await authClient.signIn.email({
         email,
         password,
-        callbackURL: "/admin",
       });
       if (signInError) {
         setError(signInError.message ?? "Email o password non validi");
@@ -30,7 +29,7 @@ export default function FormLogin() {
       }
       if (data) {
         toast.success("Login effettuato con successo");
-        router.push(data.url ?? "/admin");
+        router.push("/");
         router.refresh();
       }
     } catch {
