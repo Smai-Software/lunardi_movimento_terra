@@ -73,7 +73,7 @@ function AttivitaFilterDrawer({
   setPage: (val: number, options?: { history: "push" }) => void;
 }) {
   return (
-    <div className="drawer-side">
+    <div className="drawer-side z-50">
       <button
         type="button"
         className="drawer-overlay"
@@ -89,42 +89,44 @@ function AttivitaFilterDrawer({
         }}
         aria-label="Chiudi filtro"
       />
-      <div className="menu p-4 w-80 min-h-full bg-base-100">
+      <div className="menu p-4 w-80 min-h-full bg-base-100 text-black">
         <h2 className="text-lg font-bold mb-4">Filtra attività</h2>
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-2">Utente</h3>
-          <div className="form-control mb-2">
-            <label className="label cursor-pointer">
-              <input
-                type="radio"
-                name="user-filter"
-                className="radio radio-sm"
-                checked={filterUser === "all"}
-                onChange={() => {
-                  setFilterUser("all", { history: "push" });
-                  setPage(1, { history: "push" });
-                }}
-              />
-              <span className="label-text">Tutti gli utenti</span>
-            </label>
-          </div>
-          {users.map((user) => (
-            <div key={user.id} className="form-control mb-2">
+          <div className="max-h-60 overflow-y-auto">
+            <div className="form-control mb-2">
               <label className="label cursor-pointer">
                 <input
                   type="radio"
                   name="user-filter"
                   className="radio radio-sm"
-                  checked={filterUser === user.id}
+                  checked={filterUser === "all"}
                   onChange={() => {
-                    setFilterUser(user.id, { history: "push" });
+                    setFilterUser("all", { history: "push" });
                     setPage(1, { history: "push" });
                   }}
                 />
-                <span className="label-text">{user.name}</span>
+                <span className="label-text">Tutti gli utenti</span>
               </label>
             </div>
-          ))}
+            {users.map((user) => (
+              <div key={user.id} className="form-control mb-2">
+                <label className="label cursor-pointer">
+                  <input
+                    type="radio"
+                    name="user-filter"
+                    className="radio radio-sm"
+                    checked={filterUser === user.id}
+                    onChange={() => {
+                      setFilterUser(user.id, { history: "push" });
+                      setPage(1, { history: "push" });
+                    }}
+                  />
+                  <span className="label-text">{user.name}</span>
+                </label>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-2">Periodo</h3>
@@ -331,7 +333,7 @@ export default function AttivitaTable() {
         </label>
       </div>
 
-      <div className="drawer drawer-end z-10">
+      <div className="drawer drawer-end z-50">
         <input id={drawerId} type="checkbox" className="drawer-toggle" />
         <div className="overflow-x-auto rounded-lg shadow">
           <table className="table w-full">

@@ -55,7 +55,7 @@ function CantieriFilterDrawer({
   setPage: (val: number, options?: { history: "push" }) => void;
 }) {
   return (
-    <div className="drawer-side">
+    <div className="drawer-side z-50">
       <button
         type="button"
         className="drawer-overlay"
@@ -71,7 +71,7 @@ function CantieriFilterDrawer({
         }}
         aria-label="Chiudi filtro"
       />
-      <div className="menu p-4 w-80 min-h-full bg-base-100">
+      <div className="menu p-4 w-80 min-h-full bg-base-100 text-black">
         <h2 className="text-lg font-bold mb-4">Filtra cantieri</h2>
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-2">Stato Cantiere</h3>
@@ -290,7 +290,7 @@ export default function CantieriTable() {
         </label>
       </div>
 
-      <div className="drawer drawer-end z-10">
+      <div className="drawer drawer-end z-50">
         <input id={drawerId} type="checkbox" className="drawer-toggle" />
         <div className="overflow-x-auto rounded-lg shadow">
           <table className="table w-full">

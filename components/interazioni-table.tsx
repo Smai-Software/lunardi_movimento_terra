@@ -77,7 +77,7 @@ function InterazioniFilterDrawer({
   setPage: (val: number, options?: { history: "push" }) => void;
 }) {
   return (
-    <div className="drawer-side">
+    <div className="drawer-side z-50">
       <button
         type="button"
         className="drawer-overlay"
@@ -97,96 +97,100 @@ function InterazioniFilterDrawer({
         }}
         aria-label="Chiudi filtro"
       ></button>
-      <div className="menu p-4 w-80 min-h-full bg-base-100">
+      <div className="menu p-4 w-80 min-h-full bg-base-100 text-black">
         <h2 className="text-lg font-bold mb-4">Filtra interazioni</h2>
 
         {/* Filtro Utente */}
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-2">Utente</h3>
-          <div className="form-control mb-2">
-            <label className="label cursor-pointer">
-              <input
-                type="radio"
-                name="user-filter"
-                className="radio radio-sm"
-                checked={filterUser === "all"}
-                onChange={() => {
-                  setFilterUser("all", { history: "push" });
-                  setPage(1, { history: "push" });
-                }}
-              />
-              <span className="label-text">Tutti gli utenti</span>
-            </label>
-          </div>
-          {users.map((user) => (
-            <div key={user.id} className="form-control mb-2">
+          <div className="max-h-60 overflow-y-auto">
+            <div className="form-control mb-2">
               <label className="label cursor-pointer">
                 <input
                   type="radio"
                   name="user-filter"
                   className="radio radio-sm"
-                  checked={filterUser === user.id}
+                  checked={filterUser === "all"}
                   onChange={() => {
-                    setFilterUser(user.id, { history: "push" });
+                    setFilterUser("all", { history: "push" });
                     setPage(1, { history: "push" });
                   }}
                 />
-                <span className="label-text">{user.name}</span>
+                <span className="label-text">Tutti gli utenti</span>
               </label>
             </div>
-          ))}
+            {users.map((user) => (
+              <div key={user.id} className="form-control mb-2">
+                <label className="label cursor-pointer">
+                  <input
+                    type="radio"
+                    name="user-filter"
+                    className="radio radio-sm"
+                    checked={filterUser === user.id}
+                    onChange={() => {
+                      setFilterUser(user.id, { history: "push" });
+                      setPage(1, { history: "push" });
+                    }}
+                  />
+                  <span className="label-text">{user.name}</span>
+                </label>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Filtro Mezzo */}
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-2">Mezzo</h3>
-          <div className="form-control mb-2">
-            <label className="label cursor-pointer">
-              <input
-                type="radio"
-                name="mezzo-filter"
-                className="radio radio-sm"
-                checked={filterMezzo === "all"}
-                onChange={() => {
-                  setFilterMezzo("all", { history: "push" });
-                  setPage(1, { history: "push" });
-                }}
-              />
-              <span className="label-text">Tutti i mezzi</span>
-            </label>
-          </div>
-          <div className="form-control mb-2">
-            <label className="label cursor-pointer">
-              <input
-                type="radio"
-                name="mezzo-filter"
-                className="radio radio-sm"
-                checked={filterMezzo === "none"}
-                onChange={() => {
-                  setFilterMezzo("none", { history: "push" });
-                  setPage(1, { history: "push" });
-                }}
-              />
-              <span className="label-text">Nessun mezzo</span>
-            </label>
-          </div>
-          {mezzi.map((mezzo) => (
-            <div key={mezzo.id} className="form-control mb-2">
+          <div className="max-h-60 overflow-y-auto">
+            <div className="form-control mb-2">
               <label className="label cursor-pointer">
                 <input
                   type="radio"
                   name="mezzo-filter"
                   className="radio radio-sm"
-                  checked={filterMezzo === mezzo.id.toString()}
+                  checked={filterMezzo === "all"}
                   onChange={() => {
-                    setFilterMezzo(mezzo.id.toString(), { history: "push" });
+                    setFilterMezzo("all", { history: "push" });
                     setPage(1, { history: "push" });
                   }}
                 />
-                <span className="label-text">{mezzo.nome}</span>
+                <span className="label-text">Tutti i mezzi</span>
               </label>
             </div>
-          ))}
+            <div className="form-control mb-2">
+              <label className="label cursor-pointer">
+                <input
+                  type="radio"
+                  name="mezzo-filter"
+                  className="radio radio-sm"
+                  checked={filterMezzo === "none"}
+                  onChange={() => {
+                    setFilterMezzo("none", { history: "push" });
+                    setPage(1, { history: "push" });
+                  }}
+                />
+                <span className="label-text">Nessun mezzo</span>
+              </label>
+            </div>
+            {mezzi.map((mezzo) => (
+              <div key={mezzo.id} className="form-control mb-2">
+                <label className="label cursor-pointer">
+                  <input
+                    type="radio"
+                    name="mezzo-filter"
+                    className="radio radio-sm"
+                    checked={filterMezzo === mezzo.id.toString()}
+                    onChange={() => {
+                      setFilterMezzo(mezzo.id.toString(), { history: "push" });
+                      setPage(1, { history: "push" });
+                    }}
+                  />
+                  <span className="label-text">{mezzo.nome}</span>
+                </label>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Filtro Data */}
@@ -454,7 +458,7 @@ export default function InterazioniTable({
         </label>
       </div>
 
-      <div className="drawer drawer-end z-10">
+      <div className="drawer drawer-end z-50">
         <input id={drawerId} type="checkbox" className="drawer-toggle" />
         <div className="overflow-x-auto rounded-lg shadow">
           <table className="table w-full">
