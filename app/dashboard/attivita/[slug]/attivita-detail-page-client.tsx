@@ -1,7 +1,7 @@
 "use client";
 
 import { notFound } from "next/navigation";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import Link from "next/link";
 import AttivitaInfoCard from "@/components/attivita-info-card";
 import InterazioniTableAttivita from "@/components/interazioni-table-attivita";
@@ -44,6 +44,7 @@ export default function UserAttivitaDetailPageClient({
   slug: string;
   userId: string;
 }) {
+  const { mutate } = useSWRConfig();
   const { data: attivitaData, error: attivitaError } = useSWR<AttivitaBySlug>(
     slug ? `/api/attivita/${slug}` : null,
     fetcher,
@@ -60,7 +61,7 @@ export default function UserAttivitaDetailPageClient({
   );
 
   const { data: mezziData } = useSWR<MezziResponse>(
-    "/api/mezzi?limit=500",
+    userId ? `/api/mezzi?userId=${userId}&limit=500` : null,
     fetcher,
     { revalidateOnFocus: false },
   );
@@ -97,7 +98,7 @@ export default function UserAttivitaDetailPageClient({
         </Link>
       </div>
 
-      <AttivitaInfoCard attivita={attivitaForCard} />
+      <AttivitaInfoCard attivita={attivitaForCard} restrictDateRange />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <TotalHoursFromInterazioniCard interazioni={interazioni} />
@@ -107,7 +108,15 @@ export default function UserAttivitaDetailPageClient({
       <div className="card bg-base-100 shadow-xl border border-gray-200">
         <div className="card-body">
           <h2 className="text-xl font-bold mb-4">Interazioni</h2>
-          <InterazioniTableAttivita interazioni={interazioni} mezzi={mezzi} />
+          <InterazioniTableAttivita
+          interazioni={interazioni}
+          mezzi={mezzi}
+          onSuccess={() => {
+            if (attivitaId)
+              mutate(`/api/interazioni?attivitaId=${attivitaId}&limit=500`);
+            if (slug) mutate(`/api/attivita/${slug}`);
+          }}
+        />
         </div>
       </div>
     </div>

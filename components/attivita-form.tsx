@@ -180,9 +180,18 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
     setCantieri(updatedCantieri);
   };
 
+  const getTodayLocalDateString = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
   const handleSubmit = async () => {
     if (!selectedUserId || !selectedDate || cantieri.length === 0) {
       toast.error("Compila tutti i campi obbligatori");
+      return;
+    }
+    if (selectedDate > getTodayLocalDateString()) {
+      toast.error("La data non può essere futura");
       return;
     }
 
@@ -257,6 +266,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                   className="input input-bordered w-full"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
+                  max={getTodayLocalDateString()}
                   required
                 />
               </div>

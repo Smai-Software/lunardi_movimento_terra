@@ -12,11 +12,14 @@ type AttivitaInfoCardProps = {
     user: { id: string; name: string };
   };
   onAttivitaUpdated?: () => void;
+  /** Quando true (dashboard user), in "Modifica data" limita a max 7 giorni indietro e non futura */
+  restrictDateRange?: boolean;
 };
 
 export default function AttivitaInfoCard({
   attivita,
   onAttivitaUpdated,
+  restrictDateRange = false,
 }: AttivitaInfoCardProps) {
   const [showModificaAttivita, setShowModificaAttivita] = useState(false);
   const [showEliminaAttivita, setShowEliminaAttivita] = useState(false);
@@ -56,6 +59,7 @@ export default function AttivitaInfoCard({
           }}
           onClose={() => setShowModificaAttivita(false)}
           onSuccess={onAttivitaUpdated}
+          restrictDateRange={restrictDateRange}
         />
       )}
 

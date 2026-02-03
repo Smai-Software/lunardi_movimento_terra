@@ -180,6 +180,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const toLocalDateString = (d: Date) => {
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    };
+
+    if (session.user.role === "user") {
+      const todayStr = toLocalDateString(new Date());
+      if (toLocalDateString(parsedDate) > todayStr) {
+        return NextResponse.json(
+          { error: "La data non può essere futura" },
+          { status: 400 },
+        );
+      }
+      const minDate = new Date();
+      minDate.setDate(minDate.getDate() - 7);
+      const minDateStr = toLocalDateString(minDate);
+      if (toLocalDateString(parsedDate) < minDateStr) {
+        return NextResponse.json(
+          { error: "La data non può essere più di 7 giorni indietro" },
+          { status: 400 },
+        );
+      }
+    }
+
     const userId = session.user.id;
 
     if (interazioni && Array.isArray(interazioni) && interazioni.length > 0) {

@@ -12,12 +12,15 @@ type ModificaAttivitaModalProps = {
   };
   onClose: () => void;
   onSuccess?: () => void;
+  /** Quando true (dashboard user), limita la data a max 7 giorni indietro e non futura */
+  restrictDateRange?: boolean;
 };
 
 export default function ModificaAttivitaModal({
   attivita,
   onClose,
   onSuccess,
+  restrictDateRange = false,
 }: ModificaAttivitaModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedDate, setSelectedDate] = useState(attivita.date);
@@ -33,6 +36,17 @@ export default function ModificaAttivitaModal({
     dialogRef.current?.showModal();
   }, []);
 
+  const getTodayLocalDateString = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  const getMinDateString = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
   const handleClose = () => {
     setError(null);
     onClose();
@@ -40,6 +54,16 @@ export default function ModificaAttivitaModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (restrictDateRange) {
+      if (selectedDate > getTodayLocalDateString()) {
+        toast.error("La data non può essere futura");
+        return;
+      }
+      if (selectedDate < getMinDateString()) {
+        toast.error("La data non può essere più di 7 giorni indietro");
+        return;
+      }
+    }
     setIsSubmitting(true);
     setError(null);
     try {
@@ -84,6 +108,8 @@ export default function ModificaAttivitaModal({
               className="input input-bordered w-full"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
+              min={restrictDateRange ? getMinDateString() : undefined}
+              max={restrictDateRange ? getTodayLocalDateString() : undefined}
               required
             />
           </div>

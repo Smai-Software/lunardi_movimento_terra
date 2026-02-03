@@ -154,9 +154,28 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     setCantieri(updatedCantieri);
   };
 
+  const getTodayLocalDateString = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  const getMinDateString = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
   const handleSubmit = async () => {
     if (!selectedDate || cantieri.length === 0) {
       toast.error("Compila tutti i campi obbligatori");
+      return;
+    }
+    if (selectedDate > getTodayLocalDateString()) {
+      toast.error("La data non può essere futura");
+      return;
+    }
+    if (selectedDate < getMinDateString()) {
+      toast.error("La data non può essere più di 7 giorni indietro");
       return;
     }
 
@@ -232,6 +251,8 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
                   className="input input-bordered w-full"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
+                  min={getMinDateString()}
+                  max={getTodayLocalDateString()}
                   required
                 />
               </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 
@@ -25,6 +25,7 @@ export default function EliminaAttivitaModal({
   const [error, setError] = useState<string | null>(null);
   const { mutate } = useSWRConfig();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     dialogRef.current?.showModal();
@@ -52,7 +53,7 @@ export default function EliminaAttivitaModal({
       handleClose();
       mutate((key) => typeof key === "string" && key.startsWith("/api/attivita"));
       onSuccess?.();
-      router.push("/admin/attivita");
+      router.push(pathname.includes("/dashboard") ? "/dashboard?tab=list" : "/admin/attivita");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Errore sconosciuto");
     } finally {
