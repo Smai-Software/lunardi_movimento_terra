@@ -36,11 +36,8 @@ export default function DashboardLayout({
           aria-label="close sidebar"
           className="drawer-overlay"
         ></label>
-        <ul className="menu bg-base-200 text-base-content min-h-full w-fit p-4 space-y-2 text-base">
-          <li className="mt-1 font-semibold text-sm">
-            Lunardi Movimento Terra
-          </li>
-          <NavigationItem href="/admin" iconName="home" className="mt-8">
+        <ul className="menu bg-base-200 text-base-content min-h-full w-fit px-4 py-3 space-y-2 text-base">
+          <NavigationItem href="/admin" iconName="home">
             Dashboard
           </NavigationItem>
           <NavigationItem href="/admin/attivita" iconName="building2">

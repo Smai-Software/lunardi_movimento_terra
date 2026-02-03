@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import AggiungiAssenzaModalForm from "@/components/aggiungi-assenza-modal-form";
 import AggiungiInterazioneModalForm from "@/components/aggiungi-interazione-modal-form";
 import { Loader2Icon, TrashIcon } from "lucide-react";
 
@@ -34,6 +35,22 @@ type CantiereWithInterazioni = {
   interazioni: Interazione[];
 };
 
+type Assenza = {
+  localId: string;
+  tipo: string;
+  ore: number;
+  minuti: number;
+  note: string;
+};
+
+const ASSENZA_TIPO_LABELS: Record<string, string> = {
+  FERIE: "Ferie",
+  PERMESSO: "Permesso",
+  CASSA_INTEGRAZIONE: "Cassa integrazione",
+  MUTUA: "Mutua",
+  PATERNITA: "Paternità",
+};
+
 type UserAttivitaFormProps = {
   userId: string;
 };
@@ -45,6 +62,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     new Date().toISOString().split("T")[0],
   );
   const [cantieri, setCantieri] = useState<CantiereWithInterazioni[]>([]);
+  const [assenze, setAssenze] = useState<Assenza[]>([]);
 
   const [availableCantieri, setAvailableCantieri] = useState<Cantiere[]>([]);
   const [availableMezzi, setAvailableMezzi] = useState<Mezzo[]>([]);
@@ -154,6 +172,21 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     setCantieri(updatedCantieri);
   };
 
+  const addAssenza = (tipo: string, ore: number, minuti: number, note: string) => {
+    if (ore < 0 || minuti < 0 || minuti > 59) {
+      toast.error("Compila tutti i campi correttamente");
+      return;
+    }
+    setAssenze((prev) => [
+      ...prev,
+      { localId: crypto.randomUUID(), tipo, ore, minuti, note },
+    ]);
+  };
+
+  const removeAssenza = (index: number) => {
+    setAssenze((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const getTodayLocalDateString = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -166,8 +199,10 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
   };
 
   const handleSubmit = async () => {
-    if (!selectedDate || cantieri.length === 0) {
-      toast.error("Compila tutti i campi obbligatori");
+    const hasInterazioni = cantieri.length > 0;
+    const hasAssenze = assenze.length > 0;
+    if (!selectedDate || (!hasInterazioni && !hasAssenze)) {
+      toast.error("Compila tutti i campi obbligatori e aggiungi almeno un'interazione o un'assenza");
       return;
     }
     if (selectedDate > getTodayLocalDateString()) {
@@ -189,6 +224,13 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
       })),
     );
 
+    const allAssenze = assenze.map((a) => ({
+      tipo: a.tipo,
+      ore: a.ore,
+      minuti: a.minuti,
+      note: a.note,
+    })); // exclude localId when sending to API
+
     setIsSubmitting(true);
     setError(null);
     try {
@@ -198,7 +240,8 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
         body: JSON.stringify({
           date: selectedDate,
           user_id: userId,
-          interazioni: allInterazioni,
+          interazioni: hasInterazioni ? allInterazioni : [],
+          assenze: hasAssenze ? allAssenze : [],
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -215,7 +258,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
   };
 
   const getTotalHours = () => {
-    const totalMinutes = cantieri.reduce((total, cantiere) => {
+    const interazioniMinutes = cantieri.reduce((total, cantiere) => {
       return (
         total +
         cantiere.interazioni.reduce((cantiereTotal, interazione) => {
@@ -223,7 +266,11 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
         }, 0)
       );
     }, 0);
-
+    const assenzeMinutes = assenze.reduce(
+      (total, a) => total + a.ore * 60 + a.minuti,
+      0,
+    );
+    const totalMinutes = interazioniMinutes + assenzeMinutes;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
 
@@ -260,22 +307,21 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
           </div>
 
           <div className="mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-xl font-semibold">Interazioni</h2>
-              <AggiungiInterazioneModalForm
-                availableCantieri={availableCantieri}
-                availableMezzi={availableMezzi}
-                loadingCantieri={loadingCantieri}
-                loadingMezzi={loadingMezzi}
-                onAddInterazione={addInterazione}
-              />
-            </div>
-
-            {cantieri.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="font-semibold">Interazioni Aggiunte</h3>
+            {/* Sezione Interazioni: plus + titolo, poi tabella direttamente sotto */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <AggiungiInterazioneModalForm
+                  availableCantieri={availableCantieri}
+                  availableMezzi={availableMezzi}
+                  loadingCantieri={loadingCantieri}
+                  loadingMezzi={loadingMezzi}
+                  onAddInterazione={addInterazione}
+                />
+                <h2 className="text-xl font-semibold">Interazioni</h2>
+              </div>
+              {cantieri.length > 0 && (
                 <div className="overflow-x-auto">
-                  <table className="table table-zebra w-full">
+                  <table className="table w-full">
                     <thead>
                       <tr>
                         <th>Cantiere</th>
@@ -325,24 +371,66 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
                     </tbody>
                   </table>
                 </div>
+              )}
+            </div>
 
-                {cantieri.length > 0 && (
-                  <div className="mt-4">
-                    <div className="card bg-primary text-primary-content">
-                      <div className="card-body py-3">
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold">Totale Ore:</span>
-                          <span className="text-lg font-bold">
-                            {getTotalHours().hours.toString().padStart(2, "0")}:
-                            {getTotalHours()
-                              .minutes.toString()
-                              .padStart(2, "0")}
-                          </span>
-                        </div>
-                      </div>
+            {/* Sezione Assenze: plus + titolo, poi tabella direttamente sotto */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <AggiungiAssenzaModalForm onAddAssenza={addAssenza} />
+                <h2 className="text-xl font-semibold">Assenze</h2>
+              </div>
+              {assenze.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="table w-full">
+                    <thead>
+                      <tr>
+                        <th>Tipo</th>
+                        <th>Tempo</th>
+                        <th>Azioni</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {assenze.map((assenza, index) => (
+                        <tr key={assenza.localId}>
+                          <td className="font-medium">
+                            {ASSENZA_TIPO_LABELS[assenza.tipo] ?? assenza.tipo}
+                          </td>
+                          <td>
+                            {assenza.ore}h {assenza.minuti}m
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline btn-error"
+                              onClick={() => removeAssenza(index)}
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {(cantieri.length > 0 || assenze.length > 0) && (
+              <div className="mt-4">
+                <div className="card bg-primary text-primary-content">
+                  <div className="card-body py-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">Totale ore: </span>
+                      <span className="text-lg font-bold">
+                        {getTotalHours().hours.toString().padStart(2, "0")}:
+                        {getTotalHours()
+                          .minutes.toString()
+                          .padStart(2, "0")}
+                      </span>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             )}
           </div>
@@ -360,7 +448,11 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
               type="button"
               className="btn btn-primary"
               onClick={handleSubmit}
-              disabled={!selectedDate || cantieri.length === 0 || isSubmitting}
+              disabled={
+                !selectedDate ||
+                (cantieri.length === 0 && assenze.length === 0) ||
+                isSubmitting
+              }
             >
               {isSubmitting ? (
                 <Loader2Icon className="w-4 h-4 animate-spin" />

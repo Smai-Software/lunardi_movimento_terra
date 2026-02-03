@@ -174,10 +174,10 @@ function SortHeader({
   onSort,
 }: {
   label: string;
-  column: "date" | "user" | "totalMilliseconds";
+  column: "date" | "user";
   sortBy: string;
   sortDir: "asc" | "desc";
-  onSort: (col: "date" | "user" | "totalMilliseconds") => void;
+  onSort: (col: "date" | "user") => void;
 }) {
   return (
     <th className="cursor-pointer select-none" onClick={() => onSort(column)}>
@@ -226,9 +226,7 @@ export default function AttivitaTable() {
 
   const [sortBy, setSortBy] = useQueryState(
     "sortBy",
-    parseAsStringLiteral(["date", "user", "totalMilliseconds"]).withDefault(
-      "date",
-    ),
+    parseAsStringLiteral(["date", "user"]).withDefault("date"),
   );
   const [sortDir, setSortDir] = useQueryState(
     "sortDir",
@@ -291,7 +289,7 @@ export default function AttivitaTable() {
     return count;
   }, [filterUser, filterDateFrom, filterDateTo]);
 
-  const handleSort = (col: "date" | "user" | "totalMilliseconds") => {
+  const handleSort = (col: "date" | "user") => {
     if (sortBy === col) {
       setSortDir(sortDir === "asc" ? "desc" : "asc", { history: "push" });
     } else {
@@ -355,13 +353,7 @@ export default function AttivitaTable() {
                 />
                 <th># Cantieri</th>
                 <th># Mezzi</th>
-                <SortHeader
-                  label="Totale ore"
-                  column="totalMilliseconds"
-                  sortBy={sortBy}
-                  sortDir={sortDir}
-                  onSort={handleSort}
-                />
+                <th>Totale ore</th>
                 <th />
               </tr>
             </thead>

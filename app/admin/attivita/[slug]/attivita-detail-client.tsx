@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import AggiungiAssenzaModal from "@/components/aggiungi-assenza-modal";
 import AggiungiInterazioneModal from "@/components/aggiungi-interazione-modal";
+import AssenzeTableAttivita from "@/components/assenze-table-attivita";
 import InterazioniTableAttivita from "@/components/interazioni-table-attivita";
+
 type AttivitaDetailClientProps = {
   attivita: {
     id: number;
@@ -37,24 +40,38 @@ type AttivitaDetailClientProps = {
     mezzi: { id: number; nome: string } | null;
     attivita: { id: number; date: string };
   }>;
+  assenze: Array<{
+    id: number;
+    tipo: string;
+    ore: number;
+    minuti: number;
+    note: string | null;
+    created_at: string;
+    user: { id: string; name: string };
+    attivita: { id: number; date: string };
+  }>;
   users: Array<{ id: string; name: string }>;
   mezzi: Array<{ id: number; nome: string }>;
   cantieri: Array<{ id: number; nome: string }>;
   onInterazioniChange?: () => void;
+  onAssenzeChange?: () => void;
 };
 
 export default function AttivitaDetailClient({
   attivita,
   interazioni,
+  assenze,
   mezzi,
   cantieri,
   onInterazioniChange,
+  onAssenzeChange,
 }: AttivitaDetailClientProps) {
   const [showAggiungiInterazione, setShowAggiungiInterazione] = useState(false);
+  const [showAggiungiAssenza, setShowAggiungiAssenza] = useState(false);
 
   return (
     <>
-      {/* Interazioni Section Header */}
+      {/* Interazioni Section */}
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-bold">Interazioni</h2>
         <button
@@ -66,14 +83,12 @@ export default function AttivitaDetailClient({
         </button>
       </div>
 
-      {/* Interazioni Table */}
       <InterazioniTableAttivita
         interazioni={interazioni}
         mezzi={mezzi}
         onSuccess={onInterazioniChange}
       />
 
-      {/* Aggiungi Interazione Modal */}
       {showAggiungiInterazione && (
         <AggiungiInterazioneModal
           attivitaId={attivita.id}
@@ -82,6 +97,29 @@ export default function AttivitaDetailClient({
           mezzi={mezzi}
           onClose={() => setShowAggiungiInterazione(false)}
           onSuccess={onInterazioniChange}
+        />
+      )}
+
+      {/* Assenze Section */}
+      <div className="mb-6 flex justify-between items-center mt-10">
+        <h2 className="text-2xl font-bold">Assenze</h2>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setShowAggiungiAssenza(true)}
+        >
+          Aggiungi Assenza
+        </button>
+      </div>
+
+      <AssenzeTableAttivita assenze={assenze} onSuccess={onAssenzeChange} />
+
+      {showAggiungiAssenza && (
+        <AggiungiAssenzaModal
+          attivitaId={attivita.id}
+          userId={attivita.user_id}
+          onClose={() => setShowAggiungiAssenza(false)}
+          onSuccess={onAssenzeChange}
         />
       )}
     </>

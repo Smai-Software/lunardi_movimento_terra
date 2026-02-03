@@ -1,13 +1,13 @@
 "use client";
 
-type InterazioneWithTempo = { tempo_totale: string | number };
+type EntryWithTempo = { tempo_totale: string | number };
 
 export default function TotalHoursFromInterazioniCard({
-  interazioni,
+  entries,
 }: {
-  interazioni: InterazioneWithTempo[];
+  entries: EntryWithTempo[];
 }) {
-  const totalMilliseconds = interazioni.reduce(
+  const totalMilliseconds = entries.reduce(
     (sum, i) => sum + Number(i.tempo_totale),
     0,
   );

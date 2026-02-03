@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
+import type { assenza_tipo } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -10,14 +11,21 @@ const MAX_LIMIT = 100;
 
 function serializeAttivita(attivita: {
   interazioni?: { tempo_totale: bigint }[];
+  assenze?: { tempo_totale: bigint }[];
   [key: string]: unknown;
 }) {
-  const { interazioni, ...rest } = attivita;
+  const { interazioni, assenze, ...rest } = attivita;
   const result = { ...rest } as Record<string, unknown>;
   if (Array.isArray(interazioni)) {
     result.interazioni = interazioni.map((i) => ({
       ...i,
       tempo_totale: typeof i.tempo_totale === "bigint" ? i.tempo_totale.toString() : i.tempo_totale,
+    }));
+  }
+  if (Array.isArray(assenze)) {
+    result.assenze = assenze.map((a) => ({
+      ...a,
+      tempo_totale: typeof a.tempo_totale === "bigint" ? a.tempo_totale.toString() : a.tempo_totale,
     }));
   }
   return result;
@@ -104,6 +112,9 @@ export async function GET(request: NextRequest) {
               tempo_totale: true,
             },
           },
+          assenze: {
+            select: { tempo_totale: true },
+          },
         },
       }),
       prisma.attivita.count({ where }),
@@ -114,10 +125,15 @@ export async function GET(request: NextRequest) {
       const uniqueMezzi = new Set(
         a.interazioni.filter((i) => i.mezzi_id).map((i) => i.mezzi_id),
       );
-      const totalMilliseconds = a.interazioni.reduce(
+      const interazioniMs = a.interazioni.reduce(
         (sum, i) => sum + Number(i.tempo_totale),
         0,
       );
+      const assenzeMs = (a.assenze ?? []).reduce(
+        (sum, ass) => sum + Number(ass.tempo_totale),
+        0,
+      );
+      const totalMilliseconds = interazioniMs + assenzeMs;
       return serializeAttivita({
         ...a,
         cantieriCount: uniqueCantieri.size,
@@ -157,7 +173,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { date, user_id, interazioni } = body;
+    const { date, user_id, interazioni, assenze } = body;
 
     if (!date || typeof date !== "string") {
       return NextResponse.json(
@@ -206,9 +222,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const userId = session.user.id;
+    const userId = session.user.id as string;
+    const hasInterazioni = interazioni && Array.isArray(interazioni) && interazioni.length > 0;
+    const hasAssenze = assenze && Array.isArray(assenze) && assenze.length > 0;
 
-    if (interazioni && Array.isArray(interazioni) && interazioni.length > 0) {
+    if (hasInterazioni || hasAssenze) {
       const result = await prisma.$transaction(async (tx) => {
         const attivita = await tx.attivita.create({
           data: {
@@ -222,38 +240,73 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        await tx.interazioni.createMany({
-          data: interazioni.map(
-            (inter: {
-              cantieri_id: number;
-              mezzi_id?: number | null;
-              ore: number;
-              minuti: number;
-              note?: string;
-            }) => {
-              const ore = Number(inter.ore) || 0;
-              const minuti = Math.min(
-                59,
-                Math.max(0, Number(inter.minuti) || 0),
-              );
-              return {
-                ore,
-                minuti,
-                tempo_totale: BigInt((ore * 60 + minuti) * 60000),
-                user_id,
-                mezzi_id: inter.mezzi_id ?? null,
-                cantieri_id: inter.cantieri_id,
-                attivita_id: attivita.id,
-                external_id: randomUUID(),
-                created_at: new Date(),
-                last_update_at: new Date(),
-                created_by: userId,
-                last_update_by: userId,
-                note: inter.note || null,
-              };
-            },
-          ),
-        });
+        if (hasInterazioni) {
+          await tx.interazioni.createMany({
+            data: interazioni.map(
+              (inter: {
+                cantieri_id: number;
+                mezzi_id?: number | null;
+                ore: number;
+                minuti: number;
+                note?: string;
+              }) => {
+                const ore = Number(inter.ore) || 0;
+                const minuti = Math.min(
+                  59,
+                  Math.max(0, Number(inter.minuti) || 0),
+                );
+                return {
+                  ore,
+                  minuti,
+                  tempo_totale: BigInt((ore * 60 + minuti) * 60000),
+                  user_id,
+                  mezzi_id: inter.mezzi_id ?? null,
+                  cantieri_id: inter.cantieri_id,
+                  attivita_id: attivita.id,
+                  external_id: randomUUID(),
+                  created_at: new Date(),
+                  last_update_at: new Date(),
+                  created_by: userId,
+                  last_update_by: userId,
+                  note: inter.note || null,
+                };
+              },
+            ),
+          });
+        }
+
+        if (hasAssenze) {
+          await tx.assenze.createMany({
+            data: assenze.map(
+              (ass: {
+                tipo: string;
+                ore?: number;
+                minuti?: number;
+                note?: string;
+              }) => {
+                const ore = ass.ore !== undefined && ass.ore !== null ? Number(ass.ore) : 8;
+                const minuti =
+                  ass.minuti !== undefined && ass.minuti !== null
+                    ? Math.min(59, Math.max(0, Number(ass.minuti)))
+                    : 0;
+                return {
+                  tipo: ass.tipo as assenza_tipo,
+                  ore,
+                  minuti,
+                  tempo_totale: BigInt((ore * 60 + minuti) * 60000),
+                  user_id,
+                  attivita_id: attivita.id,
+                  external_id: randomUUID(),
+                  created_at: new Date(),
+                  last_update_at: new Date(),
+                  created_by: userId,
+                  last_update_by: userId,
+                  note: typeof ass.note === "string" ? ass.note : null,
+                };
+              },
+            ),
+          });
+        }
 
         return attivita;
       });
@@ -263,6 +316,7 @@ export async function POST(request: NextRequest) {
         include: {
           user: { select: { id: true, name: true } },
           interazioni: { select: { cantieri_id: true, mezzi_id: true, tempo_totale: true } },
+          assenze: { select: { tempo_totale: true } },
         },
       });
       return NextResponse.json(
@@ -284,6 +338,7 @@ export async function POST(request: NextRequest) {
       include: {
         user: { select: { id: true, name: true } },
         interazioni: { select: { cantieri_id: true, mezzi_id: true, tempo_totale: true } },
+        assenze: { select: { tempo_totale: true } },
       },
     });
 

@@ -40,6 +40,20 @@ type InterazioniResponse = {
   }>;
 };
 
+type AssenzeResponse = {
+  assenze: Array<{
+    id: number;
+    tipo: string;
+    ore: number;
+    minuti: number;
+    tempo_totale: string;
+    note: string | null;
+    created_at: string;
+    user: { id: string; name: string };
+    attivita: { id: number; date: string };
+  }>;
+};
+
 type UsersResponse = { users: Array<{ id: string; name: string }> };
 type MezziResponse = { mezzi: Array<{ id: number; nome: string }> };
 type CantieriResponse = { cantieri: Array<{ id: number; nome: string }> };
@@ -62,6 +76,12 @@ export default function AttivitaDetailPageClient({
 
   const { data: interazioniData } = useSWR<InterazioniResponse>(
     attivitaId ? `/api/interazioni?attivitaId=${attivitaId}&limit=500` : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const { data: assenzeData } = useSWR<AssenzeResponse>(
+    attivitaId ? `/api/assenze?attivitaId=${attivitaId}&limit=500` : null,
     fetcher,
     { revalidateOnFocus: false },
   );
@@ -97,9 +117,14 @@ export default function AttivitaDetailPageClient({
   }
 
   const interazioni = interazioniData?.interazioni ?? [];
+  const assenze = assenzeData?.assenze ?? [];
   const users = usersData?.users ?? [];
   const mezzi = mezziData?.mezzi ?? [];
   const cantieri = cantieriData?.cantieri ?? [];
+  const totalHoursEntries = [
+    ...interazioni.map((i) => ({ tempo_totale: i.tempo_totale })),
+    ...assenze.map((a) => ({ tempo_totale: a.tempo_totale })),
+  ];
 
   const attivitaForCard = {
     ...attivita,
@@ -116,18 +141,22 @@ export default function AttivitaDetailPageClient({
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <TotalHoursFromInterazioniCard interazioni={interazioni} />
+        <TotalHoursFromInterazioniCard entries={totalHoursEntries} />
         <TotalInterazioniCountCard count={interazioni.length} />
       </div>
 
       <AttivitaDetailClient
         attivita={attivitaForCard}
         interazioni={interazioni}
+        assenze={assenze}
         users={users}
         mezzi={mezzi}
         cantieri={cantieri}
         onInterazioniChange={() =>
           mutate(`/api/interazioni?attivitaId=${attivitaId}&limit=500`)
+        }
+        onAssenzeChange={() =>
+          mutate(`/api/assenze?attivitaId=${attivitaId}&limit=500`)
         }
       />
     </div>

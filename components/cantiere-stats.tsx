@@ -16,11 +16,19 @@ export async function getTotalInterazioniByCantiereId(cantieriId: number) {
 }
 
 export async function getTotalHoursByAttivitaId(attivitaId: number) {
-  const result = await prisma.interazioni.aggregate({
-    where: { attivita_id: attivitaId },
-    _sum: { tempo_totale: true },
-  });
-  return result._sum.tempo_totale?.toString() || "0";
+  const [interazioniSum, assenzeSum] = await Promise.all([
+    prisma.interazioni.aggregate({
+      where: { attivita_id: attivitaId },
+      _sum: { tempo_totale: true },
+    }),
+    prisma.assenze.aggregate({
+      where: { attivita_id: attivitaId },
+      _sum: { tempo_totale: true },
+    }),
+  ]);
+  const interazioniMs = Number(interazioniSum._sum.tempo_totale ?? 0);
+  const assenzeMs = Number(assenzeSum._sum.tempo_totale ?? 0);
+  return String(interazioniMs + assenzeMs);
 }
 
 export async function getTotalInterazioniByAttivitaId(attivitaId: number) {

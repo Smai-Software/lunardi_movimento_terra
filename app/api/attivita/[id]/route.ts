@@ -2,19 +2,27 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
+import type { assenza_tipo } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
 function serializeAttivita(attivita: {
   interazioni?: { tempo_totale: bigint }[];
+  assenze?: { tempo_totale: bigint }[];
   [key: string]: unknown;
 }) {
-  const { interazioni, ...rest } = attivita;
+  const { interazioni, assenze, ...rest } = attivita;
   const result = { ...rest } as Record<string, unknown>;
   if (Array.isArray(interazioni)) {
     result.interazioni = interazioni.map((i) => ({
       ...i,
       tempo_totale: typeof i.tempo_totale === "bigint" ? i.tempo_totale.toString() : i.tempo_totale,
+    }));
+  }
+  if (Array.isArray(assenze)) {
+    result.assenze = assenze.map((a) => ({
+      ...a,
+      tempo_totale: typeof a.tempo_totale === "bigint" ? a.tempo_totale.toString() : a.tempo_totale,
     }));
   }
   return result;
@@ -64,6 +72,19 @@ export async function GET(
             mezzi_id: true,
             cantieri: { select: { id: true, nome: true } },
             mezzi: { select: { id: true, nome: true } },
+          },
+        },
+        assenze: {
+          select: {
+            id: true,
+            tipo: true,
+            ore: true,
+            minuti: true,
+            tempo_totale: true,
+            note: true,
+            created_at: true,
+            user: { select: { id: true, name: true } },
+            attivita: { select: { id: true, date: true } },
           },
         },
       },
@@ -127,7 +148,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { date, user_id, interazioni } = body;
+    const { date, user_id, interazioni, assenze } = body;
 
     if (!date || typeof date !== "string") {
       return NextResponse.json(
@@ -177,58 +198,11 @@ export async function PUT(
     }
 
     const userId = session.user.id as string;
+    const hasInterazioni = interazioni && Array.isArray(interazioni);
+    const hasAssenze = assenze && Array.isArray(assenze);
 
-    if (interazioni && Array.isArray(interazioni) && interazioni.length > 0) {
-      await prisma.$transaction(async (tx) => {
-        await tx.attivita.update({
-          where: { id: attivitaId },
-          data: {
-            date: parsedDate,
-            user_id,
-            last_update_at: new Date(),
-            last_update_by: userId,
-          },
-        });
-
-        await tx.interazioni.deleteMany({
-          where: { attivita_id: attivitaId },
-        });
-
-        await tx.interazioni.createMany({
-          data: interazioni.map(
-            (inter: {
-              cantieri_id: number;
-              mezzi_id?: number | null;
-              ore: number;
-              minuti: number;
-              note?: string;
-            }) => {
-              const ore = Number(inter.ore) || 0;
-              const minuti = Math.min(
-                59,
-                Math.max(0, Number(inter.minuti) || 0),
-              );
-              return {
-                ore,
-                minuti,
-                tempo_totale: BigInt((ore * 60 + minuti) * 60000),
-                user_id,
-                mezzi_id: inter.mezzi_id ?? null,
-                cantieri_id: inter.cantieri_id,
-                attivita_id: attivitaId,
-                external_id: randomUUID(),
-                created_at: new Date(),
-                last_update_at: new Date(),
-                created_by: userId,
-                last_update_by: userId,
-                note: inter.note || null,
-              };
-            },
-          ),
-        });
-      });
-    } else {
-      await prisma.attivita.update({
+    await prisma.$transaction(async (tx) => {
+      await tx.attivita.update({
         where: { id: attivitaId },
         data: {
           date: parsedDate,
@@ -237,13 +211,92 @@ export async function PUT(
           last_update_by: userId,
         },
       });
-    }
+
+      if (hasInterazioni) {
+        await tx.interazioni.deleteMany({
+          where: { attivita_id: attivitaId },
+        });
+        if (interazioni.length > 0) {
+          await tx.interazioni.createMany({
+            data: interazioni.map(
+              (inter: {
+                cantieri_id: number;
+                mezzi_id?: number | null;
+                ore: number;
+                minuti: number;
+                note?: string;
+              }) => {
+                const ore = Number(inter.ore) || 0;
+                const minuti = Math.min(
+                  59,
+                  Math.max(0, Number(inter.minuti) || 0),
+                );
+                return {
+                  ore,
+                  minuti,
+                  tempo_totale: BigInt((ore * 60 + minuti) * 60000),
+                  user_id,
+                  mezzi_id: inter.mezzi_id ?? null,
+                  cantieri_id: inter.cantieri_id,
+                  attivita_id: attivitaId,
+                  external_id: randomUUID(),
+                  created_at: new Date(),
+                  last_update_at: new Date(),
+                  created_by: userId,
+                  last_update_by: userId,
+                  note: inter.note || null,
+                };
+              },
+            ),
+          });
+        }
+      }
+
+      if (hasAssenze) {
+        await tx.assenze.deleteMany({
+          where: { attivita_id: attivitaId },
+        });
+        if (assenze.length > 0) {
+          await tx.assenze.createMany({
+            data: assenze.map(
+              (ass: {
+                tipo: string;
+                ore?: number;
+                minuti?: number;
+                note?: string;
+              }) => {
+                const ore = ass.ore !== undefined && ass.ore !== null ? Number(ass.ore) : 8;
+                const minuti =
+                  ass.minuti !== undefined && ass.minuti !== null
+                    ? Math.min(59, Math.max(0, Number(ass.minuti)))
+                    : 0;
+                return {
+                  tipo: ass.tipo as assenza_tipo,
+                  ore,
+                  minuti,
+                  tempo_totale: BigInt((ore * 60 + minuti) * 60000),
+                  user_id,
+                  attivita_id: attivitaId,
+                  external_id: randomUUID(),
+                  created_at: new Date(),
+                  last_update_at: new Date(),
+                  created_by: userId,
+                  last_update_by: userId,
+                  note: typeof ass.note === "string" ? ass.note : null,
+                };
+              },
+            ),
+          });
+        }
+      }
+    });
 
     const updated = await prisma.attivita.findUnique({
       where: { id: attivitaId },
       include: {
         user: { select: { id: true, name: true } },
         interazioni: { select: { cantieri_id: true, mezzi_id: true, tempo_totale: true } },
+        assenze: { select: { tempo_totale: true } },
       },
     });
 

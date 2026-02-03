@@ -51,6 +51,9 @@ export async function GET(request: NextRequest) {
               tempo_totale: true,
             },
           },
+          assenze: {
+            select: { tempo_totale: true },
+          },
         },
         orderBy: { date: "desc" },
       }),
@@ -75,10 +78,15 @@ export async function GET(request: NextRequest) {
       const uniqueMezzi = new Set(
         a.interazioni.filter((i) => i.mezzi_id).map((i) => i.mezzi_id),
       );
-      const totalMilliseconds = a.interazioni.reduce(
+      const interazioniMs = a.interazioni.reduce(
         (sum, i) => sum + Number(i.tempo_totale),
         0,
       );
+      const assenzeMs = (a.assenze ?? []).reduce(
+        (sum, ass) => sum + Number(ass.tempo_totale),
+        0,
+      );
+      const totalMilliseconds = interazioniMs + assenzeMs;
       return {
         ...a,
         cantieriCount: uniqueCantieri.size,
@@ -87,6 +95,10 @@ export async function GET(request: NextRequest) {
         interazioni: a.interazioni.map((i) => ({
           ...i,
           tempo_totale: i.tempo_totale.toString(),
+        })),
+        assenze: (a.assenze ?? []).map((ass) => ({
+          ...ass,
+          tempo_totale: ass.tempo_totale.toString(),
         })),
       };
     });

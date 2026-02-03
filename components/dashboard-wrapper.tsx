@@ -166,10 +166,6 @@ export default function DashboardWrapper() {
       </div>
 
       <DashboardChart attivita={filteredData.attivita} interval={interval} />
-
-      <div className="mt-6">
-        <AttivitaTable />
-      </div>
     </div>
   );
 }

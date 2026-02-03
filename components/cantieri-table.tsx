@@ -134,22 +134,10 @@ function SortHeader({
   onSort,
 }: {
   label: string;
-  column:
-    | "nome"
-    | "descrizione"
-    | "open"
-    | "totalInterazioni"
-    | "totalMilliseconds";
+  column: "nome" | "descrizione" | "open";
   sortBy: string;
   sortDir: "asc" | "desc";
-  onSort: (
-    col:
-      | "nome"
-      | "descrizione"
-      | "open"
-      | "totalInterazioni"
-      | "totalMilliseconds",
-  ) => void;
+  onSort: (col: "nome" | "descrizione" | "open") => void;
 }) {
   return (
     <th className="cursor-pointer select-none" onClick={() => onSort(column)}>
@@ -198,13 +186,7 @@ export default function CantieriTable() {
 
   const [sortBy, setSortBy] = useQueryState(
     "sortBy",
-    parseAsStringLiteral([
-      "nome",
-      "descrizione",
-      "open",
-      "totalInterazioni",
-      "totalMilliseconds",
-    ]).withDefault("nome"),
+    parseAsStringLiteral(["nome", "descrizione", "open"]).withDefault("nome"),
   );
   const [sortDir, setSortDir] = useQueryState(
     "sortDir",
@@ -242,14 +224,7 @@ export default function CantieriTable() {
     return count;
   }, [filterStatus]);
 
-  const handleSort = (
-    col:
-      | "nome"
-      | "descrizione"
-      | "open"
-      | "totalInterazioni"
-      | "totalMilliseconds",
-  ) => {
+  const handleSort = (col: "nome" | "descrizione" | "open") => {
     if (sortBy === col) {
       setSortDir(sortDir === "asc" ? "desc" : "asc", { history: "push" });
     } else {
@@ -317,20 +292,8 @@ export default function CantieriTable() {
                   sortDir={sortDir}
                   onSort={handleSort}
                 />
-                <SortHeader
-                  label="Numero interazioni"
-                  column="totalInterazioni"
-                  sortBy={sortBy}
-                  sortDir={sortDir}
-                  onSort={handleSort}
-                />
-                <SortHeader
-                  label="Totale ore"
-                  column="totalMilliseconds"
-                  sortBy={sortBy}
-                  sortDir={sortDir}
-                  onSort={handleSort}
-                />
+                <th>Numero interazioni</th>
+                <th>Totale ore</th>
                 <th>Azioni</th>
               </tr>
             </thead>

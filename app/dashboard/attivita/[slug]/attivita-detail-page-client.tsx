@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
 import Link from "next/link";
 import AttivitaInfoCard from "@/components/attivita-info-card";
+import AssenzeTableAttivita from "@/components/assenze-table-attivita";
 import InterazioniTableAttivita from "@/components/interazioni-table-attivita";
 import TotalHoursFromInterazioniCard from "@/components/total-hours-from-interazioni";
 import TotalInterazioniCountCard from "@/components/total-interazioni-count-card";
@@ -35,6 +36,20 @@ type InterazioniResponse = {
   }>;
 };
 
+type AssenzeResponse = {
+  assenze: Array<{
+    id: number;
+    tipo: string;
+    ore: number;
+    minuti: number;
+    tempo_totale: string;
+    note: string | null;
+    created_at: string;
+    user: { id: string; name: string };
+    attivita: { id: number; date: string };
+  }>;
+};
+
 type MezziResponse = { mezzi: Array<{ id: number; nome: string }> };
 
 export default function UserAttivitaDetailPageClient({
@@ -56,6 +71,12 @@ export default function UserAttivitaDetailPageClient({
 
   const { data: interazioniData } = useSWR<InterazioniResponse>(
     attivitaId ? `/api/interazioni?attivitaId=${attivitaId}&limit=500` : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const { data: assenzeData } = useSWR<AssenzeResponse>(
+    attivitaId ? `/api/assenze?attivitaId=${attivitaId}&limit=500` : null,
     fetcher,
     { revalidateOnFocus: false },
   );
@@ -83,7 +104,12 @@ export default function UserAttivitaDetailPageClient({
   }
 
   const interazioni = interazioniData?.interazioni ?? [];
+  const assenze = assenzeData?.assenze ?? [];
   const mezzi = mezziData?.mezzi ?? [];
+  const totalHoursEntries = [
+    ...interazioni.map((i) => ({ tempo_totale: i.tempo_totale })),
+    ...assenze.map((a) => ({ tempo_totale: a.tempo_totale })),
+  ];
 
   const attivitaForCard = {
     ...attivita,
@@ -101,7 +127,7 @@ export default function UserAttivitaDetailPageClient({
       <AttivitaInfoCard attivita={attivitaForCard} restrictDateRange />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <TotalHoursFromInterazioniCard interazioni={interazioni} />
+        <TotalHoursFromInterazioniCard entries={totalHoursEntries} />
         <TotalInterazioniCountCard count={interazioni.length} />
       </div>
 
@@ -109,14 +135,30 @@ export default function UserAttivitaDetailPageClient({
         <div className="card-body">
           <h2 className="text-xl font-bold mb-4">Interazioni</h2>
           <InterazioniTableAttivita
-          interazioni={interazioni}
-          mezzi={mezzi}
-          onSuccess={() => {
-            if (attivitaId)
-              mutate(`/api/interazioni?attivitaId=${attivitaId}&limit=500`);
-            if (slug) mutate(`/api/attivita/${slug}`);
-          }}
-        />
+            interazioni={interazioni}
+            mezzi={mezzi}
+            onSuccess={() => {
+              if (attivitaId)
+                mutate(`/api/interazioni?attivitaId=${attivitaId}&limit=500`);
+              if (slug) mutate(`/api/attivita/${slug}`);
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="card bg-base-100 shadow-xl border border-gray-200 mt-6">
+        <div className="card-body">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Assenze</h2>
+          </div>
+          <AssenzeTableAttivita
+            assenze={assenze}
+            onSuccess={() => {
+              if (attivitaId)
+                mutate(`/api/assenze?attivitaId=${attivitaId}&limit=500`);
+              if (slug) mutate(`/api/attivita/${slug}`);
+            }}
+          />
         </div>
       </div>
     </div>

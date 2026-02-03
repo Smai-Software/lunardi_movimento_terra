@@ -173,7 +173,7 @@ export default function CantiereDetailPageClient({ slug }: { slug: string }) {
           </div>
         </div>
         <div className="flex flex-col gap-6 mb-8">
-          <TotalHoursFromInterazioniCard interazioni={interazioni} />
+          <TotalHoursFromInterazioniCard entries={interazioni} />
           <TotalInterazioniCountCard count={interazioni.length} />
         </div>
       </div>

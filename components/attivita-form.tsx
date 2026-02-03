@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import AggiungiAssenzaModalForm from "@/components/aggiungi-assenza-modal-form";
 import AggiungiInterazioneModalForm from "@/components/aggiungi-interazione-modal-form";
-
 import { TrashIcon } from "lucide-react";
 
 type Cantiere = {
@@ -35,6 +35,22 @@ type CantiereWithInterazioni = {
   interazioni: Interazione[];
 };
 
+type Assenza = {
+  localId: string;
+  tipo: string;
+  ore: number;
+  minuti: number;
+  note: string;
+};
+
+const ASSENZA_TIPO_LABELS: Record<string, string> = {
+  FERIE: "Ferie",
+  PERMESSO: "Permesso",
+  CASSA_INTEGRAZIONE: "Cassa integrazione",
+  MUTUA: "Mutua",
+  PATERNITA: "Paternità",
+};
+
 type AttivitaFormProps = {
   users?: Array<{ id: string; name: string }>;
 };
@@ -46,6 +62,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [cantieri, setCantieri] = useState<CantiereWithInterazioni[]>([]);
+  const [assenze, setAssenze] = useState<Assenza[]>([]);
 
   // Available options (users from API when not passed)
   const [users, setUsers] = useState<Array<{ id: string; name: string }>>(
@@ -180,21 +197,28 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
     setCantieri(updatedCantieri);
   };
 
-  const getTodayLocalDateString = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const addAssenza = (tipo: string, ore: number, minuti: number, note: string) => {
+    if (ore < 0 || minuti < 0 || minuti > 59) {
+      toast.error("Compila tutti i campi correttamente");
+      return;
+    }
+    setAssenze((prev) => [
+      ...prev,
+      { localId: crypto.randomUUID(), tipo, ore, minuti, note },
+    ]);
+  };
+
+  const removeAssenza = (index: number) => {
+    setAssenze((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
-    if (!selectedUserId || !selectedDate || cantieri.length === 0) {
-      toast.error("Compila tutti i campi obbligatori");
+    const hasInterazioni = cantieri.length > 0;
+    const hasAssenze = assenze.length > 0;
+    if (!selectedUserId || !selectedDate || (!hasInterazioni && !hasAssenze)) {
+      toast.error("Compila tutti i campi obbligatori e aggiungi almeno un'interazione o un'assenza");
       return;
     }
-    if (selectedDate > getTodayLocalDateString()) {
-      toast.error("La data non può essere futura");
-      return;
-    }
-
     const allInterazioni = cantieri.flatMap((cantiere) =>
       cantiere.interazioni.map((interazione) => ({
         cantieri_id: cantiere.cantiereId,
@@ -205,6 +229,13 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
       })),
     );
 
+    const allAssenze = assenze.map((a) => ({
+      tipo: a.tipo,
+      ore: a.ore,
+      minuti: a.minuti,
+      note: a.note,
+    })); // exclude localId when sending to API
+
     setIsSubmitting(true);
     setError(null);
     try {
@@ -214,7 +245,8 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
         body: JSON.stringify({
           date: selectedDate,
           user_id: selectedUserId,
-          interazioni: allInterazioni,
+          interazioni: hasInterazioni ? allInterazioni : [],
+          assenze: hasAssenze ? allAssenze : [],
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -231,7 +263,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
   };
 
   const getTotalHours = () => {
-    const totalMinutes = cantieri.reduce((total, cantiere) => {
+    const interazioniMinutes = cantieri.reduce((total, cantiere) => {
       return (
         total +
         cantiere.interazioni.reduce((cantiereTotal, interazione) => {
@@ -239,7 +271,11 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
         }, 0)
       );
     }, 0);
-
+    const assenzeMinutes = assenze.reduce(
+      (total, a) => total + a.ore * 60 + a.minuti,
+      0,
+    );
+    const totalMinutes = interazioniMinutes + assenzeMinutes;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
 
@@ -266,7 +302,6 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                   className="input input-bordered w-full"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  max={getTodayLocalDateString()}
                   required
                 />
               </div>
@@ -300,22 +335,21 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
 
           {selectedUserId && (
             <div className="mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-xl font-semibold">Interazioni</h2>
-                <AggiungiInterazioneModalForm
-                  availableCantieri={availableCantieri}
-                  availableMezzi={availableMezzi}
-                  loadingCantieri={loadingCantieri}
-                  loadingMezzi={loadingMezzi}
-                  onAddInterazione={addInterazione}
-                />
-              </div>
-
-              {cantieri.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="font-semibold">Interazioni Aggiunte</h3>
+              {/* Sezione Interazioni: plus + titolo, poi tabella direttamente sotto */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <AggiungiInterazioneModalForm
+                    availableCantieri={availableCantieri}
+                    availableMezzi={availableMezzi}
+                    loadingCantieri={loadingCantieri}
+                    loadingMezzi={loadingMezzi}
+                    onAddInterazione={addInterazione}
+                  />
+                  <h2 className="text-xl font-semibold">Interazioni</h2>
+                </div>
+                {cantieri.length > 0 && (
                   <div className="overflow-x-auto">
-                    <table className="table table-zebra w-full">
+                    <table className="table w-full">
                       <thead>
                         <tr>
                           <th className="md:hidden"></th>
@@ -384,17 +418,72 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                       </tbody>
                     </table>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">Totale ore:</span>
-                      <span>
-                        {getTotalHours().hours}h{" "}
-                        {getTotalHours()
-                          .minutes.toString()
-                          .padStart(2, "0")}
-                        m
-                      </span>
-                    </div>
+                )}
+              </div>
+
+              {/* Sezione Assenze: plus + titolo, poi tabella direttamente sotto */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <AggiungiAssenzaModalForm onAddAssenza={addAssenza} />
+                  <h2 className="text-xl font-semibold">Assenze</h2>
+                </div>
+                {assenze.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <table className="table w-full">
+                      <thead>
+                        <tr>
+                          <th className="md:hidden"></th>
+                          <th>Tipo</th>
+                          <th>Tempo</th>
+                          <th className="hidden md:table-cell">Azioni</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {assenze.map((assenza, index) => (
+                          <tr key={assenza.localId}>
+                            <td className="md:hidden">
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline btn-error"
+                                onClick={() => removeAssenza(index)}
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            </td>
+                            <td className="font-medium">
+                              {ASSENZA_TIPO_LABELS[assenza.tipo] ?? assenza.tipo}
+                            </td>
+                            <td>
+                              {assenza.ore}h {assenza.minuti}m
+                            </td>
+                            <td className="hidden md:table-cell">
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline btn-error"
+                                onClick={() => removeAssenza(index)}
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {(cantieri.length > 0 || assenze.length > 0) && (
+                <div className="flex flex-col gap-2 mt-4">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">Totale ore: </span>
+                    <span>
+                      {getTotalHours().hours}h{" "}
+                      {getTotalHours()
+                        .minutes.toString()
+                        .padStart(2, "0")}
+                      m
+                    </span>
                   </div>
                 </div>
               )}
@@ -417,7 +506,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
               disabled={
                 !selectedUserId ||
                 !selectedDate ||
-                cantieri.length === 0 ||
+                (cantieri.length === 0 && assenze.length === 0) ||
                 isSubmitting
               }
             >

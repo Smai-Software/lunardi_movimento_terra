@@ -38,6 +38,9 @@ model User {
   attivita                         attivita[]
   attivita_created_byTouser        attivita[] @relation("attivita_created_byTouser")
   attivita_last_update_byTouser   attivita[] @relation("attivita_last_update_byTouser")
+  assenze                          assenze[]
+  assenze_created_byTouser         assenze[] @relation("assenza_created_byTouser")
+  assenze_last_update_byTouser     assenze[] @relation("assenza_last_update_byTouser")
   sessions                         Session[]
 
   @@map("user")
@@ -199,6 +202,7 @@ model attivita {
   last_update_at                  DateTime @default(now()) @db.DateTime(0)
   user                            User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
   interazioni                     interazioni[]
+  assenze                         assenze[]
   user_attivita_created_byTouser  User     @relation("attivita_created_byTouser", fields: [created_by], references: [id], onUpdate: Restrict, map: "attivita_ibfk_1")
   user_attivita_last_update_byTouser User  @relation("attivita_last_update_byTouser", fields: [last_update_by], references: [id], onUpdate: Restrict, map: "attivita_ibfk_2")
 
@@ -208,4 +212,35 @@ model attivita {
   @@index([last_update_by], map: "attivita_last_update_by")
 }
 
+enum assenza_tipo {
+  FERIE
+  PERMESSO
+  CASSA_INTEGRAZIONE
+  MUTUA
+  PATERNITA
+}
 
+model assenze {
+  id                                   Int         @id @default(autoincrement())
+  tipo                                 assenza_tipo
+  ore                                  Int         @default(8)
+  minuti                               Int         @default(0)
+  tempo_totale                         BigInt
+  note                                 String?     @db.Text
+  user_id                              String
+  attivita_id                          Int
+  external_id                          String      @unique(map: "assenza_external_id") @db.Char(36)
+  created_by                           String
+  created_at                           DateTime    @default(now()) @db.DateTime(0)
+  last_update_by                       String
+  last_update_at                       DateTime    @default(now()) @db.DateTime(0)
+  user                                 User        @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  attivita                              attivita    @relation(fields: [attivita_id], references: [id], onDelete: Cascade)
+  user_assenza_created_byTouser        User        @relation("assenza_created_byTouser", fields: [created_by], references: [id], onUpdate: Restrict, map: "assenza_ibfk_1")
+  user_assenza_last_update_byTouser    User        @relation("assenza_last_update_byTouser", fields: [last_update_by], references: [id], onUpdate: Restrict, map: "assenza_ibfk_2")
+
+  @@index([user_id], map: "assenza_user_id")
+  @@index([attivita_id], map: "assenza_attivita_id")
+  @@index([created_by], map: "assenza_created_by")
+  @@index([last_update_by], map: "assenza_last_update_by")
+}
