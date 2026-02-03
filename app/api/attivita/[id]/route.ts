@@ -9,9 +9,10 @@ import prisma from "@/lib/prisma";
 function serializeAttivita(attivita: {
   interazioni?: { tempo_totale: bigint }[];
   assenze?: { tempo_totale: bigint }[];
+  trasporti?: { tempo_totale: bigint }[];
   [key: string]: unknown;
 }) {
-  const { interazioni, assenze, ...rest } = attivita;
+  const { interazioni, assenze, trasporti, ...rest } = attivita;
   const result = { ...rest } as Record<string, unknown>;
   if (Array.isArray(interazioni)) {
     result.interazioni = interazioni.map((i) => ({
@@ -23,6 +24,12 @@ function serializeAttivita(attivita: {
     result.assenze = assenze.map((a) => ({
       ...a,
       tempo_totale: typeof a.tempo_totale === "bigint" ? a.tempo_totale.toString() : a.tempo_totale,
+    }));
+  }
+  if (Array.isArray(trasporti)) {
+    result.trasporti = trasporti.map((t) => ({
+      ...t,
+      tempo_totale: typeof t.tempo_totale === "bigint" ? t.tempo_totale.toString() : t.tempo_totale,
     }));
   }
   return result;
@@ -87,6 +94,21 @@ export async function GET(
             attivita: { select: { id: true, date: true } },
           },
         },
+        trasporti: {
+          select: {
+            id: true,
+            ore: true,
+            minuti: true,
+            tempo_totale: true,
+            note: true,
+            cantieri_partenza_id: true,
+            cantieri_arrivo_id: true,
+            mezzi_id: true,
+            cantieri_partenza: { select: { id: true, nome: true } },
+            cantieri_arrivo: { select: { id: true, nome: true } },
+            mezzi: { select: { id: true, nome: true } },
+          },
+        },
       },
     });
 
@@ -148,7 +170,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { date, user_id, interazioni, assenze } = body;
+    const { date, user_id, interazioni, assenze, trasporti } = body;
 
     if (!date || typeof date !== "string") {
       return NextResponse.json(
@@ -200,6 +222,7 @@ export async function PUT(
     const userId = session.user.id as string;
     const hasInterazioni = interazioni && Array.isArray(interazioni);
     const hasAssenze = assenze && Array.isArray(assenze);
+    const hasTrasporti = trasporti && Array.isArray(trasporti);
 
     await prisma.$transaction(async (tx) => {
       await tx.attivita.update({
@@ -289,6 +312,79 @@ export async function PUT(
           });
         }
       }
+
+      if (hasTrasporti) {
+        await tx.trasporti.deleteMany({
+          where: { attivita_id: attivitaId },
+        });
+        if (trasporti.length > 0) {
+          const [userCantieriRows, userMezziRows] = await Promise.all([
+            tx.user_cantieri.findMany({
+              where: { user_id },
+              select: { cantieri_id: true },
+            }),
+            tx.user_mezzi.findMany({
+              where: { user_id },
+              select: { mezzi_id: true },
+            }),
+          ]);
+          const allowedCantieri = new Set(userCantieriRows.map((r) => r.cantieri_id));
+          const allowedMezzi = new Set(userMezziRows.map((r) => r.mezzi_id));
+          for (const tr of trasporti as Array<{
+            cantieri_partenza_id: number;
+            cantieri_arrivo_id: number;
+            mezzi_id: number;
+            ore: number;
+            minuti: number;
+            note?: string;
+          }>) {
+            const partenzaId = Number(tr.cantieri_partenza_id);
+            const arrivoId = Number(tr.cantieri_arrivo_id);
+            const mezzoId = Number(tr.mezzi_id);
+            if (!allowedCantieri.has(partenzaId)) {
+              throw new Error("Cantiere partenza non assegnato all'utente");
+            }
+            if (!allowedCantieri.has(arrivoId)) {
+              throw new Error("Cantiere arrivo non assegnato all'utente");
+            }
+            if (!allowedMezzi.has(mezzoId)) {
+              throw new Error("Mezzo non assegnato all'utente");
+            }
+            if (partenzaId === arrivoId) {
+              throw new Error("Cantiere partenza e arrivo devono essere diversi");
+            }
+          }
+          await tx.trasporti.createMany({
+            data: (trasporti as Array<{
+              cantieri_partenza_id: number;
+              cantieri_arrivo_id: number;
+              mezzi_id: number;
+              ore: number;
+              minuti: number;
+              note?: string;
+            }>).map((tr) => {
+              const ore = Number(tr.ore) || 0;
+              const minuti = Math.min(59, Math.max(0, Number(tr.minuti) || 0));
+              return {
+                ore,
+                minuti,
+                tempo_totale: BigInt((ore * 60 + minuti) * 60000),
+                user_id,
+                attivita_id: attivitaId,
+                mezzi_id: Number(tr.mezzi_id),
+                cantieri_partenza_id: Number(tr.cantieri_partenza_id),
+                cantieri_arrivo_id: Number(tr.cantieri_arrivo_id),
+                external_id: randomUUID(),
+                created_at: new Date(),
+                last_update_at: new Date(),
+                created_by: userId,
+                last_update_by: userId,
+                note: typeof tr.note === "string" ? tr.note : null,
+              };
+            }),
+          });
+        }
+      }
     });
 
     const updated = await prisma.attivita.findUnique({
@@ -297,6 +393,7 @@ export async function PUT(
         user: { select: { id: true, name: true } },
         interazioni: { select: { cantieri_id: true, mezzi_id: true, tempo_totale: true } },
         assenze: { select: { tempo_totale: true } },
+        trasporti: { select: { cantieri_partenza_id: true, cantieri_arrivo_id: true, mezzi_id: true, tempo_totale: true } },
       },
     });
 

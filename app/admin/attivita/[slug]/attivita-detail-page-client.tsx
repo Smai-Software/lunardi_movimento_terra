@@ -54,6 +54,22 @@ type AssenzeResponse = {
   }>;
 };
 
+type TrasportiResponse = {
+  trasporti: Array<{
+    id: number;
+    ore: number;
+    minuti: number;
+    tempo_totale: string;
+    note: string | null;
+    created_at: string;
+    user: { id: string; name: string };
+    mezzi: { id: number; nome: string };
+    cantieri_partenza: { id: number; nome: string };
+    cantieri_arrivo: { id: number; nome: string };
+    attivita: { id: number; date: string };
+  }>;
+};
+
 type UsersResponse = { users: Array<{ id: string; name: string }> };
 type MezziResponse = { mezzi: Array<{ id: number; nome: string }> };
 type CantieriResponse = { cantieri: Array<{ id: number; nome: string }> };
@@ -82,6 +98,12 @@ export default function AttivitaDetailPageClient({
 
   const { data: assenzeData } = useSWR<AssenzeResponse>(
     attivitaId ? `/api/assenze?attivitaId=${attivitaId}&limit=500` : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const { data: trasportiData } = useSWR<TrasportiResponse>(
+    attivitaId ? `/api/trasporti?attivitaId=${attivitaId}&limit=500` : null,
     fetcher,
     { revalidateOnFocus: false },
   );
@@ -118,12 +140,14 @@ export default function AttivitaDetailPageClient({
 
   const interazioni = interazioniData?.interazioni ?? [];
   const assenze = assenzeData?.assenze ?? [];
+  const trasporti = trasportiData?.trasporti ?? [];
   const users = usersData?.users ?? [];
   const mezzi = mezziData?.mezzi ?? [];
   const cantieri = cantieriData?.cantieri ?? [];
   const totalHoursEntries = [
     ...interazioni.map((i) => ({ tempo_totale: i.tempo_totale })),
     ...assenze.map((a) => ({ tempo_totale: a.tempo_totale })),
+    ...trasporti.map((t) => ({ tempo_totale: t.tempo_totale })),
   ];
 
   const attivitaForCard = {
@@ -149,6 +173,7 @@ export default function AttivitaDetailPageClient({
         attivita={attivitaForCard}
         interazioni={interazioni}
         assenze={assenze}
+        trasporti={trasporti}
         users={users}
         mezzi={mezzi}
         cantieri={cantieri}
@@ -157,6 +182,9 @@ export default function AttivitaDetailPageClient({
         }
         onAssenzeChange={() =>
           mutate(`/api/assenze?attivitaId=${attivitaId}&limit=500`)
+        }
+        onTrasportiChange={() =>
+          mutate(`/api/trasporti?attivitaId=${attivitaId}&limit=500`)
         }
       />
     </div>

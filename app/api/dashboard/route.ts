@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const endDate = new Date();
     const startDate = subDays(endDate, days);
 
-    const [attivitaList, interazioni] = await Promise.all([
+    const [attivitaList, interazioni, trasportiInPeriod] = await Promise.all([
       prisma.attivita.findMany({
         where: {
           date: {
@@ -54,6 +54,14 @@ export async function GET(request: NextRequest) {
           assenze: {
             select: { tempo_totale: true },
           },
+          trasporti: {
+            select: {
+              cantieri_partenza_id: true,
+              cantieri_arrivo_id: true,
+              mezzi_id: true,
+              tempo_totale: true,
+            },
+          },
         },
         orderBy: { date: "desc" },
       }),
@@ -71,6 +79,21 @@ export async function GET(request: NextRequest) {
           mezzi_id: true,
         },
       }),
+      prisma.trasporti.findMany({
+        where: {
+          attivita: {
+            date: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+        },
+        select: {
+          cantieri_partenza_id: true,
+          cantieri_arrivo_id: true,
+          mezzi_id: true,
+        },
+      }),
     ]);
 
     const attivitaWithCounts = attivitaList.map((a) => {
@@ -78,6 +101,11 @@ export async function GET(request: NextRequest) {
       const uniqueMezzi = new Set(
         a.interazioni.filter((i) => i.mezzi_id).map((i) => i.mezzi_id),
       );
+      for (const t of a.trasporti ?? []) {
+        uniqueCantieri.add(t.cantieri_partenza_id);
+        uniqueCantieri.add(t.cantieri_arrivo_id);
+        uniqueMezzi.add(t.mezzi_id);
+      }
       const interazioniMs = a.interazioni.reduce(
         (sum, i) => sum + Number(i.tempo_totale),
         0,
@@ -86,7 +114,11 @@ export async function GET(request: NextRequest) {
         (sum, ass) => sum + Number(ass.tempo_totale),
         0,
       );
-      const totalMilliseconds = interazioniMs + assenzeMs;
+      const trasportiMs = (a.trasporti ?? []).reduce(
+        (sum, t) => sum + Number(t.tempo_totale),
+        0,
+      );
+      const totalMilliseconds = interazioniMs + assenzeMs + trasportiMs;
       return {
         ...a,
         cantieriCount: uniqueCantieri.size,
@@ -100,6 +132,10 @@ export async function GET(request: NextRequest) {
           ...ass,
           tempo_totale: ass.tempo_totale.toString(),
         })),
+        trasporti: (a.trasporti ?? []).map((t) => ({
+          ...t,
+          tempo_totale: t.tempo_totale.toString(),
+        })),
       };
     });
 
@@ -107,6 +143,11 @@ export async function GET(request: NextRequest) {
     const uniqueMezzi = new Set(
       interazioni.filter((i) => i.mezzi_id).map((i) => i.mezzi_id),
     );
+    for (const t of trasportiInPeriod) {
+      uniqueCantieri.add(t.cantieri_partenza_id);
+      uniqueCantieri.add(t.cantieri_arrivo_id);
+      uniqueMezzi.add(t.mezzi_id);
+    }
 
     return NextResponse.json({
       attivita: attivitaWithCounts,

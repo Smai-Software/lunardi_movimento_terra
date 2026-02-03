@@ -3,11 +3,14 @@
 import { notFound } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
 import Link from "next/link";
+import { useState } from "react";
 import AttivitaInfoCard from "@/components/attivita-info-card";
+import AggiungiTrasportoModal from "@/components/aggiungi-trasporto-modal";
 import AssenzeTableAttivita from "@/components/assenze-table-attivita";
 import InterazioniTableAttivita from "@/components/interazioni-table-attivita";
 import TotalHoursFromInterazioniCard from "@/components/total-hours-from-interazioni";
 import TotalInterazioniCountCard from "@/components/total-interazioni-count-card";
+import TrasportiTableAttivita from "@/components/trasporti-table-attivita";
 import { fetcher } from "@/lib/api-fetcher";
 
 type AttivitaBySlug = {
@@ -50,7 +53,24 @@ type AssenzeResponse = {
   }>;
 };
 
+type TrasportiResponse = {
+  trasporti: Array<{
+    id: number;
+    ore: number;
+    minuti: number;
+    tempo_totale: string;
+    note: string | null;
+    created_at: string;
+    user: { id: string; name: string };
+    mezzi: { id: number; nome: string };
+    cantieri_partenza: { id: number; nome: string };
+    cantieri_arrivo: { id: number; nome: string };
+    attivita: { id: number; date: string };
+  }>;
+};
+
 type MezziResponse = { mezzi: Array<{ id: number; nome: string }> };
+type CantieriResponse = { cantieri: Array<{ id: number; nome: string }> };
 
 export default function UserAttivitaDetailPageClient({
   slug,
@@ -81,11 +101,25 @@ export default function UserAttivitaDetailPageClient({
     { revalidateOnFocus: false },
   );
 
+  const { data: trasportiData } = useSWR<TrasportiResponse>(
+    attivitaId ? `/api/trasporti?attivitaId=${attivitaId}&limit=500` : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
   const { data: mezziData } = useSWR<MezziResponse>(
     userId ? `/api/mezzi?userId=${userId}&limit=500` : null,
     fetcher,
     { revalidateOnFocus: false },
   );
+
+  const { data: cantieriData } = useSWR<CantieriResponse>(
+    userId ? `/api/cantieri?userId=${userId}&limit=500` : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const [showAggiungiTrasporto, setShowAggiungiTrasporto] = useState(false);
 
   if (attivitaError || (attivitaData && !attivita)) {
     notFound();
@@ -105,15 +139,23 @@ export default function UserAttivitaDetailPageClient({
 
   const interazioni = interazioniData?.interazioni ?? [];
   const assenze = assenzeData?.assenze ?? [];
+  const trasporti = trasportiData?.trasporti ?? [];
   const mezzi = mezziData?.mezzi ?? [];
+  const cantieri = cantieriData?.cantieri ?? [];
   const totalHoursEntries = [
     ...interazioni.map((i) => ({ tempo_totale: i.tempo_totale })),
     ...assenze.map((a) => ({ tempo_totale: a.tempo_totale })),
+    ...trasporti.map((t) => ({ tempo_totale: t.tempo_totale })),
   ];
 
   const attivitaForCard = {
     ...attivita,
     date: new Date(attivita.date),
+  };
+
+  const mutateTrasporti = () => {
+    if (attivitaId) mutate(`/api/trasporti?attivitaId=${attivitaId}&limit=500`);
+    if (slug) mutate(`/api/attivita/${slug}`);
   };
 
   return (
@@ -143,6 +185,37 @@ export default function UserAttivitaDetailPageClient({
               if (slug) mutate(`/api/attivita/${slug}`);
             }}
           />
+        </div>
+      </div>
+
+      <div className="card bg-base-100 shadow-xl border border-gray-200 mt-6">
+        <div className="card-body">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Trasporti</h2>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => setShowAggiungiTrasporto(true)}
+            >
+              Aggiungi Trasporto
+            </button>
+          </div>
+          <TrasportiTableAttivita
+            trasporti={trasporti}
+            cantieri={cantieri}
+            mezzi={mezzi}
+            onSuccess={mutateTrasporti}
+          />
+          {showAggiungiTrasporto && (
+            <AggiungiTrasportoModal
+              attivitaId={attivita.id}
+              userId={attivita.user_id}
+              cantieri={cantieri}
+              mezzi={mezzi}
+              onClose={() => setShowAggiungiTrasporto(false)}
+              onSuccess={mutateTrasporti}
+            />
+          )}
         </div>
       </div>
 

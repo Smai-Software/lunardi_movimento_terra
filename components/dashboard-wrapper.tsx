@@ -6,7 +6,7 @@ import DashboardChart from "@/components/dashboard-chart";
 import AttivitaTable from "@/components/attivita-table";
 
 type DashboardApiResponse = {
-  attivita: Array<{
+    attivita: Array<{
     id: number;
     date: string;
     user_id: string;
@@ -17,6 +17,12 @@ type DashboardApiResponse = {
     interazioni: Array<{
       cantieri_id: number;
       mezzi_id: number | null;
+      tempo_totale: string;
+    }>;
+    trasporti?: Array<{
+      cantieri_partenza_id: number;
+      cantieri_arrivo_id: number;
+      mezzi_id: number;
       tempo_totale: string;
     }>;
     user: { id: string; name: string };
@@ -87,6 +93,11 @@ export default function DashboardWrapper() {
         if (interazione.mezzi_id) {
           uniqueMezzi.add(interazione.mezzi_id);
         }
+      });
+      (attivita.trasporti ?? []).forEach((t) => {
+        uniqueCantieri.add(t.cantieri_partenza_id);
+        uniqueCantieri.add(t.cantieri_arrivo_id);
+        uniqueMezzi.add(t.mezzi_id);
       });
     });
 

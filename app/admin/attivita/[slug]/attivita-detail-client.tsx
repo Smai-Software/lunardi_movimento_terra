@@ -3,8 +3,10 @@
 import { useState } from "react";
 import AggiungiAssenzaModal from "@/components/aggiungi-assenza-modal";
 import AggiungiInterazioneModal from "@/components/aggiungi-interazione-modal";
+import AggiungiTrasportoModal from "@/components/aggiungi-trasporto-modal";
 import AssenzeTableAttivita from "@/components/assenze-table-attivita";
 import InterazioniTableAttivita from "@/components/interazioni-table-attivita";
+import TrasportiTableAttivita from "@/components/trasporti-table-attivita";
 
 type AttivitaDetailClientProps = {
   attivita: {
@@ -50,24 +52,40 @@ type AttivitaDetailClientProps = {
     user: { id: string; name: string };
     attivita: { id: number; date: string };
   }>;
+  trasporti: Array<{
+    id: number;
+    ore: number;
+    minuti: number;
+    note: string | null;
+    created_at: string;
+    user: { id: string; name: string };
+    mezzi: { id: number; nome: string };
+    cantieri_partenza: { id: number; nome: string };
+    cantieri_arrivo: { id: number; nome: string };
+    attivita: { id: number; date: string };
+  }>;
   users: Array<{ id: string; name: string }>;
   mezzi: Array<{ id: number; nome: string }>;
   cantieri: Array<{ id: number; nome: string }>;
   onInterazioniChange?: () => void;
   onAssenzeChange?: () => void;
+  onTrasportiChange?: () => void;
 };
 
 export default function AttivitaDetailClient({
   attivita,
   interazioni,
   assenze,
+  trasporti,
   mezzi,
   cantieri,
   onInterazioniChange,
   onAssenzeChange,
+  onTrasportiChange,
 }: AttivitaDetailClientProps) {
   const [showAggiungiInterazione, setShowAggiungiInterazione] = useState(false);
   const [showAggiungiAssenza, setShowAggiungiAssenza] = useState(false);
+  const [showAggiungiTrasporto, setShowAggiungiTrasporto] = useState(false);
 
   return (
     <>
@@ -97,6 +115,36 @@ export default function AttivitaDetailClient({
           mezzi={mezzi}
           onClose={() => setShowAggiungiInterazione(false)}
           onSuccess={onInterazioniChange}
+        />
+      )}
+
+      {/* Trasporti Section */}
+      <div className="mb-6 flex justify-between items-center mt-10">
+        <h2 className="text-2xl font-bold">Trasporti</h2>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setShowAggiungiTrasporto(true)}
+        >
+          Aggiungi Trasporto
+        </button>
+      </div>
+
+      <TrasportiTableAttivita
+        trasporti={trasporti}
+        cantieri={cantieri}
+        mezzi={mezzi}
+        onSuccess={onTrasportiChange}
+      />
+
+      {showAggiungiTrasporto && (
+        <AggiungiTrasportoModal
+          attivitaId={attivita.id}
+          userId={attivita.user_id}
+          cantieri={cantieri}
+          mezzi={mezzi}
+          onClose={() => setShowAggiungiTrasporto(false)}
+          onSuccess={onTrasportiChange}
         />
       )}
 

@@ -75,16 +75,27 @@ export async function GET(request: NextRequest) {
           },
           _count: { select: { interazioni: true } },
           interazioni: { select: { tempo_totale: true } },
+          trasporti_partenza: { select: { tempo_totale: true } },
+          trasporti_arrivo: { select: { tempo_totale: true } },
         },
       }),
       prisma.cantieri.count({ where }),
     ]);
 
     const cantieriWithStats = cantieriList.map((c) => {
-      const totalMilliseconds = c.interazioni.reduce(
+      const interazioniMs = c.interazioni.reduce(
         (sum, i) => sum + Number(i.tempo_totale),
         0,
       );
+      const trasportiPartenzaMs = (c.trasporti_partenza ?? []).reduce(
+        (sum, t) => sum + Number(t.tempo_totale),
+        0,
+      );
+      const trasportiArrivoMs = (c.trasporti_arrivo ?? []).reduce(
+        (sum, t) => sum + Number(t.tempo_totale),
+        0,
+      );
+      const totalMilliseconds = interazioniMs + trasportiPartenzaMs + trasportiArrivoMs;
       return {
         ...c,
         totalInterazioni: c._count.interazioni,
@@ -92,6 +103,14 @@ export async function GET(request: NextRequest) {
         interazioni: c.interazioni.map((i) => ({
           ...i,
           tempo_totale: i.tempo_totale.toString(),
+        })),
+        trasporti_partenza: (c.trasporti_partenza ?? []).map((t) => ({
+          ...t,
+          tempo_totale: t.tempo_totale.toString(),
+        })),
+        trasporti_arrivo: (c.trasporti_arrivo ?? []).map((t) => ({
+          ...t,
+          tempo_totale: t.tempo_totale.toString(),
         })),
       };
     });

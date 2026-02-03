@@ -43,6 +43,8 @@ export async function GET(
         },
         _count: { select: { interazioni: true } },
         interazioni: { select: { tempo_totale: true } },
+        trasporti_partenza: { select: { tempo_totale: true } },
+        trasporti_arrivo: { select: { tempo_totale: true } },
       },
     });
 
@@ -53,11 +55,20 @@ export async function GET(
       );
     }
 
-    const totalMilliseconds = cantiere.interazioni.reduce(
+    const interazioniMs = cantiere.interazioni.reduce(
       (sum, i) => sum + Number(i.tempo_totale),
       0,
     );
-   
+    const trasportiPartenzaMs = (cantiere.trasporti_partenza ?? []).reduce(
+      (sum, t) => sum + Number(t.tempo_totale),
+      0,
+    );
+    const trasportiArrivoMs = (cantiere.trasporti_arrivo ?? []).reduce(
+      (sum, t) => sum + Number(t.tempo_totale),
+      0,
+    );
+    const totalMilliseconds = interazioniMs + trasportiPartenzaMs + trasportiArrivoMs;
+
     return NextResponse.json({
       cantiere: {
         ...cantiere,
@@ -66,6 +77,14 @@ export async function GET(
         interazioni: cantiere.interazioni.map((i) => ({
           ...i,
           tempo_totale: i.tempo_totale.toString(),
+        })),
+        trasporti_partenza: (cantiere.trasporti_partenza ?? []).map((t) => ({
+          ...t,
+          tempo_totale: t.tempo_totale.toString(),
+        })),
+        trasporti_arrivo: (cantiere.trasporti_arrivo ?? []).map((t) => ({
+          ...t,
+          tempo_totale: t.tempo_totale.toString(),
         })),
       },
     });

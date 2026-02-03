@@ -8,6 +8,7 @@ import AssegnaUtenteCantiereModal from "@/components/assegna-utente-cantiere-mod
 import TotalHoursFromInterazioniCard from "@/components/total-hours-from-interazioni";
 import TotalInterazioniCountCard from "@/components/total-interazioni-count-card";
 import InterazioniTable from "@/components/interazioni-table";
+import TrasportiTableAttivita from "@/components/trasporti-table-attivita";
 import { fetcher } from "@/lib/api-fetcher";
 
 type CantiereBySlug = {
@@ -43,8 +44,25 @@ type InterazioniResponse = {
   }>;
 };
 
+type TrasportiResponse = {
+  trasporti: Array<{
+    id: number;
+    ore: number;
+    minuti: number;
+    tempo_totale: string;
+    note: string | null;
+    created_at: string;
+    user: { id: string; name: string };
+    mezzi: { id: number; nome: string };
+    cantieri_partenza: { id: number; nome: string };
+    cantieri_arrivo: { id: number; nome: string };
+    attivita: { id: number; date: string };
+  }>;
+};
+
 type UsersResponse = { users: Array<{ id: string; name: string }> };
 type MezziResponse = { mezzi: Array<{ id: number; nome: string }> };
+type CantieriListResponse = { cantieri: Array<{ id: number; nome: string }> };
 type CantiereUsersResponse = {
   users: Array<{ user_id: string; cantieri_id: number; user: { id: string; name: string } }>;
 };
@@ -62,6 +80,12 @@ export default function CantiereDetailPageClient({ slug }: { slug: string }) {
 
   const { data: interazioniData } = useSWR<InterazioniResponse>(
     cantiereId ? `/api/interazioni?cantiereId=${cantiereId}&limit=500` : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const { data: trasportiData } = useSWR<TrasportiResponse>(
+    cantiereId ? `/api/trasporti?cantiereId=${cantiereId}&limit=500` : null,
     fetcher,
     { revalidateOnFocus: false },
   );
@@ -84,6 +108,12 @@ export default function CantiereDetailPageClient({ slug }: { slug: string }) {
     { revalidateOnFocus: false },
   );
 
+  const { data: cantieriListData } = useSWR<CantieriListResponse>(
+    "/api/cantieri?limit=500&sortBy=nome&sortOrder=asc",
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
   if (cantiereError || (cantiereData && !cantiere)) {
     notFound();
   }
@@ -97,9 +127,16 @@ export default function CantiereDetailPageClient({ slug }: { slug: string }) {
   }
 
   const interazioni = interazioniData?.interazioni ?? [];
+  const trasporti = trasportiData?.trasporti ?? [];
   const users = usersData?.users ?? [];
   const mezzi = mezziData?.mezzi ?? [];
+  const cantieri = cantieriListData?.cantieri ?? [];
   const userCantieriList = cantiereUsersData?.users ?? [];
+
+  const totalHoursEntries = [
+    ...interazioni.map((i) => ({ tempo_totale: i.tempo_totale })),
+    ...trasporti.map((t) => ({ tempo_totale: t.tempo_totale })),
+  ];
   const userCantieri = userCantieriList.map((u) => ({
     user_id: u.user_id,
     cantieri_id: u.cantieri_id,
@@ -173,7 +210,7 @@ export default function CantiereDetailPageClient({ slug }: { slug: string }) {
           </div>
         </div>
         <div className="flex flex-col gap-6 mb-8">
-          <TotalHoursFromInterazioniCard entries={interazioni} />
+          <TotalHoursFromInterazioniCard entries={totalHoursEntries} />
           <TotalInterazioniCountCard count={interazioni.length} />
         </div>
       </div>
@@ -191,6 +228,19 @@ export default function CantiereDetailPageClient({ slug }: { slug: string }) {
           mutate(`/api/interazioni?cantiereId=${cantiereId}&limit=500`)
         }
       />
+
+      <div className="mt-10">
+        <h2 className="text-2xl font-bold mb-4">Trasporti</h2>
+        <TrasportiTableAttivita
+          trasporti={trasporti}
+          cantieri={cantieri}
+          mezzi={mezzi}
+          onSuccess={() => {
+            mutate(`/api/trasporti?cantiereId=${cantiereId}&limit=500`);
+            mutate(`/api/cantieri/${slug}`);
+          }}
+        />
+      </div>
     </div>
   );
 }

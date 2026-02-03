@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import AggiungiAssenzaModalForm from "@/components/aggiungi-assenza-modal-form";
 import AggiungiInterazioneModalForm from "@/components/aggiungi-interazione-modal-form";
+import AggiungiTrasportoModalForm from "@/components/aggiungi-trasporto-modal-form";
 import { Loader2Icon, TrashIcon } from "lucide-react";
 
 type Cantiere = {
@@ -43,6 +44,16 @@ type Assenza = {
   note: string;
 };
 
+type Trasporto = {
+  localId: string;
+  cantieriPartenzaId: number;
+  cantieriArrivoId: number;
+  mezziId: number;
+  ore: number;
+  minuti: number;
+  note: string;
+};
+
 const ASSENZA_TIPO_LABELS: Record<string, string> = {
   FERIE: "Ferie",
   PERMESSO: "Permesso",
@@ -63,6 +74,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
   );
   const [cantieri, setCantieri] = useState<CantiereWithInterazioni[]>([]);
   const [assenze, setAssenze] = useState<Assenza[]>([]);
+  const [trasporti, setTrasporti] = useState<Trasporto[]>([]);
 
   const [availableCantieri, setAvailableCantieri] = useState<Cantiere[]>([]);
   const [availableMezzi, setAvailableMezzi] = useState<Mezzo[]>([]);
@@ -187,6 +199,32 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     setAssenze((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const addTrasporto = (
+    cantieriPartenzaId: number,
+    cantieriArrivoId: number,
+    mezziId: number,
+    ore: number,
+    minuti: number,
+    note: string,
+  ) => {
+    setTrasporti((prev) => [
+      ...prev,
+      {
+        localId: crypto.randomUUID(),
+        cantieriPartenzaId,
+        cantieriArrivoId,
+        mezziId,
+        ore,
+        minuti,
+        note,
+      },
+    ]);
+  };
+
+  const removeTrasporto = (index: number) => {
+    setTrasporti((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const getTodayLocalDateString = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -201,8 +239,11 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
   const handleSubmit = async () => {
     const hasInterazioni = cantieri.length > 0;
     const hasAssenze = assenze.length > 0;
-    if (!selectedDate || (!hasInterazioni && !hasAssenze)) {
-      toast.error("Compila tutti i campi obbligatori e aggiungi almeno un'interazione o un'assenza");
+    const hasTrasporti = trasporti.length > 0;
+    if (!selectedDate || (!hasInterazioni && !hasAssenze && !hasTrasporti)) {
+      toast.error(
+        "Compila tutti i campi obbligatori e aggiungi almeno un'interazione, un'assenza o un trasporto",
+      );
       return;
     }
     if (selectedDate > getTodayLocalDateString()) {
@@ -229,7 +270,15 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
       ore: a.ore,
       minuti: a.minuti,
       note: a.note,
-    })); // exclude localId when sending to API
+    }));
+    const allTrasporti = trasporti.map((t) => ({
+      cantieri_partenza_id: t.cantieriPartenzaId,
+      cantieri_arrivo_id: t.cantieriArrivoId,
+      mezzi_id: t.mezziId,
+      ore: t.ore,
+      minuti: t.minuti,
+      note: t.note,
+    }));
 
     setIsSubmitting(true);
     setError(null);
@@ -242,6 +291,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
           user_id: userId,
           interazioni: hasInterazioni ? allInterazioni : [],
           assenze: hasAssenze ? allAssenze : [],
+          trasporti: hasTrasporti ? allTrasporti : [],
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -270,7 +320,11 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
       (total, a) => total + a.ore * 60 + a.minuti,
       0,
     );
-    const totalMinutes = interazioniMinutes + assenzeMinutes;
+    const trasportiMinutes = trasporti.reduce(
+      (total, t) => total + t.ore * 60 + t.minuti,
+      0,
+    );
+    const totalMinutes = interazioniMinutes + assenzeMinutes + trasportiMinutes;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
 
@@ -374,7 +428,63 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
               )}
             </div>
 
-            {/* Sezione Assenze: plus + titolo, poi tabella direttamente sotto */}
+            {/* Sezione Trasporti */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <AggiungiTrasportoModalForm
+                  availableCantieri={availableCantieri}
+                  availableMezzi={availableMezzi}
+                  loadingCantieri={loadingCantieri}
+                  loadingMezzi={loadingMezzi}
+                  onAddTrasporto={addTrasporto}
+                />
+                <h2 className="text-xl font-semibold">Trasporti</h2>
+              </div>
+              {trasporti.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="table w-full">
+                    <thead>
+                      <tr>
+                        <th>Partenza</th>
+                        <th>Arrivo</th>
+                        <th>Mezzo</th>
+                        <th>Tempo</th>
+                        <th>Azioni</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {trasporti.map((t, index) => (
+                        <tr key={t.localId}>
+                          <td className="font-medium">
+                            {availableCantieri.find((c) => c.id === t.cantieriPartenzaId)?.nome ?? "—"}
+                          </td>
+                          <td>
+                            {availableCantieri.find((c) => c.id === t.cantieriArrivoId)?.nome ?? "—"}
+                          </td>
+                          <td>
+                            {availableMezzi.find((m) => m.id === t.mezziId)?.nome ?? "—"}
+                          </td>
+                          <td>
+                            {t.ore}h {t.minuti}m
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline btn-error"
+                              onClick={() => removeTrasporto(index)}
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Sezione Assenze */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <AggiungiAssenzaModalForm onAddAssenza={addAssenza} />
@@ -416,7 +526,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
               )}
             </div>
 
-            {(cantieri.length > 0 || assenze.length > 0) && (
+            {(cantieri.length > 0 || assenze.length > 0 || trasporti.length > 0) && (
               <div className="mt-4">
                 <div className="card bg-primary text-primary-content">
                   <div className="card-body py-3">
@@ -450,7 +560,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
               onClick={handleSubmit}
               disabled={
                 !selectedDate ||
-                (cantieri.length === 0 && assenze.length === 0) ||
+                (cantieri.length === 0 && assenze.length === 0 && trasporti.length === 0) ||
                 isSubmitting
               }
             >
