@@ -21,8 +21,8 @@ export default function AttivitaInfoCard({
   restrictDateRange = false,
 }: AttivitaInfoCardProps) {
   return (
-    <div className="flex items-center justify-between mb-4">
-      <h1 className="card-title text-3xl">
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-2">
+      <h1 className="card-title text-lg md:text-3xl">
         {new Date(attivita.date).toLocaleDateString("it-IT")} -{" "}
         {attivita.user.name}
       </h1>

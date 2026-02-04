@@ -10,6 +10,7 @@ import AssenzeTableAttivita from "@/components/assenze-table-attivita";
 import InterazioniTableAttivita from "@/components/interazioni-table-attivita";
 import TrasportiTableAttivita from "@/components/trasporti-table-attivita";
 import { fetcher } from "@/lib/api-fetcher";
+import { ArrowLeftIcon } from "lucide-react";
 
 type AttivitaBySlug = {
   attivita: {
@@ -164,10 +165,10 @@ export default function UserAttivitaDetailPageClient({
   };
 
   return (
-    <div className="mx-auto px-6 py-8">
+    <div className="mx-auto md:px-6 py-8 px-2">
       <div className="mb-4">
         <Link href="/dashboard?tab=list" className="btn btn-sm btn-ghost">
-          ← Torna alle attività
+          <ArrowLeftIcon className="w-4 h-4" /> Torna alle attività
         </Link>
       </div>
 
@@ -209,16 +210,6 @@ export default function UserAttivitaDetailPageClient({
 
       <div className="card bg-base-100 shadow-xl border border-gray-200 mt-6">
         <div className="card-body">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Trasporti</h2>
-            <AggiungiTrasportoModal
-              attivitaId={attivita.id}
-              userId={attivita.user_id}
-              cantieri={cantieri}
-              mezzi={mezzi}
-              onSuccess={mutateTrasporti}
-            />
-          </div>
           <TrasportiTableAttivita
             trasporti={trasporti}
             cantieri={cantieri}

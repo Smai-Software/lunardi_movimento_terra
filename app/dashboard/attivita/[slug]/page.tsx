@@ -23,5 +23,5 @@ export default async function AttivitaDetailPage({ params }: PageProps) {
 
   const userId = session.user.id;
 
-  return <UserAttivitaDetailPageClient slug={slug} userId={userId} />;
+  return <div className="mx-auto md:container"><UserAttivitaDetailPageClient slug={slug} userId={userId} /></div>;
 }
