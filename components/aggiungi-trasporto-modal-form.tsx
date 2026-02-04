@@ -170,9 +170,9 @@ export default function AggiungiTrasportoModalForm({
                   onChange={(e) => setCurrentOre(parseInt(e.target.value, 10) || 0)}
                   required
                 >
-                  {Array.from({ length: 24 }, (_, i) => (
-                    <option key={`hour-${i}`} value={i}>
-                      {i}
+                  {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                    <option key={hour} value={hour}>
+                      {hour}
                     </option>
                   ))}
                 </select>

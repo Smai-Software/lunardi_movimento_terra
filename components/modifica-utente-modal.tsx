@@ -37,7 +37,7 @@ export default function ModificaUtenteModal({
     setPhone(utente.phone || "");
     setLicenseCamion(utente.licenseCamion || false);
     setLicenseEscavatore(utente.licenseEscavatore || false);
-  }, [utente]);
+  }, [utente.name, utente.phone, utente.licenseCamion, utente.licenseEscavatore]);
 
   const openModal = () => {
     setName(utente.name || "");

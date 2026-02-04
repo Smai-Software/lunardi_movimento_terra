@@ -1,6 +1,5 @@
-import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import CantiereDetailPageClient from "./cantiere-detail-page-client";
 
 type PageProps = {
@@ -8,11 +7,11 @@ type PageProps = {
 };
 
 export default async function CantiereDetailPage({ params }: PageProps) {
-  const { slug } = await params;
-
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const [session, resolvedParams] = await Promise.all([
+    getSession(),
+    params,
+  ]);
+  const { slug } = resolvedParams;
 
   if (!session) {
     redirect("/sign-in");

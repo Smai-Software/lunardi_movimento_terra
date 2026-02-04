@@ -1,12 +1,9 @@
-import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import DashboardWrapper from "@/components/dashboard-wrapper";
 
-export default async function DashboardPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+export default async function AdminPage() {
+  const session = await getSession();
 
   if (!session) {
     redirect("/sign-in");

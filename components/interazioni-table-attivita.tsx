@@ -38,7 +38,7 @@ export default function InterazioniTableAttivita({
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-lg shadow">
+      <div className="overflow-x-auto rounded-lg shadow content-visibility-auto">
         <table className="table w-full">
           <thead>
             <tr>
@@ -107,7 +107,7 @@ export default function InterazioniTableAttivita({
         </table>
       </div>
 
-      {selectedInterazioneForEdit && (
+      {selectedInterazioneForEdit ? (
         <ModificaInterazioneModal
           interazione={selectedInterazioneForEdit}
           mezzi={mezzi}
@@ -120,14 +120,14 @@ export default function InterazioniTableAttivita({
           onClose={() => setSelectedInterazioneForEdit(null)}
           onSuccess={onSuccess}
         />
-      )}
-      {selectedInterazioneForDelete && (
+      ) : null}
+      {selectedInterazioneForDelete ? (
         <EliminaInterazioneModal
           interazione={selectedInterazioneForDelete}
           onClose={() => setSelectedInterazioneForDelete(null)}
           onSuccess={onSuccess}
         />
-      )}
+      ) : null}
     </div>
   );
 }

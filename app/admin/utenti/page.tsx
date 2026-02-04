@@ -1,13 +1,10 @@
-import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import AggiungiUtenteModal from "@/components/aggiungi-utente-modal";
 import UtentiTable from "@/components/utenti-table";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 
 export default async function UtentiPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session) {
     redirect("/sign-in");

@@ -1,13 +1,10 @@
-import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import AggiungiCantiereModal from "@/components/aggiungi-cantiere-modal";
 import CantieriTable from "@/components/cantieri-table";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 
 export default async function CantieriPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session) {
     redirect("/sign-in");

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 type ModificaCantiereModalProps = {
   cantiere: {
@@ -31,7 +30,7 @@ export default function ModificaCantiereModal({
     setNome(cantiere.nome);
     setDescrizione(cantiere.descrizione);
     setOpen(cantiere.open);
-  }, [cantiere]);
+  }, [cantiere.nome, cantiere.descrizione, cantiere.open]);
 
   useEffect(() => {
     dialogRef.current?.showModal();

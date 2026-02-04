@@ -37,7 +37,7 @@ export default function TrasportiTableAttivita({
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-lg shadow">
+      <div className="overflow-x-auto rounded-lg shadow content-visibility-auto">
         <table className="table w-full">
           <thead>
             <tr>
@@ -91,7 +91,7 @@ export default function TrasportiTableAttivita({
         </table>
       </div>
 
-      {selectedForEdit && (
+      {selectedForEdit ? (
         <ModificaTrasportoModal
           trasporto={selectedForEdit}
           cantieri={cantieri}
@@ -99,14 +99,14 @@ export default function TrasportiTableAttivita({
           onClose={() => setSelectedForEdit(null)}
           onSuccess={onSuccess}
         />
-      )}
-      {selectedForDelete && (
+      ) : null}
+      {selectedForDelete ? (
         <EliminaTrasportoModal
           trasporto={selectedForDelete}
           onClose={() => setSelectedForDelete(null)}
           onSuccess={onSuccess}
         />
-      )}
+      ) : null}
     </div>
   );
 }

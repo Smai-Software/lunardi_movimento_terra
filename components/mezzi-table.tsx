@@ -101,7 +101,7 @@ export default function MezziTable() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg shadow">
+      <div className="overflow-x-auto rounded-lg shadow content-visibility-auto">
         <table className="table">
           <thead className="bg-base-200">
             <tr>
@@ -198,7 +198,7 @@ export default function MezziTable() {
         </table>
       </div>
 
-      {totalPages > 1 && (
+      {totalPages > 1 ? (
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-base-content/70">
             Pagina {page} di {totalPages} ({total} mezzi totali)
@@ -245,7 +245,7 @@ export default function MezziTable() {
             </button>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

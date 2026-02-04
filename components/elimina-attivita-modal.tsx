@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
@@ -11,13 +11,11 @@ type EliminaAttivitaModalProps = {
     date: string;
     user: string;
   };
-  onClose: () => void;
   onSuccess?: () => void;
 };
 
 export default function EliminaAttivitaModal({
   attivita,
-  onClose,
   onSuccess,
 }: EliminaAttivitaModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -27,14 +25,14 @@ export default function EliminaAttivitaModal({
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
+  const openModal = () => {
+    setError(null);
     dialogRef.current?.showModal();
-  }, []);
+  };
 
   const handleClose = () => {
     setError(null);
     dialogRef.current?.close();
-    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,48 +60,57 @@ export default function EliminaAttivitaModal({
   };
 
   return (
-    <dialog ref={dialogRef} className="modal" id="elimina-attivita-modal">
-      <div className="modal-box">
-        <h3 className="font-bold text-lg mb-2">Elimina attività</h3>
-        <p className="mb-4">
-          Sei sicuro di voler eliminare l&apos;attività del{" "}
-          <strong>{new Date(attivita.date).toLocaleDateString("it-IT")}</strong>{" "}
-          per l&apos;utente <strong>{attivita.user}</strong>?
-        </p>
-        <form onSubmit={handleSubmit}>
-          {error && (
-            <div className="alert alert-error mb-4">
-              <span>{error}</span>
+    <>
+      <button
+        type="button"
+        className="btn btn-outline btn-error btn-sm"
+        onClick={openModal}
+      >
+        Elimina attività
+      </button>
+      <dialog ref={dialogRef} className="modal" id="elimina-attivita-modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-2">Elimina attività</h3>
+          <p className="mb-4">
+            Sei sicuro di voler eliminare l&apos;attività del{" "}
+            <strong>{new Date(attivita.date).toLocaleDateString("it-IT")}</strong>{" "}
+            per l&apos;utente <strong>{attivita.user}</strong>?
+          </p>
+          <form onSubmit={handleSubmit}>
+            {error && (
+              <div className="alert alert-error mb-4">
+                <span>{error}</span>
+              </div>
+            )}
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={handleClose}
+                disabled={isSubmitting}
+              >
+                Annulla
+              </button>
+              <button
+                type="submit"
+                className="btn btn-error"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
+                  "Elimina attività"
+                )}
+              </button>
             </div>
-          )}
-          <div className="modal-action">
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Annulla
-            </button>
-            <button
-              type="submit"
-              className="btn btn-error"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <span className="loading loading-spinner loading-sm" />
-              ) : (
-                "Elimina attività"
-              )}
-            </button>
-          </div>
+          </form>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button tabIndex={-1} type="submit">
+            Annulla
+          </button>
         </form>
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button type="button" tabIndex={-1} onClick={handleClose}>
-          Annulla
-        </button>
-      </form>
-    </dialog>
+      </dialog>
+    </>
   );
 }

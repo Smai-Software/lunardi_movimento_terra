@@ -1,6 +1,12 @@
 "use client";
 
 import { AppProgressProvider as ProgressProvider } from "@bprogress/next";
+import dynamic from "next/dynamic";
+
+const Toaster = dynamic(
+  () => import("sonner").then((m) => m.Toaster),
+  { ssr: false },
+);
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -11,6 +17,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       delay={200}
     >
       {children}
+      <Toaster position="bottom-center" richColors />
     </ProgressProvider>
   );
 }

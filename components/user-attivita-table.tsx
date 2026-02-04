@@ -82,7 +82,7 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
       <p className="text-sm text-base-content/70">
         Visualizza le tue attività inserite negli ultimi 7 giorni
       </p>
-      <div className="overflow-x-auto rounded-lg shadow mt-2">
+      <div className="overflow-x-auto rounded-lg shadow mt-2 content-visibility-auto">
         <table className="table w-full">
           <thead className="bg-base-200">
             <tr>
@@ -136,7 +136,7 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
         </table>
       </div>
 
-      {pageCount > 1 && (
+      {pageCount > 1 ? (
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-base-content/70">
             Pagina {page} di {pageCount}
@@ -160,7 +160,7 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
             </button>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

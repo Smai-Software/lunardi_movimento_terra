@@ -257,17 +257,17 @@ export default function CantieriTable() {
         </div>
         <label htmlFor={drawerId} className="btn btn-outline relative">
           Filtra
-          {activeFilterCount > 0 && (
+          {activeFilterCount > 0 ? (
             <span className="badge badge-secondary badge-sm absolute -top-2 -right-2">
               {activeFilterCount}
             </span>
-          )}
+          ) : null}
         </label>
       </div>
 
       <div className="drawer drawer-end z-50">
         <input id={drawerId} type="checkbox" className="drawer-toggle" />
-        <div className="overflow-x-auto rounded-lg shadow">
+        <div className="overflow-x-auto rounded-lg shadow content-visibility-auto">
           <table className="table w-full">
             <thead className="bg-base-200">
               <tr>
@@ -375,7 +375,7 @@ export default function CantieriTable() {
         />
       </div>
 
-      {totalPages > 1 && (
+      {totalPages > 1 ? (
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-base-content/70">
             Pagina {page} di {totalPages} ({total} cantieri totali)
@@ -421,9 +421,9 @@ export default function CantieriTable() {
             </button>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {selectedCantiereForEdit && (
+      {selectedCantiereForEdit ? (
         <ModificaCantiereModal
           cantiere={{
             id: selectedCantiereForEdit.id,
@@ -434,7 +434,7 @@ export default function CantieriTable() {
           onClose={() => setSelectedCantiereForEdit(null)}
           onSuccess={() => mutate()}
         />
-      )}
+      ) : null}
     </div>
   );
 }

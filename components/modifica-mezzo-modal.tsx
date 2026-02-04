@@ -37,7 +37,7 @@ export default function ModificaMezzoModal({
     setDescrizione(mezzo.descrizione);
     setHasLicenseCamion(mezzo.has_license_camion);
     setHasLicenseEscavatore(mezzo.has_license_escavatore);
-  }, [mezzo]);
+  }, [mezzo.nome, mezzo.descrizione, mezzo.has_license_camion, mezzo.has_license_escavatore]);
 
   const openModal = () => {
     setNome(mezzo.nome);

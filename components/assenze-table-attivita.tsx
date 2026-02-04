@@ -43,7 +43,7 @@ export default function AssenzeTableAttivita({
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-lg shadow">
+      <div className="overflow-x-auto rounded-lg shadow content-visibility-auto">
         <table className="table w-full">
           <thead>
             <tr>
@@ -104,7 +104,7 @@ export default function AssenzeTableAttivita({
         </table>
       </div>
 
-      {selectedAssenzaForEdit && (
+      {selectedAssenzaForEdit ? (
         <ModificaAssenzaModal
           assenza={selectedAssenzaForEdit}
           attivita={[
@@ -116,14 +116,14 @@ export default function AssenzeTableAttivita({
           onClose={() => setSelectedAssenzaForEdit(null)}
           onSuccess={onSuccess}
         />
-      )}
-      {selectedAssenzaForDelete && (
+      ) : null}
+      {selectedAssenzaForDelete ? (
         <EliminaAssenzaModal
           assenza={selectedAssenzaForDelete}
           onClose={() => setSelectedAssenzaForDelete(null)}
           onSuccess={onSuccess}
         />
-      )}
+      ) : null}
     </div>
   );
 }

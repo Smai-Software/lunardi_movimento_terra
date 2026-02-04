@@ -1,13 +1,10 @@
-import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import AttivitaTable from "@/components/attivita-table";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 
 export default async function AttivitaPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session) {
     redirect("/sign-in");

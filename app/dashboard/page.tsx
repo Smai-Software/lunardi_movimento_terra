@@ -1,6 +1,5 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import UserAttivitaForm from "@/components/user-attivita-form";
 import UserAttivitaTable from "@/components/user-attivita-table";
 import { TabsClient } from "@/components/tabs-client";
@@ -10,9 +9,10 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ tab?: string }>;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const [session, params] = await Promise.all([
+    getSession(),
+    searchParams,
+  ]);
 
   if (!session) {
     redirect("/sign-in");
@@ -22,8 +22,7 @@ export default async function DashboardPage({
     redirect("/admin");
   }
 
-  const params = await searchParams;
-  const tab = params.tab || "insert";
+  const tab = params.tab ?? "insert";
   const userId = session.user.id;
 
   return (

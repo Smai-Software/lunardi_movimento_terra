@@ -90,7 +90,7 @@ export default function UtentiTable({
         />
       </div>
 
-      <div className="overflow-x-auto rounded-lg shadow">
+      <div className="overflow-x-auto rounded-lg shadow content-visibility-auto">
         <table className="table">
           <thead className="bg-base-200">
             <tr>
@@ -188,7 +188,7 @@ export default function UtentiTable({
         </table>
       </div>
 
-      {totalPages > 1 && (
+      {totalPages > 1 ? (
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-base-content/70">
             Pagina {page} di {totalPages} ({total} utenti totali)
@@ -229,7 +229,7 @@ export default function UtentiTable({
             </button>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

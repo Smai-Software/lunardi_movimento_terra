@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 
@@ -10,7 +10,6 @@ type ModificaAttivitaModalProps = {
     date: string;
     user_id: string;
   };
-  onClose: () => void;
   onSuccess?: () => void;
   /** Quando true (dashboard user), limita la data a max 7 giorni indietro e non futura */
   restrictDateRange?: boolean;
@@ -18,7 +17,6 @@ type ModificaAttivitaModalProps = {
 
 export default function ModificaAttivitaModal({
   attivita,
-  onClose,
   onSuccess,
   restrictDateRange = false,
 }: ModificaAttivitaModalProps) {
@@ -28,13 +26,16 @@ export default function ModificaAttivitaModal({
   const [error, setError] = useState<string | null>(null);
   const { mutate } = useSWRConfig();
 
-  useEffect(() => {
+  const openModal = () => {
     setSelectedDate(attivita.date);
-  }, [attivita]);
-
-  useEffect(() => {
+    setError(null);
     dialogRef.current?.showModal();
-  }, []);
+  };
+
+  const handleClose = () => {
+    setError(null);
+    dialogRef.current?.close();
+  };
 
   const getTodayLocalDateString = () => {
     const d = new Date();
@@ -45,11 +46,6 @@ export default function ModificaAttivitaModal({
     const d = new Date();
     d.setDate(d.getDate() - 7);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  };
-
-  const handleClose = () => {
-    setError(null);
-    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,61 +87,70 @@ export default function ModificaAttivitaModal({
   };
 
   return (
-    <dialog ref={dialogRef} className="modal">
-      <div className="modal-box">
-        <h3 className="font-bold text-lg mb-2">Modifica data</h3>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label
-              className="block font-medium mb-1 text-sm"
-              htmlFor={`date-attivita-${attivita.id}`}
-            >
-              Data *
-            </label>
-            <input
-              id={`date-attivita-${attivita.id}`}
-              type="date"
-              className="input input-bordered w-full"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              min={restrictDateRange ? getMinDateString() : undefined}
-              max={restrictDateRange ? getTodayLocalDateString() : undefined}
-              required
-            />
-          </div>
-          {error && (
-            <div className="alert alert-error mb-4">
-              <span>{error}</span>
+    <>
+      <button
+        type="button"
+        className="btn btn-outline btn-sm"
+        onClick={openModal}
+      >
+        Modifica data
+      </button>
+      <dialog ref={dialogRef} className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-2">Modifica data</h3>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label
+                className="block font-medium mb-1 text-sm"
+                htmlFor={`date-attivita-${attivita.id}`}
+              >
+                Data *
+              </label>
+              <input
+                id={`date-attivita-${attivita.id}`}
+                type="date"
+                className="input input-bordered w-full"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                min={restrictDateRange ? getMinDateString() : undefined}
+                max={restrictDateRange ? getTodayLocalDateString() : undefined}
+                required
+              />
             </div>
-          )}
-          <div className="modal-action">
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Annulla
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <span className="loading loading-spinner loading-sm" />
-              ) : (
-                "Salva modifiche"
-              )}
-            </button>
-          </div>
+            {error && (
+              <div className="alert alert-error mb-4">
+                <span>{error}</span>
+              </div>
+            )}
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={handleClose}
+                disabled={isSubmitting}
+              >
+                Annulla
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
+                  "Salva modifiche"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button tabIndex={-1} type="submit">
+            Annulla
+          </button>
         </form>
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button type="button" tabIndex={-1} onClick={handleClose}>
-          Annulla
-        </button>
-      </form>
-    </dialog>
+      </dialog>
+    </>
   );
 }

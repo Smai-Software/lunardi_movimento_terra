@@ -450,17 +450,17 @@ export default function InterazioniTable({
         </div>
         <label htmlFor={drawerId} className="btn btn-outline relative">
           Filtra
-          {activeFilterCount > 0 && (
+          {activeFilterCount > 0 ? (
             <span className="badge badge-secondary badge-sm absolute -top-2 -right-2">
               {activeFilterCount}
             </span>
-          )}
+          ) : null}
         </label>
       </div>
 
       <div className="drawer drawer-end z-50">
         <input id={drawerId} type="checkbox" className="drawer-toggle" />
-        <div className="overflow-x-auto rounded-lg shadow">
+        <div className="overflow-x-auto rounded-lg shadow content-visibility-auto">
           <table className="table w-full">
             <thead>
               <tr>
@@ -562,7 +562,7 @@ export default function InterazioniTable({
       </div>
 
       {/* Paginazione */}
-      {pageCount > 1 && (
+      {pageCount > 1 ? (
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-base-content/70">
             Pagina {page} di {pageCount}
@@ -606,9 +606,9 @@ export default function InterazioniTable({
             </button>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {selectedInterazioneForEdit && (
+      {selectedInterazioneForEdit ? (
         <ModificaInterazioneModal
           interazione={selectedInterazioneForEdit}
           mezzi={mezzi}
@@ -616,14 +616,14 @@ export default function InterazioniTable({
           onClose={() => setSelectedInterazioneForEdit(null)}
           onSuccess={onSuccess}
         />
-      )}
-      {selectedInterazioneForDelete && (
+      ) : null}
+      {selectedInterazioneForDelete ? (
         <EliminaInterazioneModal
           interazione={selectedInterazioneForDelete}
           onClose={() => setSelectedInterazioneForDelete(null)}
           onSuccess={onSuccess}
         />
-      )}
+      ) : null}
     </div>
   );
 }

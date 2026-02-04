@@ -1,12 +1,9 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import FormLogin from "./form-login";
 
 export default async function SignIn() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (session?.user?.role === "admin") {
     redirect("/admin");

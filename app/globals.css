@@ -2,3 +2,11 @@
 @plugin "daisyui" {
   themes: emerald;
 }
+
+/* content-visibility for long lists/tables: browser can skip off-screen rendering */
+@layer components {
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 400px;
+  }
+}

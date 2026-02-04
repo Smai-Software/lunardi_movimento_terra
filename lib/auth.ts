@@ -1,7 +1,9 @@
+import { cache } from "react";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { admin } from "better-auth/plugins";
+import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
 import { transporter } from "./email";
 
@@ -82,6 +84,15 @@ export type SessionWithUser = NonNullable<
   Awaited<ReturnType<typeof auth.api.getSession>>
 >;
 
+/**
+ * Cached getSession for Server Components. Deduplicates within the same RSC request
+ * (e.g. layout + page). Use in app/ pages/layouts only; API routes keep auth.api.getSession.
+ */
+export const getSession = cache(async () => {
+  const h = await headers();
+  return auth.api.getSession({ headers: h });
+});
+
 export const errorCodes = {
   USER_NOT_FOUND: "Utente non trovato",
   FAILED_TO_CREATE_USER: "Impossibile creare l'utente",
@@ -113,9 +124,7 @@ export const errorCodes = {
 } as const;
 
 export function getErrorMessage(code: string): string {
-  console.log(code);
-  return (
-    errorCodes[code as keyof typeof errorCodes] ||
-    "Errore sconosciuto. Contattare l'assistenza"
-  );
+  const message = errorCodes[code as keyof typeof errorCodes];
+  if (message) return message;
+  return "Errore sconosciuto. Contattare l'assistenza";
 }
