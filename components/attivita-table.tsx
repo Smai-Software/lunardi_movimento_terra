@@ -29,8 +29,9 @@ interface AttivitaItem {
   date: string;
   user_id: string;
   external_id: string;
-  cantieriCount: number;
-  mezziCount: number;
+  interazioniCount: number;
+  trasportiCount: number;
+  assenzeCount: number;
   totalMilliseconds: number;
   user: { id: string; name: string };
 }
@@ -351,8 +352,9 @@ export default function AttivitaTable() {
                   sortDir={sortDir}
                   onSort={handleSort}
                 />
-                <th># Cantieri</th>
-                <th># Mezzi</th>
+                <th># Interazioni</th>
+                <th># Trasporti</th>
+                <th># Assenze</th>
                 <th>Totale ore</th>
                 <th />
               </tr>
@@ -360,20 +362,20 @@ export default function AttivitaTable() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8">
+                  <td colSpan={7} className="text-center py-8">
                     <span className="loading loading-spinner loading-lg" />
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-error">
+                  <td colSpan={7} className="text-center py-8 text-error">
                     Errore nel caricamento dei dati
                   </td>
                 </tr>
               ) : attivita.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center text-base-content/60 py-8"
                   >
                     Nessuna attività trovata.
@@ -386,8 +388,9 @@ export default function AttivitaTable() {
                       {new Date(a.date).toLocaleDateString("it-IT")}
                     </td>
                     <td>{a.user.name}</td>
-                    <td>{a.cantieriCount}</td>
-                    <td>{a.mezziCount}</td>
+                    <td>{a.interazioniCount}</td>
+                    <td>{a.trasportiCount}</td>
+                    <td>{a.assenzeCount}</td>
                     <td>
                       {(() => {
                         const totalMinutes = Math.floor(

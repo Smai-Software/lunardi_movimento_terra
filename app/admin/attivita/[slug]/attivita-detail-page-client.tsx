@@ -1,11 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { notFound } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
 import AttivitaInfoCard from "@/components/attivita-info-card";
 import AttivitaDetailClient from "@/app/admin/attivita/[slug]/attivita-detail-client";
-import TotalHoursFromInterazioniCard from "@/components/total-hours-from-interazioni";
-import TotalInterazioniCountCard from "@/components/total-interazioni-count-card";
 import { fetcher } from "@/lib/api-fetcher";
 
 type AttivitaBySlug = {
@@ -126,6 +125,22 @@ export default function AttivitaDetailPageClient({
     { revalidateOnFocus: false },
   );
 
+  const interazioni = interazioniData?.interazioni ?? [];
+  const assenze = assenzeData?.assenze ?? [];
+  const trasporti = trasportiData?.trasporti ?? [];
+
+  const totalHoursFormatted = useMemo(() => {
+    const totalMilliseconds = [
+      ...interazioni,
+      ...assenze,
+      ...trasporti,
+    ].reduce((sum, e) => sum + Number(e.tempo_totale), 0);
+    const totalMinutes = Math.floor(totalMilliseconds / (1000 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours}h ${minutes}m`;
+  }, [interazioni, assenze, trasporti]);
+
   if (attivitaError || (attivitaData && !attivita)) {
     notFound();
   }
@@ -138,17 +153,9 @@ export default function AttivitaDetailPageClient({
     );
   }
 
-  const interazioni = interazioniData?.interazioni ?? [];
-  const assenze = assenzeData?.assenze ?? [];
-  const trasporti = trasportiData?.trasporti ?? [];
   const users = usersData?.users ?? [];
   const mezzi = mezziData?.mezzi ?? [];
   const cantieri = cantieriData?.cantieri ?? [];
-  const totalHoursEntries = [
-    ...interazioni.map((i) => ({ tempo_totale: i.tempo_totale })),
-    ...assenze.map((a) => ({ tempo_totale: a.tempo_totale })),
-    ...trasporti.map((t) => ({ tempo_totale: t.tempo_totale })),
-  ];
 
   const attivitaForCard = {
     ...attivita,
@@ -164,9 +171,23 @@ export default function AttivitaDetailPageClient({
         onAttivitaUpdated={() => mutate(`/api/attivita/${slug}`)}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <TotalHoursFromInterazioniCard entries={totalHoursEntries} />
-        <TotalInterazioniCountCard count={interazioni.length} />
+      <div className="stats shadow w-full mb-8">
+        <div className="stat">
+          <div className="stat-title">Ore totali</div>
+          <div className="stat-value text-primary">{totalHoursFormatted}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-title">Interazioni</div>
+          <div className="stat-value">{interazioni.length}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-title">Trasporti</div>
+          <div className="stat-value">{trasporti.length}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-title">Assenze</div>
+          <div className="stat-value">{assenze.length}</div>
+        </div>
       </div>
 
       <AttivitaDetailClient

@@ -136,15 +136,6 @@ export async function GET(request: NextRequest) {
     ]);
 
     const attivitaWithCounts = attivitaList.map((a) => {
-      const uniqueCantieri = new Set(a.interazioni.map((i) => i.cantieri_id));
-      const uniqueMezzi = new Set(
-        a.interazioni.filter((i) => i.mezzi_id).map((i) => i.mezzi_id),
-      );
-      for (const t of a.trasporti ?? []) {
-        uniqueCantieri.add(t.cantieri_partenza_id);
-        uniqueCantieri.add(t.cantieri_arrivo_id);
-        uniqueMezzi.add(t.mezzi_id);
-      }
       const interazioniMs = a.interazioni.reduce(
         (sum, i) => sum + Number(i.tempo_totale),
         0,
@@ -160,8 +151,9 @@ export async function GET(request: NextRequest) {
       const totalMilliseconds = interazioniMs + assenzeMs + trasportiMs;
       return serializeAttivita({
         ...a,
-        cantieriCount: uniqueCantieri.size,
-        mezziCount: uniqueMezzi.size,
+        interazioniCount: a.interazioni.length,
+        trasportiCount: (a.trasporti ?? []).length,
+        assenzeCount: (a.assenze ?? []).length,
         totalMilliseconds,
       });
     });

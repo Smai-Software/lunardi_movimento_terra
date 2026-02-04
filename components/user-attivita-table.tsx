@@ -17,8 +17,9 @@ interface AttivitaItem {
   date: string;
   user_id: string;
   external_id: string;
-  cantieriCount: number;
-  mezziCount: number;
+  interazioniCount: number;
+  trasportiCount: number;
+  assenzeCount: number;
   totalMilliseconds: number;
   user: { id: string; name: string };
 }
@@ -86,8 +87,9 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
           <thead className="bg-base-200">
             <tr>
               <th>Data</th>
-              <th className="hidden md:table-cell"># Cantieri</th>
-              <th className="hidden md:table-cell"># Mezzi</th>
+              <th className="hidden md:table-cell"># Interazioni</th>
+              <th className="hidden md:table-cell"># Trasporti</th>
+              <th className="hidden md:table-cell"># Assenze</th>
               <th>Totale ore</th>
               <th></th>
             </tr>
@@ -96,7 +98,7 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
             {paginated.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="text-center text-base-content/60 py-8"
                 >
                   Nessuna attività trovata negli ultimi 7 giorni.
@@ -106,8 +108,9 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
               paginated.map((a) => (
                 <tr key={a.id}>
                   <td>{new Date(a.date).toLocaleDateString("it-IT")}</td>
-                  <td className="hidden md:table-cell">{a.cantieriCount}</td>
-                  <td className="hidden md:table-cell">{a.mezziCount}</td>
+                  <td className="hidden md:table-cell">{a.interazioniCount}</td>
+                  <td className="hidden md:table-cell">{a.trasportiCount}</td>
+                  <td className="hidden md:table-cell">{a.assenzeCount}</td>
                   <td>
                     {(() => {
                       const totalMinutes = Math.floor(
