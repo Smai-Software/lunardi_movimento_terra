@@ -1,13 +1,13 @@
 "use client";
 
-import { Building2, Forklift, HardHat, Home, Users } from "lucide-react";
+import { Building2, FileText, Forklift, HardHat, Home, Users } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
 
 interface NavigationItemProps {
   href: string & Route;
-  iconName: "home" | "building2" | "hardhat" | "forklift" | "users";
+  iconName: "home" | "building2" | "hardhat" | "forklift" | "users" | "fileText";
   children: React.ReactNode;
   className?: string;
 }
@@ -18,6 +18,7 @@ const iconMap = {
   hardhat: HardHat,
   forklift: Forklift,
   users: Users,
+  fileText: FileText,
 };
 
 export default function NavigationItem({
