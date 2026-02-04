@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useRouter } from "next/navigation";
@@ -10,13 +10,13 @@ type EliminaCantiereModalProps = {
     id: number;
     nome: string;
   };
-  onClose?: () => void;
+  triggerLabel?: React.ReactNode;
   onSuccess?: () => void;
 };
 
 export default function EliminaCantiereModal({
   cantiere,
-  onClose,
+  triggerLabel = "Elimina Cantiere",
   onSuccess,
 }: EliminaCantiereModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -25,14 +25,14 @@ export default function EliminaCantiereModal({
   const { mutate } = useSWRConfig();
   const router = useRouter();
 
-  useEffect(() => {
+  const openModal = () => {
+    setError(null);
     dialogRef.current?.showModal();
-  }, []);
+  };
 
   const handleClose = () => {
     setError(null);
     dialogRef.current?.close();
-    onClose?.();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,7 +60,15 @@ export default function EliminaCantiereModal({
   };
 
   return (
-    <dialog ref={dialogRef} className="modal">
+    <>
+      <button
+        type="button"
+        className="btn btn-outline btn-error btn-sm"
+        onClick={openModal}
+      >
+        {triggerLabel}
+      </button>
+      <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Conferma eliminazione</h3>
         <form onSubmit={handleSubmit}>
@@ -95,6 +103,12 @@ export default function EliminaCantiereModal({
           </div>
         </form>
       </div>
+      <form method="dialog" className="modal-backdrop">
+        <button tabIndex={-1} type="submit">
+          Annulla
+        </button>
+      </form>
     </dialog>
+    </>
   );
 }

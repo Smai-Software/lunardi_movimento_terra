@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 const ASSENZA_TIPI = [
@@ -14,14 +14,12 @@ const ASSENZA_TIPI = [
 type AggiungiAssenzaModalProps = {
   attivitaId: number;
   userId: string;
-  onClose: () => void;
   onSuccess?: () => void;
 };
 
 export default function AggiungiAssenzaModal({
   attivitaId,
   userId,
-  onClose,
   onSuccess,
 }: AggiungiAssenzaModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -32,9 +30,22 @@ export default function AggiungiAssenzaModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleClose = () => {
+  const openModal = () => {
+    setSelectedTipo("");
+    setSelectedOre(8);
+    setSelectedMinuti(0);
+    setNote("");
     setError(null);
-    onClose();
+    dialogRef.current?.showModal();
+  };
+
+  const handleClose = () => {
+    setSelectedTipo("");
+    setSelectedOre(8);
+    setSelectedMinuti(0);
+    setNote("");
+    setError(null);
+    dialogRef.current?.close();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,12 +83,12 @@ export default function AggiungiAssenzaModal({
     }
   };
 
-  useEffect(() => {
-    dialogRef.current?.showModal();
-  }, []);
-
   return (
-    <dialog ref={dialogRef} className="modal">
+    <>
+      <button type="button" className="btn btn-primary" onClick={openModal}>
+        Aggiungi Assenza
+      </button>
+      <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Aggiungi assenza</h3>
         <form onSubmit={handleSubmit}>
@@ -174,6 +185,7 @@ export default function AggiungiAssenzaModal({
               type="button"
               className="btn btn-outline"
               onClick={handleClose}
+              disabled={isSubmitting}
             >
               Annulla
             </button>
@@ -196,5 +208,6 @@ export default function AggiungiAssenzaModal({
         </button>
       </form>
     </dialog>
+    </>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import EliminaTrasportoModal from "@/components/elimina-trasporto-modal";
 import ModificaTrasportoModal from "@/components/modifica-trasporto-modal";
 
@@ -30,9 +29,6 @@ export default function TrasportiTableAttivita({
   mezzi,
   onSuccess,
 }: TrasportiTableAttivitaProps) {
-  const [selectedForEdit, setSelectedForEdit] = useState<TrasportoRow | null>(null);
-  const [selectedForDelete, setSelectedForDelete] = useState<TrasportoRow | null>(null);
-
   const formatTime = (ore: number, minuti: number) => `${ore}h ${minuti}m`;
 
   return (
@@ -68,20 +64,16 @@ export default function TrasportiTableAttivita({
                   <td className="max-w-xs truncate">{t.note || ""}</td>
                   <td>
                     <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline"
-                        onClick={() => setSelectedForEdit(t)}
-                      >
-                        Modifica
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline btn-error"
-                        onClick={() => setSelectedForDelete(t)}
-                      >
-                        Elimina
-                      </button>
+                      <ModificaTrasportoModal
+                        trasporto={t}
+                        cantieri={cantieri}
+                        mezzi={mezzi}
+                        onSuccess={onSuccess}
+                      />
+                      <EliminaTrasportoModal
+                        trasporto={t}
+                        onSuccess={onSuccess}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -90,23 +82,6 @@ export default function TrasportiTableAttivita({
           </tbody>
         </table>
       </div>
-
-      {selectedForEdit ? (
-        <ModificaTrasportoModal
-          trasporto={selectedForEdit}
-          cantieri={cantieri}
-          mezzi={mezzi}
-          onClose={() => setSelectedForEdit(null)}
-          onSuccess={onSuccess}
-        />
-      ) : null}
-      {selectedForDelete ? (
-        <EliminaTrasportoModal
-          trasporto={selectedForDelete}
-          onClose={() => setSelectedForDelete(null)}
-          onSuccess={onSuccess}
-        />
-      ) : null}
     </div>
   );
 }

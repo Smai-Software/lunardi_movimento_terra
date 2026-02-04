@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 type ModificaCantiereModalProps = {
@@ -10,13 +10,15 @@ type ModificaCantiereModalProps = {
     descrizione: string;
     open: boolean;
   };
-  onClose: () => void;
+  triggerLabel?: React.ReactNode;
+  triggerClassName?: string;
   onSuccess?: () => void;
 };
 
 export default function ModificaCantiereModal({
   cantiere,
-  onClose,
+  triggerLabel = "Modifica Cantiere",
+  triggerClassName = "btn btn-outline btn-sm",
   onSuccess,
 }: ModificaCantiereModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -26,19 +28,17 @@ export default function ModificaCantiereModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const openModal = () => {
     setNome(cantiere.nome);
     setDescrizione(cantiere.descrizione);
     setOpen(cantiere.open);
-  }, [cantiere.nome, cantiere.descrizione, cantiere.open]);
-
-  useEffect(() => {
+    setError(null);
     dialogRef.current?.showModal();
-  }, []);
+  };
 
   const handleClose = () => {
     setError(null);
-    onClose();
+    dialogRef.current?.close();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,7 +70,11 @@ export default function ModificaCantiereModal({
   };
 
   return (
-    <dialog ref={dialogRef} className="modal">
+    <>
+      <button type="button" className={triggerClassName} onClick={openModal}>
+        {triggerLabel}
+      </button>
+      <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Modifica cantiere</h3>
         <form onSubmit={handleSubmit}>
@@ -150,13 +154,14 @@ export default function ModificaCantiereModal({
               )}
             </button>
           </div>
-        </form>
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button tabIndex={-1} type="submit">
-          Annulla
-        </button>
       </form>
-    </dialog>
+    </div>
+    <form method="dialog" className="modal-backdrop">
+      <button tabIndex={-1} type="submit">
+        Annulla
+      </button>
+    </form>
+  </dialog>
+  </>
   );
 }

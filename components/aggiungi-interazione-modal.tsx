@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 type AggiungiInterazioneModalProps = {
@@ -8,7 +8,6 @@ type AggiungiInterazioneModalProps = {
   userId: string;
   cantieri: Array<{ id: number; nome: string }>;
   mezzi: Array<{ id: number; nome: string }>;
-  onClose: () => void;
   onSuccess?: () => void;
 };
 
@@ -17,7 +16,6 @@ export default function AggiungiInterazioneModal({
   userId,
   cantieri,
   mezzi,
-  onClose,
   onSuccess,
 }: AggiungiInterazioneModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -29,9 +27,24 @@ export default function AggiungiInterazioneModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleClose = () => {
+  const openModal = () => {
+    setSelectedCantiereId("");
+    setSelectedMezzoId("");
+    setSelectedOre(0);
+    setSelectedMinuti(0);
+    setNote("");
     setError(null);
-    onClose();
+    dialogRef.current?.showModal();
+  };
+
+  const handleClose = () => {
+    setSelectedCantiereId("");
+    setSelectedMezzoId("");
+    setSelectedOre(0);
+    setSelectedMinuti(0);
+    setNote("");
+    setError(null);
+    dialogRef.current?.close();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,12 +84,12 @@ export default function AggiungiInterazioneModal({
     }
   };
 
-  useEffect(() => {
-    dialogRef.current?.showModal();
-  }, []);
-
   return (
-    <dialog ref={dialogRef} className="modal">
+    <>
+      <button type="button" className="btn btn-primary" onClick={openModal}>
+        Aggiungi Interazione
+      </button>
+      <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Aggiungi interazione</h3>
         <form onSubmit={handleSubmit}>
@@ -196,6 +209,7 @@ export default function AggiungiInterazioneModal({
               type="button"
               className="btn btn-outline"
               onClick={handleClose}
+              disabled={isSubmitting}
             >
               Annulla
             </button>
@@ -218,5 +232,6 @@ export default function AggiungiInterazioneModal({
         </button>
       </form>
     </dialog>
+    </>
   );
 }

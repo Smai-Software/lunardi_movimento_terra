@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 type ModificaTrasportoModalProps = {
@@ -17,7 +17,6 @@ type ModificaTrasportoModalProps = {
   };
   cantieri: Array<{ id: number; nome: string }>;
   mezzi: Array<{ id: number; nome: string }>;
-  onClose: () => void;
   onSuccess?: () => void;
 };
 
@@ -25,7 +24,6 @@ export default function ModificaTrasportoModal({
   trasporto,
   cantieri,
   mezzi,
-  onClose,
   onSuccess,
 }: ModificaTrasportoModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -38,9 +36,20 @@ export default function ModificaTrasportoModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const openModal = () => {
+    setOre(trasporto.ore);
+    setMinuti(trasporto.minuti);
+    setNote(trasporto.note ?? "");
+    setPartenzaId(trasporto.cantieri_partenza.id);
+    setArrivoId(trasporto.cantieri_arrivo.id);
+    setMezziId(trasporto.mezzi.id);
+    setError(null);
+    dialogRef.current?.showModal();
+  };
+
   const handleClose = () => {
     setError(null);
-    onClose();
+    dialogRef.current?.close();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,12 +87,12 @@ export default function ModificaTrasportoModal({
     }
   };
 
-  useEffect(() => {
-    dialogRef.current?.showModal();
-  }, []);
-
   return (
-    <dialog ref={dialogRef} className="modal">
+    <>
+      <button type="button" className="btn btn-sm btn-outline" onClick={openModal}>
+        Modifica
+      </button>
+      <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Modifica trasporto</h3>
         <form onSubmit={handleSubmit}>
@@ -192,7 +201,7 @@ export default function ModificaTrasportoModal({
           </div>
           {error && <p className="mt-2 text-sm text-error">{error}</p>}
           <div className="modal-action">
-            <button type="button" className="btn btn-outline" onClick={handleClose}>
+            <button type="button" className="btn btn-outline" onClick={handleClose} disabled={isSubmitting}>
               Annulla
             </button>
             <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
@@ -200,13 +209,14 @@ export default function ModificaTrasportoModal({
               Salva modifiche
             </button>
           </div>
-        </form>
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button tabIndex={-1} type="submit">
-          Annulla
-        </button>
       </form>
-    </dialog>
+    </div>
+    <form method="dialog" className="modal-backdrop">
+      <button tabIndex={-1} type="submit">
+        Annulla
+      </button>
+    </form>
+  </dialog>
+  </>
   );
 }

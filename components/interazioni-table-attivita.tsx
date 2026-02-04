@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import EliminaInterazioneModal from "@/components/elimina-interazione-modal";
 import ModificaInterazioneModal from "@/components/modifica-interazione-modal";
 
@@ -27,11 +26,6 @@ export default function InterazioniTableAttivita({
   mezzi,
   onSuccess,
 }: InterazioniTableAttivitaProps) {
-  const [selectedInterazioneForEdit, setSelectedInterazioneForEdit] =
-    useState<InterazioneRow | null>(null);
-  const [selectedInterazioneForDelete, setSelectedInterazioneForDelete] =
-    useState<InterazioneRow | null>(null);
-
   const formatTime = (ore: number, minuti: number) => {
     return `${ore}h ${minuti}m`;
   };
@@ -80,24 +74,21 @@ export default function InterazioniTableAttivita({
                   </td>
                   <td>
                     <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline"
-                        onClick={() =>
-                          setSelectedInterazioneForEdit(interazione)
-                        }
-                      >
-                        Modifica
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline btn-error"
-                        onClick={() =>
-                          setSelectedInterazioneForDelete(interazione)
-                        }
-                      >
-                        Elimina
-                      </button>
+                      <ModificaInterazioneModal
+                        interazione={interazione}
+                        mezzi={mezzi}
+                        attivita={[
+                          {
+                            id: interazione.attivita.id,
+                            date: interazione.attivita.date,
+                          },
+                        ]}
+                        onSuccess={onSuccess}
+                      />
+                      <EliminaInterazioneModal
+                        interazione={interazione}
+                        onSuccess={onSuccess}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -106,28 +97,6 @@ export default function InterazioniTableAttivita({
           </tbody>
         </table>
       </div>
-
-      {selectedInterazioneForEdit ? (
-        <ModificaInterazioneModal
-          interazione={selectedInterazioneForEdit}
-          mezzi={mezzi}
-          attivita={[
-            {
-              id: selectedInterazioneForEdit.attivita.id,
-              date: selectedInterazioneForEdit.attivita.date,
-            },
-          ]}
-          onClose={() => setSelectedInterazioneForEdit(null)}
-          onSuccess={onSuccess}
-        />
-      ) : null}
-      {selectedInterazioneForDelete ? (
-        <EliminaInterazioneModal
-          interazione={selectedInterazioneForDelete}
-          onClose={() => setSelectedInterazioneForDelete(null)}
-          onSuccess={onSuccess}
-        />
-      ) : null}
     </div>
   );
 }

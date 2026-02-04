@@ -10,3 +10,7 @@
     contain-intrinsic-size: 0 400px;
   }
 }
+
+.modal {
+  transition: visibility 0s, background-color 0s, opacity 0s;
+}

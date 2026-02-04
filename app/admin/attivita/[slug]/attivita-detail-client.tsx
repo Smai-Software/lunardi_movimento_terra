@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import AggiungiAssenzaModal from "@/components/aggiungi-assenza-modal";
 import AggiungiInterazioneModal from "@/components/aggiungi-interazione-modal";
 import AggiungiTrasportoModal from "@/components/aggiungi-trasporto-modal";
@@ -83,22 +82,18 @@ export default function AttivitaDetailClient({
   onAssenzeChange,
   onTrasportiChange,
 }: AttivitaDetailClientProps) {
-  const [showAggiungiInterazione, setShowAggiungiInterazione] = useState(false);
-  const [showAggiungiAssenza, setShowAggiungiAssenza] = useState(false);
-  const [showAggiungiTrasporto, setShowAggiungiTrasporto] = useState(false);
-
   return (
     <>
       {/* Interazioni Section */}
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-bold">Interazioni</h2>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setShowAggiungiInterazione(true)}
-        >
-          Aggiungi Interazione
-        </button>
+        <AggiungiInterazioneModal
+          attivitaId={attivita.id}
+          userId={attivita.user_id}
+          cantieri={cantieri}
+          mezzi={mezzi}
+          onSuccess={onInterazioniChange}
+        />
       </div>
 
       <InterazioniTableAttivita
@@ -107,27 +102,16 @@ export default function AttivitaDetailClient({
         onSuccess={onInterazioniChange}
       />
 
-      {showAggiungiInterazione && (
-        <AggiungiInterazioneModal
+      {/* Trasporti Section */}
+      <div className="mb-6 flex justify-between items-center mt-10">
+        <h2 className="text-2xl font-bold">Trasporti</h2>
+        <AggiungiTrasportoModal
           attivitaId={attivita.id}
           userId={attivita.user_id}
           cantieri={cantieri}
           mezzi={mezzi}
-          onClose={() => setShowAggiungiInterazione(false)}
-          onSuccess={onInterazioniChange}
+          onSuccess={onTrasportiChange}
         />
-      )}
-
-      {/* Trasporti Section */}
-      <div className="mb-6 flex justify-between items-center mt-10">
-        <h2 className="text-2xl font-bold">Trasporti</h2>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setShowAggiungiTrasporto(true)}
-        >
-          Aggiungi Trasporto
-        </button>
       </div>
 
       <TrasportiTableAttivita
@@ -137,39 +121,17 @@ export default function AttivitaDetailClient({
         onSuccess={onTrasportiChange}
       />
 
-      {showAggiungiTrasporto && (
-        <AggiungiTrasportoModal
-          attivitaId={attivita.id}
-          userId={attivita.user_id}
-          cantieri={cantieri}
-          mezzi={mezzi}
-          onClose={() => setShowAggiungiTrasporto(false)}
-          onSuccess={onTrasportiChange}
-        />
-      )}
-
       {/* Assenze Section */}
       <div className="mb-6 flex justify-between items-center mt-10">
         <h2 className="text-2xl font-bold">Assenze</h2>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setShowAggiungiAssenza(true)}
-        >
-          Aggiungi Assenza
-        </button>
-      </div>
-
-      <AssenzeTableAttivita assenze={assenze} onSuccess={onAssenzeChange} />
-
-      {showAggiungiAssenza && (
         <AggiungiAssenzaModal
           attivitaId={attivita.id}
           userId={attivita.user_id}
-          onClose={() => setShowAggiungiAssenza(false)}
           onSuccess={onAssenzeChange}
         />
-      )}
+      </div>
+
+      <AssenzeTableAttivita assenze={assenze} onSuccess={onAssenzeChange} />
     </>
   );
 }

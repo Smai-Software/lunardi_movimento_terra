@@ -196,8 +196,6 @@ export default function CantieriTable() {
     "filterStatus",
     parseAsString.withDefault("all"),
   );
-  const [selectedCantiereForEdit, setSelectedCantiereForEdit] =
-    useState<Cantiere | null>(null);
   const drawerId = "cantieri-filter-drawer";
 
   const openParam =
@@ -344,14 +342,17 @@ export default function CantieriTable() {
                     </td>
                     <td>
                       <div className="flex gap-1">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-ghost"
-                          onClick={() => setSelectedCantiereForEdit(c)}
-                          aria-label={`Modifica ${c.nome}`}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
+                        <ModificaCantiereModal
+                          cantiere={{
+                            id: c.id,
+                            nome: c.nome,
+                            descrizione: c.descrizione,
+                            open: c.open,
+                          }}
+                          triggerLabel={<Pencil className="w-4 h-4" aria-hidden />}
+                          triggerClassName="btn btn-sm btn-ghost"
+                          onSuccess={() => mutate()}
+                        />
                         <Link
                           href={`/admin/cantieri/${c.id}`}
                           className="btn btn-sm btn-ghost"
@@ -421,19 +422,6 @@ export default function CantieriTable() {
             </button>
           </div>
         </div>
-      ) : null}
-
-      {selectedCantiereForEdit ? (
-        <ModificaCantiereModal
-          cantiere={{
-            id: selectedCantiereForEdit.id,
-            nome: selectedCantiereForEdit.nome,
-            descrizione: selectedCantiereForEdit.descrizione,
-            open: selectedCantiereForEdit.open,
-          }}
-          onClose={() => setSelectedCantiereForEdit(null)}
-          onSuccess={() => mutate()}
-        />
       ) : null}
     </div>
   );

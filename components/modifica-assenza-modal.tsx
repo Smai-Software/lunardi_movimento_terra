@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 const ASSENZA_TIPI = [
@@ -22,14 +22,12 @@ type ModificaAssenzaModalProps = {
     attivita: { id: number; date: string };
   };
   attivita: Array<{ id: number; date: string }>;
-  onClose: () => void;
   onSuccess?: () => void;
 };
 
 export default function ModificaAssenzaModal({
   assenza,
   attivita,
-  onClose,
   onSuccess,
 }: ModificaAssenzaModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -41,9 +39,19 @@ export default function ModificaAssenzaModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const openModal = () => {
+    setTipo(assenza.tipo);
+    setOre(assenza.ore);
+    setMinuti(assenza.minuti);
+    setNote(assenza.note ?? "");
+    setAttivitaId(assenza.attivita.id);
+    setError(null);
+    dialogRef.current?.showModal();
+  };
+
   const handleClose = () => {
     setError(null);
-    onClose();
+    dialogRef.current?.close();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,12 +84,12 @@ export default function ModificaAssenzaModal({
     }
   };
 
-  useEffect(() => {
-    dialogRef.current?.showModal();
-  }, []);
-
   return (
-    <dialog ref={dialogRef} className="modal">
+    <>
+      <button type="button" className="btn btn-sm btn-outline" onClick={openModal}>
+        Modifica
+      </button>
+      <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Modifica assenza</h3>
         <form onSubmit={handleSubmit}>
@@ -218,6 +226,7 @@ export default function ModificaAssenzaModal({
               type="button"
               className="btn btn-outline"
               onClick={handleClose}
+              disabled={isSubmitting}
             >
               Annulla
             </button>
@@ -232,13 +241,14 @@ export default function ModificaAssenzaModal({
               Salva modifiche
             </button>
           </div>
-        </form>
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button tabIndex={-1} type="submit">
-          Annulla
-        </button>
       </form>
-    </dialog>
+    </div>
+    <form method="dialog" className="modal-backdrop">
+      <button tabIndex={-1} type="submit">
+        Annulla
+      </button>
+    </form>
+  </dialog>
+  </>
   );
 }

@@ -218,7 +218,7 @@ export default function AggiungiTrasportoModalForm({
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button type="button" tabIndex={-1}>
+          <button tabIndex={-1} type="submit">
             Annulla
           </button>
         </form>

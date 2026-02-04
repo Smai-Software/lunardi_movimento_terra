@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import EliminaCantiereModal from "@/components/elimina-cantiere-modal";
 import ModificaCantiereModal from "@/components/modifica-cantiere-modal";
 
@@ -32,9 +31,6 @@ export default function CantiereInfoCard({
   cantiere,
   onCantiereUpdated,
 }: CantiereInfoCardProps) {
-  const [showModificaCantiere, setShowModificaCantiere] = useState(false);
-  const [showEliminaCantiere, setShowEliminaCantiere] = useState(false);
-
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -49,24 +45,6 @@ export default function CantiereInfoCard({
               <span className="badge badge-error">Chiuso</span>
             )}
           </div>
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={() => setShowModificaCantiere(true)}
-          >
-            Modifica Cantiere
-          </button>
-          <button
-            type="button"
-            className="btn btn-outline btn-error btn-sm"
-            onClick={() => setShowEliminaCantiere(true)}
-          >
-            Elimina Cantiere
-          </button>
-        </div>
-
-        {/* Modals */}
-        {showModificaCantiere && (
           <ModificaCantiereModal
             cantiere={{
               id: cantiere.id,
@@ -74,20 +52,16 @@ export default function CantiereInfoCard({
               descrizione: cantiere.descrizione,
               open: cantiere.open,
             }}
-            onClose={() => setShowModificaCantiere(false)}
             onSuccess={onCantiereUpdated}
           />
-        )}
-
-        {showEliminaCantiere && (
           <EliminaCantiereModal
             cantiere={{
               id: cantiere.id,
               nome: cantiere.nome,
             }}
-            onClose={() => setShowEliminaCantiere(false)}
+            onSuccess={onCantiereUpdated}
           />
-        )}
+        </div>
       </div>
       <p className="text-base-content/70 mb-4">{cantiere.descrizione}</p>
     </>

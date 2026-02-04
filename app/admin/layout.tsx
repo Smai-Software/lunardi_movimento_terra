@@ -30,7 +30,7 @@ export default function DashboardLayout({
         </div>
         {children}
       </div>
-      <div className="drawer-side">
+      <div className="drawer-side z-[60]">
         <label
           htmlFor="my-drawer-2"
           aria-label="close sidebar"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { notFound } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
 import Link from "next/link";
@@ -117,7 +117,6 @@ export default function UserAttivitaDetailPageClient({
     { revalidateOnFocus: false },
   );
 
-  const [showAggiungiTrasporto, setShowAggiungiTrasporto] = useState(false);
 
   const interazioni = interazioniData?.interazioni ?? [];
   const assenze = assenzeData?.assenze ?? [];
@@ -212,13 +211,13 @@ export default function UserAttivitaDetailPageClient({
         <div className="card-body">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Trasporti</h2>
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => setShowAggiungiTrasporto(true)}
-            >
-              Aggiungi Trasporto
-            </button>
+            <AggiungiTrasportoModal
+              attivitaId={attivita.id}
+              userId={attivita.user_id}
+              cantieri={cantieri}
+              mezzi={mezzi}
+              onSuccess={mutateTrasporti}
+            />
           </div>
           <TrasportiTableAttivita
             trasporti={trasporti}
@@ -226,16 +225,6 @@ export default function UserAttivitaDetailPageClient({
             mezzi={mezzi}
             onSuccess={mutateTrasporti}
           />
-          {showAggiungiTrasporto && (
-            <AggiungiTrasportoModal
-              attivitaId={attivita.id}
-              userId={attivita.user_id}
-              cantieri={cantieri}
-              mezzi={mezzi}
-              onClose={() => setShowAggiungiTrasporto(false)}
-              onSuccess={mutateTrasporti}
-            />
-          )}
         </div>
       </div>
 

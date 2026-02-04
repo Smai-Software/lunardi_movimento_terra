@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import EliminaAssenzaModal from "@/components/elimina-assenza-modal";
 import ModificaAssenzaModal from "@/components/modifica-assenza-modal";
 
@@ -32,11 +31,6 @@ export default function AssenzeTableAttivita({
   assenze,
   onSuccess,
 }: AssenzeTableAttivitaProps) {
-  const [selectedAssenzaForEdit, setSelectedAssenzaForEdit] =
-    useState<AssenzaRow | null>(null);
-  const [selectedAssenzaForDelete, setSelectedAssenzaForDelete] =
-    useState<AssenzaRow | null>(null);
-
   const formatTime = (ore: number, minuti: number) => {
     return `${ore}h ${minuti}m`;
   };
@@ -81,20 +75,15 @@ export default function AssenzeTableAttivita({
                   </td>
                   <td>
                     <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline"
-                        onClick={() => setSelectedAssenzaForEdit(assenza)}
-                      >
-                        Modifica
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline btn-error"
-                        onClick={() => setSelectedAssenzaForDelete(assenza)}
-                      >
-                        Elimina
-                      </button>
+                      <ModificaAssenzaModal
+                        assenza={assenza}
+                        attivita={[{ id: assenza.attivita.id, date: assenza.attivita.date }]}
+                        onSuccess={onSuccess}
+                      />
+                      <EliminaAssenzaModal
+                        assenza={assenza}
+                        onSuccess={onSuccess}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -103,27 +92,6 @@ export default function AssenzeTableAttivita({
           </tbody>
         </table>
       </div>
-
-      {selectedAssenzaForEdit ? (
-        <ModificaAssenzaModal
-          assenza={selectedAssenzaForEdit}
-          attivita={[
-            {
-              id: selectedAssenzaForEdit.attivita.id,
-              date: selectedAssenzaForEdit.attivita.date,
-            },
-          ]}
-          onClose={() => setSelectedAssenzaForEdit(null)}
-          onSuccess={onSuccess}
-        />
-      ) : null}
-      {selectedAssenzaForDelete ? (
-        <EliminaAssenzaModal
-          assenza={selectedAssenzaForDelete}
-          onClose={() => setSelectedAssenzaForDelete(null)}
-          onSuccess={onSuccess}
-        />
-      ) : null}
     </div>
   );
 }

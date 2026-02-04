@@ -317,10 +317,6 @@ export default function InterazioniTable({
     "filterMezzo",
     parseAsString.withDefault("all"),
   );
-  const [selectedInterazioneForEdit, setSelectedInterazioneForEdit] =
-    useState<InterazioneRow | null>(null);
-  const [selectedInterazioneForDelete, setSelectedInterazioneForDelete] =
-    useState<InterazioneRow | null>(null);
   const drawerId = "interazioni-filter-drawer";
 
   const activeFilterCount = useMemo(() => {
@@ -523,20 +519,16 @@ export default function InterazioniTable({
                     <td className="max-w-xs truncate">{i.note || ""}</td>
                     <td>
                       <div className="flex gap-2">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline"
-                          onClick={() => setSelectedInterazioneForEdit(i)}
-                        >
-                          Modifica
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline btn-error"
-                          onClick={() => setSelectedInterazioneForDelete(i)}
-                        >
-                          Elimina
-                        </button>
+                        <ModificaInterazioneModal
+                          interazione={i}
+                          mezzi={mezzi}
+                          attivita={attivita}
+                          onSuccess={onSuccess}
+                        />
+                        <EliminaInterazioneModal
+                          interazione={i}
+                          onSuccess={onSuccess}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -606,23 +598,6 @@ export default function InterazioniTable({
             </button>
           </div>
         </div>
-      ) : null}
-
-      {selectedInterazioneForEdit ? (
-        <ModificaInterazioneModal
-          interazione={selectedInterazioneForEdit}
-          mezzi={mezzi}
-          attivita={attivita}
-          onClose={() => setSelectedInterazioneForEdit(null)}
-          onSuccess={onSuccess}
-        />
-      ) : null}
-      {selectedInterazioneForDelete ? (
-        <EliminaInterazioneModal
-          interazione={selectedInterazioneForDelete}
-          onClose={() => setSelectedInterazioneForDelete(null)}
-          onSuccess={onSuccess}
-        />
       ) : null}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 type EliminaTrasportoModalProps = {
@@ -14,22 +14,25 @@ type EliminaTrasportoModalProps = {
     cantieri_arrivo: { id: number; nome: string };
     attivita: { id: number; date: string };
   };
-  onClose: () => void;
   onSuccess?: () => void;
 };
 
 export default function EliminaTrasportoModal({
   trasporto,
-  onClose,
   onSuccess,
 }: EliminaTrasportoModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const openModal = () => {
+    setError(null);
+    dialogRef.current?.showModal();
+  };
+
   const handleClose = () => {
     setError(null);
-    onClose();
+    dialogRef.current?.close();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,14 +59,14 @@ export default function EliminaTrasportoModal({
     }
   };
 
-  useEffect(() => {
-    dialogRef.current?.showModal();
-  }, []);
-
   const formatTime = (ore: number, minuti: number) => `${ore}h ${minuti}m`;
 
   return (
-    <dialog ref={dialogRef} className="modal">
+    <>
+      <button type="button" className="btn btn-sm btn-outline btn-error" onClick={openModal}>
+        Elimina
+      </button>
+      <dialog ref={dialogRef} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2">Conferma eliminazione</h3>
         <form onSubmit={handleSubmit}>
@@ -89,7 +92,7 @@ export default function EliminaTrasportoModal({
           </div>
           {error && <p className="mt-2 text-sm text-error">{error}</p>}
           <div className="modal-action">
-            <button type="button" className="btn" onClick={handleClose}>
+            <button type="button" className="btn" onClick={handleClose} disabled={isSubmitting}>
               Annulla
             </button>
             <button type="submit" className="btn btn-error" disabled={isSubmitting}>
@@ -97,13 +100,14 @@ export default function EliminaTrasportoModal({
               Conferma eliminazione
             </button>
           </div>
-        </form>
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button tabIndex={-1} type="submit">
-          Annulla
-        </button>
       </form>
-    </dialog>
+    </div>
+    <form method="dialog" className="modal-backdrop">
+      <button tabIndex={-1} type="submit">
+        Annulla
+      </button>
+    </form>
+  </dialog>
+  </>
   );
 }
