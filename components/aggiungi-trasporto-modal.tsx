@@ -22,6 +22,7 @@ export default function AggiungiTrasportoModal({
   const [partenzaId, setPartenzaId] = useState("");
   const [arrivoId, setArrivoId] = useState("");
   const [mezziId, setMezziId] = useState("");
+  const [mezziTrasportatoId, setMezziTrasportatoId] = useState("");
   const [ore, setOre] = useState(0);
   const [minuti, setMinuti] = useState(0);
   const [note, setNote] = useState("");
@@ -32,6 +33,7 @@ export default function AggiungiTrasportoModal({
     setPartenzaId("");
     setArrivoId("");
     setMezziId("");
+    setMezziTrasportatoId("");
     setOre(0);
     setMinuti(0);
     setNote("");
@@ -43,6 +45,7 @@ export default function AggiungiTrasportoModal({
     setPartenzaId("");
     setArrivoId("");
     setMezziId("");
+    setMezziTrasportatoId("");
     setOre(0);
     setMinuti(0);
     setNote("");
@@ -75,6 +78,7 @@ export default function AggiungiTrasportoModal({
           cantieri_partenza_id: partenza,
           cantieri_arrivo_id: arrivo,
           mezzi_id: mezzo,
+          mezzi_trasportato_id: mezziTrasportatoId ? Number(mezziTrasportatoId) : null,
           ore,
           minuti,
           note: note.trim() || null,
@@ -160,6 +164,24 @@ export default function AggiungiTrasportoModal({
               ))}
             </select>
           </div>
+          <div className="mb-4">
+            <label className="block font-medium mb-1 text-sm" htmlFor="trasporto-mezzo-trasportato">
+              Mezzo trasportato
+            </label>
+            <select
+              id="trasporto-mezzo-trasportato"
+              className="select select-bordered w-full"
+              value={mezziTrasportatoId}
+              onChange={(e) => setMezziTrasportatoId(e.target.value)}
+            >
+              <option value="">Nessuno</option>
+              {mezzi.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nome}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block font-medium mb-1 text-sm" htmlFor="trasporto-ore">
@@ -172,11 +194,14 @@ export default function AggiungiTrasportoModal({
                 onChange={(e) => setOre(Number(e.target.value))}
                 required
               >
-                {Array.from({ length: 24 }, (_, i) => (
-                  <option key={i} value={i}>
-                    {i}
-                  </option>
-                ))}
+                {Array.from({ length: 24 }, (_, i) => {
+                  const hourValue = i;
+                  return (
+                    <option key={`ore-${hourValue}`} value={hourValue}>
+                      {hourValue}
+                    </option>
+                  );
+                })}
               </select>
             </div>
             <div>

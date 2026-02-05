@@ -12,6 +12,7 @@ type TrasportoRow = {
   cantieri_partenza: { id: number; nome: string };
   cantieri_arrivo: { id: number; nome: string };
   mezzi: { id: number; nome: string };
+  mezzi_trasportato?: { id: number; nome: string } | null;
   attivita: { id: number; date: string };
   user: { id: string; name: string };
 };
@@ -40,6 +41,7 @@ export default function TrasportiTableAttivita({
               <th>Partenza</th>
               <th>Arrivo</th>
               <th>Mezzo</th>
+              <th>Mezzo trasportato</th>
               <th>Tempo</th>
               <th>Data creazione</th>
               <th>Note</th>
@@ -49,7 +51,7 @@ export default function TrasportiTableAttivita({
           <tbody>
             {trasporti.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center text-base-content/60 py-8">
+                <td colSpan={8} className="text-center text-base-content/60 py-8">
                   Nessun trasporto trovato.
                 </td>
               </tr>
@@ -59,6 +61,7 @@ export default function TrasportiTableAttivita({
                   <td className="font-medium">{t.cantieri_partenza.nome}</td>
                   <td>{t.cantieri_arrivo.nome}</td>
                   <td>{t.mezzi.nome}</td>
+                  <td>{t.mezzi_trasportato?.nome ?? "—"}</td>
                   <td>{formatTime(t.ore, t.minuti)}</td>
                   <td>{new Date(t.created_at).toLocaleDateString("it-IT")}</td>
                   <td className="max-w-xs truncate">{t.note || ""}</td>

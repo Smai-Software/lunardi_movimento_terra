@@ -49,6 +49,7 @@ type Trasporto = {
   cantieriPartenzaId: number;
   cantieriArrivoId: number;
   mezziId: number;
+  mezziTrasportatoId: number | null;
   ore: number;
   minuti: number;
   note: string;
@@ -206,6 +207,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     ore: number,
     minuti: number,
     note: string,
+    mezziTrasportatoId?: number | null,
   ) => {
     setTrasporti((prev) => [
       ...prev,
@@ -214,6 +216,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
         cantieriPartenzaId,
         cantieriArrivoId,
         mezziId,
+        mezziTrasportatoId: mezziTrasportatoId ?? null,
         ore,
         minuti,
         note,
@@ -275,6 +278,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
       cantieri_partenza_id: t.cantieriPartenzaId,
       cantieri_arrivo_id: t.cantieriArrivoId,
       mezzi_id: t.mezziId,
+      mezzi_trasportato_id: t.mezziTrasportatoId ?? null,
       ore: t.ore,
       minuti: t.minuti,
       note: t.note,

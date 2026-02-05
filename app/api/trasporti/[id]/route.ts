@@ -67,6 +67,7 @@ export async function GET(
       include: {
         user: { select: { id: true, name: true } },
         mezzi: { select: { id: true, nome: true } },
+        mezzi_trasportato: { select: { id: true, nome: true } },
         cantieri_partenza: { select: { id: true, nome: true } },
         cantieri_arrivo: { select: { id: true, nome: true } },
         attivita: { select: { id: true, date: true, external_id: true } },
@@ -130,6 +131,7 @@ export async function PUT(
         cantieri_partenza_id: true,
         cantieri_arrivo_id: true,
         mezzi_id: true,
+        mezzi_trasportato_id: true,
       },
     });
 
@@ -147,6 +149,7 @@ export async function PUT(
       cantieri_partenza_id,
       cantieri_arrivo_id,
       mezzi_id,
+      mezzi_trasportato_id,
       attivita_id,
       note,
     } = body;
@@ -158,6 +161,12 @@ export async function PUT(
     const finalArrivo =
       cantieri_arrivo_id !== undefined ? Number(cantieri_arrivo_id) : existing.cantieri_arrivo_id;
     const finalMezzo = mezzi_id !== undefined ? Number(mezzi_id) : existing.mezzi_id;
+    const finalMezzoTrasportato =
+      mezzi_trasportato_id !== undefined
+        ? mezzi_trasportato_id != null
+          ? Number(mezzi_trasportato_id)
+          : null
+        : existing.mezzi_trasportato_id;
 
     if (finalOre < 0) {
       return NextResponse.json(
@@ -200,6 +209,7 @@ export async function PUT(
       cantieri_partenza_id: number;
       cantieri_arrivo_id: number;
       mezzi_id: number;
+      mezzi_trasportato_id: number | null;
       note?: string | null;
       attivita_id?: number;
     } = {
@@ -211,6 +221,7 @@ export async function PUT(
       cantieri_partenza_id: finalPartenza,
       cantieri_arrivo_id: finalArrivo,
       mezzi_id: finalMezzo,
+      mezzi_trasportato_id: finalMezzoTrasportato,
     };
 
     if (note !== undefined) updateData.note = typeof note === "string" ? note : null;
@@ -222,6 +233,7 @@ export async function PUT(
       include: {
         user: { select: { id: true, name: true } },
         mezzi: { select: { id: true, nome: true } },
+        mezzi_trasportato: { select: { id: true, nome: true } },
         cantieri_partenza: { select: { id: true, nome: true } },
         cantieri_arrivo: { select: { id: true, nome: true } },
         attivita: { select: { id: true, date: true, external_id: true } },

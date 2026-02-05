@@ -98,6 +98,7 @@ export async function GET(request: NextRequest) {
         include: {
           user: { select: { id: true, name: true } },
           mezzi: { select: { id: true, nome: true } },
+          mezzi_trasportato: { select: { id: true, nome: true } },
           cantieri_partenza: { select: { id: true, nome: true } },
           cantieri_arrivo: { select: { id: true, nome: true } },
           attivita: { select: { id: true, date: true, external_id: true } },
@@ -146,6 +147,7 @@ export async function POST(request: NextRequest) {
       minuti,
       user_id,
       mezzi_id,
+      mezzi_trasportato_id,
       cantieri_partenza_id,
       cantieri_arrivo_id,
       attivita_id,
@@ -222,6 +224,10 @@ export async function POST(request: NextRequest) {
         note: typeof note === "string" ? note : null,
         user_id,
         mezzi_id,
+        mezzi_trasportato_id:
+          mezzi_trasportato_id != null && typeof mezzi_trasportato_id === "number"
+            ? mezzi_trasportato_id
+            : null,
         cantieri_partenza_id,
         cantieri_arrivo_id,
         attivita_id,
@@ -234,6 +240,7 @@ export async function POST(request: NextRequest) {
       include: {
         user: { select: { id: true, name: true } },
         mezzi: { select: { id: true, nome: true } },
+        mezzi_trasportato: { select: { id: true, nome: true } },
         cantieri_partenza: { select: { id: true, nome: true } },
         cantieri_arrivo: { select: { id: true, nome: true } },
         attivita: { select: { id: true, date: true, external_id: true } },

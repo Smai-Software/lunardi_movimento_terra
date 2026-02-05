@@ -26,6 +26,7 @@ type AggiungiTrasportoModalFormProps = {
     ore: number,
     minuti: number,
     note: string,
+    mezziTrasportatoId: number | null,
   ) => void;
 };
 
@@ -40,6 +41,7 @@ export default function AggiungiTrasportoModalForm({
   const [currentPartenzaId, setCurrentPartenzaId] = useState("");
   const [currentArrivoId, setCurrentArrivoId] = useState("");
   const [currentMezzoId, setCurrentMezzoId] = useState("");
+  const [currentMezzoTrasportatoId, setCurrentMezzoTrasportatoId] = useState("");
   const [currentOre, setCurrentOre] = useState(0);
   const [currentMinuti, setCurrentMinuti] = useState(0);
   const [currentNote, setCurrentNote] = useState("");
@@ -52,6 +54,7 @@ export default function AggiungiTrasportoModalForm({
     setCurrentPartenzaId("");
     setCurrentArrivoId("");
     setCurrentMezzoId("");
+    setCurrentMezzoTrasportatoId("");
     setCurrentOre(0);
     setCurrentMinuti(0);
     setCurrentNote("");
@@ -77,7 +80,18 @@ export default function AggiungiTrasportoModalForm({
       toast.error("Cantiere partenza e arrivo devono essere diversi");
       return;
     }
-    onAddTrasporto(partenzaId, arrivoId, mezziId, currentOre, currentMinuti, currentNote);
+    const mezzoTrasportatoId = currentMezzoTrasportatoId
+      ? parseInt(currentMezzoTrasportatoId, 10)
+      : null;
+    onAddTrasporto(
+      partenzaId,
+      arrivoId,
+      mezziId,
+      currentOre,
+      currentMinuti,
+      currentNote,
+      mezzoTrasportatoId,
+    );
     handleClose();
   };
 
@@ -150,6 +164,26 @@ export default function AggiungiTrasportoModalForm({
                 required
               >
                 <option value="">Seleziona mezzo</option>
+                {availableMezzi.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-control flex flex-col">
+              <label htmlFor="trasporto-mezzo-trasportato" className="label">
+                <span className="label-text font-medium">Mezzo trasportato</span>
+              </label>
+              <select
+                id="trasporto-mezzo-trasportato"
+                className="select select-bordered w-full"
+                value={currentMezzoTrasportatoId}
+                onChange={(e) => setCurrentMezzoTrasportatoId(e.target.value)}
+                disabled={loadingMezzi}
+              >
+                <option value="">Nessuno</option>
                 {availableMezzi.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.nome}

@@ -11,6 +11,7 @@ type ModificaTrasportoModalProps = {
     note: string | null;
     user: { id: string; name: string };
     mezzi: { id: number; nome: string };
+    mezzi_trasportato?: { id: number; nome: string } | null;
     cantieri_partenza: { id: number; nome: string };
     cantieri_arrivo: { id: number; nome: string };
     attivita: { id: number; date: string };
@@ -33,6 +34,9 @@ export default function ModificaTrasportoModal({
   const [partenzaId, setPartenzaId] = useState(trasporto.cantieri_partenza.id);
   const [arrivoId, setArrivoId] = useState(trasporto.cantieri_arrivo.id);
   const [mezziId, setMezziId] = useState(trasporto.mezzi.id);
+  const [mezziTrasportatoId, setMezziTrasportatoId] = useState<number | null>(
+    trasporto.mezzi_trasportato?.id ?? null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +47,7 @@ export default function ModificaTrasportoModal({
     setPartenzaId(trasporto.cantieri_partenza.id);
     setArrivoId(trasporto.cantieri_arrivo.id);
     setMezziId(trasporto.mezzi.id);
+    setMezziTrasportatoId(trasporto.mezzi_trasportato?.id ?? null);
     setError(null);
     dialogRef.current?.showModal();
   };
@@ -68,6 +73,7 @@ export default function ModificaTrasportoModal({
           cantieri_partenza_id: partenzaId,
           cantieri_arrivo_id: arrivoId,
           mezzi_id: mezziId,
+          mezzi_trasportato_id: mezziTrasportatoId ?? null,
           ore,
           minuti,
           note: note.trim() || null,
@@ -153,6 +159,26 @@ export default function ModificaTrasportoModal({
               onChange={(e) => setMezziId(Number(e.target.value))}
               required
             >
+              {mezzi.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mb-4">
+            <label className="block font-medium mb-1 text-sm" htmlFor="mod-trasporto-mezzo-trasportato">
+              Mezzo trasportato
+            </label>
+            <select
+              id="mod-trasporto-mezzo-trasportato"
+              className="select select-bordered w-full"
+              value={mezziTrasportatoId ?? ""}
+              onChange={(e) =>
+                setMezziTrasportatoId(e.target.value ? Number(e.target.value) : null)
+              }
+            >
+              <option value="">Nessuno</option>
               {mezzi.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.nome}

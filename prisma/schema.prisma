@@ -112,6 +112,7 @@ model mezzi {
   user_mezzi                      user_mezzi[]
   interazioni                     interazioni[]
   trasporti                       trasporti[]
+  trasporti_mezzi_trasportato     trasporti[] @relation("MezzoTrasportato")
 
   @@index([created_by], map: "created_by")
   @@index([last_update_by], map: "last_update_by")
@@ -261,6 +262,7 @@ model trasporti {
   user_id                              String
   attivita_id                          Int
   mezzi_id                             Int
+  mezzi_trasportato_id                 Int?
   cantieri_partenza_id                 Int
   cantieri_arrivo_id                   Int
   external_id                          String   @unique(map: "trasporto_external_id") @db.Char(36)
@@ -271,6 +273,7 @@ model trasporti {
   user                                 User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
   attivita                             attivita @relation(fields: [attivita_id], references: [id], onDelete: Cascade)
   mezzi                                mezzi    @relation(fields: [mezzi_id], references: [id], onDelete: Restrict)
+  mezzi_trasportato                    mezzi?   @relation("MezzoTrasportato", fields: [mezzi_trasportato_id], references: [id], onDelete: Restrict)
   cantieri_partenza                    cantieri @relation("trasporto_cantieri_partenza", fields: [cantieri_partenza_id], references: [id], onDelete: Cascade)
   cantieri_arrivo                      cantieri @relation("trasporto_cantieri_arrivo", fields: [cantieri_arrivo_id], references: [id], onDelete: Cascade)
   user_trasporto_created_byTouser     User     @relation("trasporto_created_byTouser", fields: [created_by], references: [id], onUpdate: Restrict, map: "trasporto_ibfk_1")
@@ -279,6 +282,7 @@ model trasporti {
   @@index([user_id], map: "trasporto_user_id")
   @@index([attivita_id], map: "trasporto_attivita_id")
   @@index([mezzi_id], map: "trasporto_mezzi_id")
+  @@index([mezzi_trasportato_id], map: "trasporto_mezzi_trasportato_id")
   @@index([cantieri_partenza_id], map: "trasporto_cantieri_partenza_id")
   @@index([cantieri_arrivo_id], map: "trasporto_cantieri_arrivo_id")
   @@index([created_by], map: "trasporto_created_by")

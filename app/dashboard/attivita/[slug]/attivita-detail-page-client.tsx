@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
 import Link from "next/link";
 import AttivitaInfoCard from "@/components/attivita-info-card";
-import AggiungiTrasportoModal from "@/components/aggiungi-trasporto-modal";
 import AssenzeTableAttivita from "@/components/assenze-table-attivita";
 import InterazioniTableAttivita from "@/components/interazioni-table-attivita";
 import TrasportiTableAttivita from "@/components/trasporti-table-attivita";

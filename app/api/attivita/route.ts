@@ -127,7 +127,9 @@ export async function GET(request: NextRequest) {
               cantieri_partenza_id: true,
               cantieri_arrivo_id: true,
               mezzi_id: true,
+              mezzi_trasportato_id: true,
               tempo_totale: true,
+              mezzi_trasportato: { select: { id: true, nome: true } },
             },
           },
         },
@@ -342,6 +344,7 @@ export async function POST(request: NextRequest) {
             cantieri_partenza_id: number;
             cantieri_arrivo_id: number;
             mezzi_id: number;
+            mezzi_trasportato_id?: number | null;
             ore: number;
             minuti: number;
             note?: string;
@@ -367,6 +370,7 @@ export async function POST(request: NextRequest) {
               cantieri_partenza_id: number;
               cantieri_arrivo_id: number;
               mezzi_id: number;
+              mezzi_trasportato_id?: number | null;
               ore: number;
               minuti: number;
               note?: string;
@@ -380,6 +384,10 @@ export async function POST(request: NextRequest) {
                 user_id,
                 attivita_id: attivita.id,
                 mezzi_id: Number(tr.mezzi_id),
+                mezzi_trasportato_id:
+                  tr.mezzi_trasportato_id != null && typeof tr.mezzi_trasportato_id === "number"
+                    ? tr.mezzi_trasportato_id
+                    : null,
                 cantieri_partenza_id: Number(tr.cantieri_partenza_id),
                 cantieri_arrivo_id: Number(tr.cantieri_arrivo_id),
                 external_id: randomUUID(),
@@ -402,7 +410,16 @@ export async function POST(request: NextRequest) {
           user: { select: { id: true, name: true } },
           interazioni: { select: { cantieri_id: true, mezzi_id: true, tempo_totale: true } },
           assenze: { select: { tempo_totale: true } },
-          trasporti: { select: { cantieri_partenza_id: true, cantieri_arrivo_id: true, mezzi_id: true, tempo_totale: true } },
+          trasporti: {
+            select: {
+              cantieri_partenza_id: true,
+              cantieri_arrivo_id: true,
+              mezzi_id: true,
+              mezzi_trasportato_id: true,
+              tempo_totale: true,
+              mezzi_trasportato: { select: { id: true, nome: true } },
+            },
+          },
         },
       });
       return NextResponse.json(
@@ -425,7 +442,16 @@ export async function POST(request: NextRequest) {
         user: { select: { id: true, name: true } },
         interazioni: { select: { cantieri_id: true, mezzi_id: true, tempo_totale: true } },
         assenze: { select: { tempo_totale: true } },
-        trasporti: { select: { cantieri_partenza_id: true, cantieri_arrivo_id: true, mezzi_id: true, tempo_totale: true } },
+        trasporti: {
+          select: {
+            cantieri_partenza_id: true,
+            cantieri_arrivo_id: true,
+            mezzi_id: true,
+            mezzi_trasportato_id: true,
+            tempo_totale: true,
+            mezzi_trasportato: { select: { id: true, nome: true } },
+          },
+        },
       },
     });
 
