@@ -102,6 +102,18 @@ export default function CantiereDetailPageClient({ slug }: { slug: string }) {
     { revalidateOnFocus: false },
   );
 
+  const { data: mezziCamionData } = useSWR<MezziResponse>(
+    "/api/mezzi?limit=500&has_license_camion=true",
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const { data: mezziEscavatoreData } = useSWR<MezziResponse>(
+    "/api/mezzi?limit=500&has_license_escavatore=true",
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
   const { data: cantiereUsersData } = useSWR<CantiereUsersResponse>(
     cantiereId ? `/api/cantieri/${cantiereId}/users` : null,
     fetcher,
@@ -130,6 +142,8 @@ export default function CantiereDetailPageClient({ slug }: { slug: string }) {
   const trasporti = trasportiData?.trasporti ?? [];
   const users = usersData?.users ?? [];
   const mezzi = mezziData?.mezzi ?? [];
+  const mezziCamion = mezziCamionData?.mezzi ?? [];
+  const mezziEscavatore = mezziEscavatoreData?.mezzi ?? [];
   const cantieri = cantieriListData?.cantieri ?? [];
   const userCantieriList = cantiereUsersData?.users ?? [];
 
@@ -223,6 +237,7 @@ export default function CantiereDetailPageClient({ slug }: { slug: string }) {
         interazioni={interazioniForTable}
         users={users}
         mezzi={mezzi}
+        cantieri={cantieri}
         attivita={attivita}
         onSuccess={() =>
           mutate(`/api/interazioni?cantiereId=${cantiereId}&limit=500`)
@@ -235,6 +250,8 @@ export default function CantiereDetailPageClient({ slug }: { slug: string }) {
           trasporti={trasporti}
           cantieri={cantieri}
           mezzi={mezzi}
+          mezziCamion={mezziCamion}
+          mezziEscavatore={mezziEscavatore}
           onSuccess={() => {
             mutate(`/api/trasporti?cantiereId=${cantiereId}&limit=500`);
             mutate(`/api/cantieri/${slug}`);

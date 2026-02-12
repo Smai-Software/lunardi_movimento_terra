@@ -18,12 +18,14 @@ type InterazioneRow = {
 type InterazioniTableAttivitaProps = {
   interazioni: InterazioneRow[];
   mezzi: Array<{ id: number; nome: string }>;
+  cantieri: Array<{ id: number; nome: string }>;
   onSuccess?: () => void;
 };
 
 export default function InterazioniTableAttivita({
   interazioni,
   mezzi,
+  cantieri,
   onSuccess,
 }: InterazioniTableAttivitaProps) {
   const formatTime = (ore: number, minuti: number) => {
@@ -77,6 +79,7 @@ export default function InterazioniTableAttivita({
                       <ModificaInterazioneModal
                         interazione={interazione}
                         mezzi={mezzi}
+                        cantieri={cantieri}
                         attivita={[
                           {
                             id: interazione.attivita.id,

@@ -350,9 +350,6 @@ export async function PUT(
             if (!allowedMezzi.has(mezzoId)) {
               throw new Error("Mezzo non assegnato all'utente");
             }
-            if (partenzaId === arrivoId) {
-              throw new Error("Cantiere partenza e arrivo devono essere diversi");
-            }
           }
           await tx.trasporti.createMany({
             data: (trasporti as Array<{

@@ -7,7 +7,8 @@ type AggiungiTrasportoModalProps = {
   attivitaId: number;
   userId: string;
   cantieri: Array<{ id: number; nome: string }>;
-  mezzi: Array<{ id: number; nome: string }>;
+  mezziCamion: Array<{ id: number; nome: string }>;
+  mezziEscavatore: Array<{ id: number; nome: string }>;
   onSuccess?: () => void;
 };
 
@@ -15,7 +16,8 @@ export default function AggiungiTrasportoModal({
   attivitaId,
   userId,
   cantieri,
-  mezzi,
+  mezziCamion,
+  mezziEscavatore,
   onSuccess,
 }: AggiungiTrasportoModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -60,10 +62,6 @@ export default function AggiungiTrasportoModal({
     const mezzo = mezziId ? Number(mezziId) : null;
     if (!partenza || !arrivo || !mezzo) {
       setError("Partenza, arrivo e mezzo sono obbligatori");
-      return;
-    }
-    if (partenza === arrivo) {
-      setError("Cantiere partenza e arrivo devono essere diversi");
       return;
     }
     setIsSubmitting(true);
@@ -157,7 +155,7 @@ export default function AggiungiTrasportoModal({
               required
             >
               <option value="">Seleziona mezzo</option>
-              {mezzi.map((m) => (
+              {mezziCamion.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.nome}
                 </option>
@@ -175,7 +173,7 @@ export default function AggiungiTrasportoModal({
               onChange={(e) => setMezziTrasportatoId(e.target.value)}
             >
               <option value="">Nessuno</option>
-              {mezzi.map((m) => (
+              {mezziEscavatore.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.nome}
                 </option>

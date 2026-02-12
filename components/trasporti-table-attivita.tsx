@@ -21,6 +21,8 @@ type TrasportiTableAttivitaProps = {
   trasporti: TrasportoRow[];
   cantieri: Array<{ id: number; nome: string }>;
   mezzi: Array<{ id: number; nome: string }>;
+  mezziCamion: Array<{ id: number; nome: string }>;
+  mezziEscavatore: Array<{ id: number; nome: string }>;
   onSuccess?: () => void;
 };
 
@@ -28,6 +30,8 @@ export default function TrasportiTableAttivita({
   trasporti,
   cantieri,
   mezzi,
+  mezziCamion,
+  mezziEscavatore,
   onSuccess,
 }: TrasportiTableAttivitaProps) {
   const formatTime = (ore: number, minuti: number) => `${ore}h ${minuti}m`;
@@ -71,6 +75,8 @@ export default function TrasportiTableAttivita({
                         trasporto={t}
                         cantieri={cantieri}
                         mezzi={mezzi}
+                        mezziCamion={mezziCamion}
+                        mezziEscavatore={mezziEscavatore}
                         onSuccess={onSuccess}
                       />
                       <EliminaTrasportoModal

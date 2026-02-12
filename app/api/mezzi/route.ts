@@ -32,6 +32,8 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get("sortBy") || "nome";
     const sortOrder = searchParams.get("sortOrder") || "asc";
     const userIdFilter = searchParams.get("userId") || "";
+    const hasLicenseCamionFilter = searchParams.get("has_license_camion");
+    const hasLicenseEscavatoreFilter = searchParams.get("has_license_escavatore");
 
     const where: {
       OR?: Array<
@@ -39,6 +41,8 @@ export async function GET(request: NextRequest) {
         | { descrizione: { contains: string } }
       >;
       user_mezzi?: { some: { user_id: string } };
+      has_license_camion?: boolean;
+      has_license_escavatore?: boolean;
     } = {};
 
     if (search) {
@@ -49,6 +53,12 @@ export async function GET(request: NextRequest) {
     }
     if (userIdFilter) {
       where.user_mezzi = { some: { user_id: userIdFilter } };
+    }
+    if (hasLicenseCamionFilter === "true") {
+      where.has_license_camion = true;
+    }
+    if (hasLicenseEscavatoreFilter === "true") {
+      where.has_license_escavatore = true;
     }
 
     const orderBy: Record<string, "asc" | "desc"> = {

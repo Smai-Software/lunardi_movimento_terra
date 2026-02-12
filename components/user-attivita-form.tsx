@@ -79,6 +79,8 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
 
   const [availableCantieri, setAvailableCantieri] = useState<Cantiere[]>([]);
   const [availableMezzi, setAvailableMezzi] = useState<Mezzo[]>([]);
+  const [availableMezziCamion, setAvailableMezziCamion] = useState<Mezzo[]>([]);
+  const [availableMezziEscavatore, setAvailableMezziEscavatore] = useState<Mezzo[]>([]);
 
   const [loadingCantieri, setLoadingCantieri] = useState(false);
   const [loadingMezzi, setLoadingMezzi] = useState(false);
@@ -90,13 +92,21 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     setLoadingMezzi(true);
 
     try {
-      const [cantieriRes, mezziRes] = await Promise.all([
+      const [cantieriRes, mezziRes, mezziCamionRes, mezziEscavatoreRes] = await Promise.all([
         fetch(`/api/cantieri?userId=${userId}&limit=500`),
         fetch(`/api/mezzi?userId=${userId}&limit=500`),
+        fetch(
+          `/api/mezzi?userId=${userId}&limit=500&has_license_camion=true`,
+        ),
+        fetch(
+          `/api/mezzi?userId=${userId}&limit=500&has_license_escavatore=true`,
+        ),
       ]);
 
       const cantieriData = await cantieriRes.json().catch(() => ({}));
       const mezziData = await mezziRes.json().catch(() => ({}));
+      const mezziCamionData = await mezziCamionRes.json().catch(() => ({}));
+      const mezziEscavatoreData = await mezziEscavatoreRes.json().catch(() => ({}));
 
       if (cantieriRes.ok && Array.isArray(cantieriData.cantieri)) {
         setAvailableCantieri(cantieriData.cantieri);
@@ -113,6 +123,24 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
           (mezziData as { error?: string }).error || "Errore nel caricamento dei mezzi",
         );
       }
+
+      if (mezziCamionRes.ok && Array.isArray(mezziCamionData.mezzi)) {
+        setAvailableMezziCamion(mezziCamionData.mezzi);
+      } else if (!mezziCamionRes.ok) {
+        toast.error(
+          (mezziCamionData as { error?: string }).error ||
+            "Errore nel caricamento dei mezzi camion",
+        );
+      }
+
+      if (mezziEscavatoreRes.ok && Array.isArray(mezziEscavatoreData.mezzi)) {
+        setAvailableMezziEscavatore(mezziEscavatoreData.mezzi);
+      } else if (!mezziEscavatoreRes.ok) {
+        toast.error(
+          (mezziEscavatoreData as { error?: string }).error ||
+            "Errore nel caricamento dei mezzi escavatore",
+        );
+      }
     } catch {
       toast.error("Errore nel caricamento delle risorse");
     } finally {
@@ -127,6 +155,8 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     } else {
       setAvailableCantieri([]);
       setAvailableMezzi([]);
+      setAvailableMezziCamion([]);
+      setAvailableMezziEscavatore([]);
     }
   }, [userId, fetchUserResources]);
 
@@ -437,7 +467,8 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
               <div className="flex items-center gap-2 mb-2">
                 <AggiungiTrasportoModalForm
                   availableCantieri={availableCantieri}
-                  availableMezzi={availableMezzi}
+                  availableMezziCamion={availableMezziCamion}
+                  availableMezziEscavatore={availableMezziEscavatore}
                   loadingCantieri={loadingCantieri}
                   loadingMezzi={loadingMezzi}
                   onAddTrasporto={addTrasporto}

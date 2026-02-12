@@ -180,13 +180,6 @@ export async function PUT(
         { status: 400 },
       );
     }
-    if (finalPartenza === finalArrivo) {
-      return NextResponse.json(
-        { error: "Cantiere partenza e arrivo devono essere diversi" },
-        { status: 400 },
-      );
-    }
-
     const check = await checkUserAssignments(
       existing.user_id,
       finalPartenza,

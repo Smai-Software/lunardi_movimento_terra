@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 type ModificaTrasportoModalProps = {
@@ -18,6 +18,8 @@ type ModificaTrasportoModalProps = {
   };
   cantieri: Array<{ id: number; nome: string }>;
   mezzi: Array<{ id: number; nome: string }>;
+  mezziCamion: Array<{ id: number; nome: string }>;
+  mezziEscavatore: Array<{ id: number; nome: string }>;
   onSuccess?: () => void;
 };
 
@@ -25,6 +27,8 @@ export default function ModificaTrasportoModal({
   trasporto,
   cantieri,
   mezzi,
+  mezziCamion,
+  mezziEscavatore,
   onSuccess,
 }: ModificaTrasportoModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -39,6 +43,27 @@ export default function ModificaTrasportoModal({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const mezziCamionOptions = useMemo(() => {
+    const base = [...mezziCamion];
+    const setIds = new Set(base.map((m) => m.id));
+    if (!setIds.has(trasporto.mezzi.id)) {
+      const current = mezzi.find((m) => m.id === trasporto.mezzi.id);
+      if (current) base.push(current);
+    }
+    return base;
+  }, [mezziCamion, mezzi, trasporto.mezzi.id]);
+
+  const mezziEscavatoreOptions = useMemo(() => {
+    const base = [...mezziEscavatore];
+    const setIds = new Set(base.map((m) => m.id));
+    const currentTrasportatoId = trasporto.mezzi_trasportato?.id;
+    if (currentTrasportatoId != null && !setIds.has(currentTrasportatoId)) {
+      const current = mezzi.find((m) => m.id === currentTrasportatoId);
+      if (current) base.push(current);
+    }
+    return base;
+  }, [mezziEscavatore, mezzi, trasporto.mezzi_trasportato?.id]);
 
   const openModal = () => {
     setOre(trasporto.ore);
@@ -59,10 +84,6 @@ export default function ModificaTrasportoModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (partenzaId === arrivoId) {
-      setError("Cantiere partenza e arrivo devono essere diversi");
-      return;
-    }
     setIsSubmitting(true);
     setError(null);
     try {
@@ -159,7 +180,7 @@ export default function ModificaTrasportoModal({
               onChange={(e) => setMezziId(Number(e.target.value))}
               required
             >
-              {mezzi.map((m) => (
+              {mezziCamionOptions.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.nome}
                 </option>
@@ -179,7 +200,7 @@ export default function ModificaTrasportoModal({
               }
             >
               <option value="">Nessuno</option>
-              {mezzi.map((m) => (
+              {mezziEscavatoreOptions.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.nome}
                 </option>

@@ -184,12 +184,6 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    if (cantieri_partenza_id === cantieri_arrivo_id) {
-      return NextResponse.json(
-        { error: "Cantiere partenza e arrivo devono essere diversi" },
-        { status: 400 },
-      );
-    }
     if (mezzi_id == null || typeof mezzi_id !== "number") {
       return NextResponse.json(
         { error: "Il mezzo è obbligatorio" },

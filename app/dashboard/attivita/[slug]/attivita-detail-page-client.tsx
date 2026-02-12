@@ -111,6 +111,22 @@ export default function UserAttivitaDetailPageClient({
     { revalidateOnFocus: false },
   );
 
+  const { data: mezziCamionData } = useSWR<MezziResponse>(
+    userId
+      ? `/api/mezzi?userId=${userId}&limit=500&has_license_camion=true`
+      : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const { data: mezziEscavatoreData } = useSWR<MezziResponse>(
+    userId
+      ? `/api/mezzi?userId=${userId}&limit=500&has_license_escavatore=true`
+      : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
   const { data: cantieriData } = useSWR<CantieriResponse>(
     userId ? `/api/cantieri?userId=${userId}&limit=500` : null,
     fetcher,
@@ -151,6 +167,8 @@ export default function UserAttivitaDetailPageClient({
   }
 
   const mezzi = mezziData?.mezzi ?? [];
+  const mezziCamion = mezziCamionData?.mezzi ?? [];
+  const mezziEscavatore = mezziEscavatoreData?.mezzi ?? [];
   const cantieri = cantieriData?.cantieri ?? [];
 
   const attivitaForCard = {
@@ -198,6 +216,7 @@ export default function UserAttivitaDetailPageClient({
           <InterazioniTableAttivita
             interazioni={interazioni}
             mezzi={mezzi}
+            cantieri={cantieri}
             onSuccess={() => {
               if (attivitaId)
                 mutate(`/api/interazioni?attivitaId=${attivitaId}&limit=500`);
@@ -213,6 +232,8 @@ export default function UserAttivitaDetailPageClient({
             trasporti={trasporti}
             cantieri={cantieri}
             mezzi={mezzi}
+            mezziCamion={mezziCamion}
+            mezziEscavatore={mezziEscavatore}
             onSuccess={mutateTrasporti}
           />
         </div>

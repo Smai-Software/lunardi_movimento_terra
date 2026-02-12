@@ -40,6 +40,7 @@ type InterazioniTableProps = {
   interazioni: InterazioneRow[];
   users: Array<{ id: string; name: string }>;
   mezzi: Array<{ id: number; nome: string }>;
+  cantieri: Array<{ id: number; nome: string }>;
   attivita: Array<{ id: number; date: string }>;
   onSuccess?: () => void;
 };
@@ -267,6 +268,7 @@ export default function InterazioniTable({
   interazioni,
   users,
   mezzi,
+  cantieri,
   attivita,
   onSuccess,
 }: InterazioniTableProps) {
@@ -522,6 +524,7 @@ export default function InterazioniTable({
                         <ModificaInterazioneModal
                           interazione={i}
                           mezzi={mezzi}
+                          cantieri={cantieri}
                           attivita={attivita}
                           onSuccess={onSuccess}
                         />

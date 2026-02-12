@@ -17,12 +17,14 @@ type ModificaInterazioneModalProps = {
       id: number;
       nome: string;
     } | null;
+    cantieri: { id: number; nome: string };
     attivita: {
       id: number;
       date: string;
     };
   };
   mezzi: Array<{ id: number; nome: string }>;
+  cantieri: Array<{ id: number; nome: string }>;
   attivita: Array<{ id: number; date: string }>;
   onSuccess?: () => void;
 };
@@ -30,6 +32,7 @@ type ModificaInterazioneModalProps = {
 export default function ModificaInterazioneModal({
   interazione,
   mezzi,
+  cantieri,
   attivita,
   onSuccess,
 }: ModificaInterazioneModalProps) {
@@ -40,6 +43,7 @@ export default function ModificaInterazioneModal({
   const [mezziId, setMezziId] = useState<number | null>(
     interazione.mezzi?.id ?? null,
   );
+  const [cantieriId, setCantieriId] = useState(interazione.cantieri.id);
   const [attivitaId, setAttivitaId] = useState(interazione.attivita.id);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +53,7 @@ export default function ModificaInterazioneModal({
     setMinuti(interazione.minuti);
     setNote(interazione.note ?? "");
     setMezziId(interazione.mezzi?.id ?? null);
+    setCantieriId(interazione.cantieri.id);
     setAttivitaId(interazione.attivita.id);
     setError(null);
     dialogRef.current?.showModal();
@@ -71,6 +76,7 @@ export default function ModificaInterazioneModal({
           ore,
           minuti,
           mezzi_id: mezziId,
+          cantieri_id: cantieriId,
           attivita_id: attivitaId,
           note: note.trim() || null,
         }),
@@ -112,6 +118,30 @@ export default function ModificaInterazioneModal({
               disabled
               readOnly
             />
+          </div>
+
+          <div className="mb-4">
+            <label
+              className="block font-medium mb-1 text-sm"
+              htmlFor={`cantieri-interazione-${interazione.id}`}
+            >
+              Cantiere *
+            </label>
+            <select
+              id={`cantieri-interazione-${interazione.id}`}
+              className="select select-bordered w-full"
+              name="cantieri_id"
+              value={cantieriId}
+              onChange={(e) => setCantieriId(Number(e.target.value))}
+              required
+            >
+              <option value="">Seleziona un cantiere</option>
+              {cantieri.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="mb-4">

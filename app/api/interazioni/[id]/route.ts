@@ -110,7 +110,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { ore, minuti, mezzi_id, attivita_id, note } = body;
+    const { ore, minuti, mezzi_id, cantieri_id, attivita_id, note } = body;
 
     const finalOre = ore !== undefined ? Number(ore) : existing.ore;
     const finalMinuti = minuti !== undefined ? Number(minuti) : existing.minuti;
@@ -127,6 +127,15 @@ export async function PUT(
         { status: 400 },
       );
     }
+    if (cantieri_id !== undefined) {
+      const cid = Number(cantieri_id);
+      if (Number.isNaN(cid) || cid < 1) {
+        return NextResponse.json(
+          { error: "Il cantiere deve essere un ID valido (maggiore di 0)" },
+          { status: 400 },
+        );
+      }
+    }
 
     const tempo_totale = BigInt((finalOre * 60 + finalMinuti) * 60000);
     const userId = session.user.id as string;
@@ -139,6 +148,7 @@ export async function PUT(
       last_update_by: string;
       note?: string | null;
       mezzi_id?: number | null;
+      cantieri_id?: number;
       attivita_id?: number;
     } = {
       ore: finalOre,
@@ -150,6 +160,7 @@ export async function PUT(
 
     if (note !== undefined) updateData.note = typeof note === "string" ? note : null;
     if (mezzi_id !== undefined) updateData.mezzi_id = mezzi_id != null ? Number(mezzi_id) : null;
+    if (cantieri_id !== undefined) updateData.cantieri_id = Number(cantieri_id);
     if (attivita_id !== undefined) updateData.attivita_id = Number(attivita_id);
 
     const interazione = await prisma.interazioni.update({

@@ -16,7 +16,8 @@ type Mezzo = {
 
 type AggiungiTrasportoModalFormProps = {
   availableCantieri: Cantiere[];
-  availableMezzi: Mezzo[];
+  availableMezziCamion: Mezzo[];
+  availableMezziEscavatore: Mezzo[];
   loadingCantieri: boolean;
   loadingMezzi: boolean;
   onAddTrasporto: (
@@ -32,7 +33,8 @@ type AggiungiTrasportoModalFormProps = {
 
 export default function AggiungiTrasportoModalForm({
   availableCantieri,
-  availableMezzi,
+  availableMezziCamion,
+  availableMezziEscavatore,
   loadingCantieri,
   loadingMezzi,
   onAddTrasporto,
@@ -76,10 +78,6 @@ export default function AggiungiTrasportoModalForm({
     const partenzaId = parseInt(currentPartenzaId, 10);
     const arrivoId = parseInt(currentArrivoId, 10);
     const mezziId = parseInt(currentMezzoId, 10);
-    if (partenzaId === arrivoId) {
-      toast.error("Cantiere partenza e arrivo devono essere diversi");
-      return;
-    }
     const mezzoTrasportatoId = currentMezzoTrasportatoId
       ? parseInt(currentMezzoTrasportatoId, 10)
       : null;
@@ -164,7 +162,7 @@ export default function AggiungiTrasportoModalForm({
                 required
               >
                 <option value="">Seleziona mezzo</option>
-                {availableMezzi.map((m) => (
+                {availableMezziCamion.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.nome}
                   </option>
@@ -184,7 +182,7 @@ export default function AggiungiTrasportoModalForm({
                 disabled={loadingMezzi}
               >
                 <option value="">Nessuno</option>
-                {availableMezzi.map((m) => (
+                {availableMezziEscavatore.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.nome}
                   </option>

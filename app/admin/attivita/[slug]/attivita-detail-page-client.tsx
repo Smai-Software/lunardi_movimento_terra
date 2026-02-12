@@ -119,6 +119,18 @@ export default function AttivitaDetailPageClient({
     { revalidateOnFocus: false },
   );
 
+  const { data: mezziCamionData } = useSWR<MezziResponse>(
+    "/api/mezzi?limit=500&has_license_camion=true",
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const { data: mezziEscavatoreData } = useSWR<MezziResponse>(
+    "/api/mezzi?limit=500&has_license_escavatore=true",
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
   const { data: cantieriData } = useSWR<CantieriResponse>(
     userId ? `/api/cantieri?userId=${userId}&limit=500` : null,
     fetcher,
@@ -155,6 +167,8 @@ export default function AttivitaDetailPageClient({
 
   const users = usersData?.users ?? [];
   const mezzi = mezziData?.mezzi ?? [];
+  const mezziCamion = mezziCamionData?.mezzi ?? [];
+  const mezziEscavatore = mezziEscavatoreData?.mezzi ?? [];
   const cantieri = cantieriData?.cantieri ?? [];
 
   const attivitaForCard = {
@@ -198,6 +212,8 @@ export default function AttivitaDetailPageClient({
         users={users}
         mezzi={mezzi}
         cantieri={cantieri}
+        mezziCamion={mezziCamion}
+        mezziEscavatore={mezziEscavatore}
         onInterazioniChange={() =>
           mutate(`/api/interazioni?attivitaId=${attivitaId}&limit=500`)
         }
