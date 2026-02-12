@@ -69,10 +69,8 @@ export default function InterazioniTableAttivita({
                       "it-IT",
                     )}
                   </td>
-                  <td>
-                    <div className="max-w-xs truncate">
-                      {interazione.note || ""}
-                    </div>
+                  <td className="max-w-[280px] break-words whitespace-normal align-top">
+                    {interazione.note || ""}
                   </td>
                   <td>
                     <div className="flex gap-2">

@@ -518,7 +518,7 @@ export default function InterazioniTable({
                       </Link>
                     </td>
                     <td>{formatTime(i.ore, i.minuti)}</td>
-                    <td className="max-w-xs truncate">{i.note || ""}</td>
+                    <td className="max-w-[280px] break-words whitespace-normal align-top">{i.note || ""}</td>
                     <td>
                       <div className="flex gap-2">
                         <ModificaInterazioneModal

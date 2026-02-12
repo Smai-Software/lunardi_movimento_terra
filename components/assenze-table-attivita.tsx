@@ -68,10 +68,8 @@ export default function AssenzeTableAttivita({
                   <td>
                     {new Date(assenza.created_at).toLocaleDateString("it-IT")}
                   </td>
-                  <td>
-                    <div className="max-w-xs truncate">
-                      {assenza.note || ""}
-                    </div>
+                  <td className="max-w-[280px] break-words whitespace-normal align-top">
+                    {assenza.note || ""}
                   </td>
                   <td>
                     <div className="flex gap-2">

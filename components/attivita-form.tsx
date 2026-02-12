@@ -486,7 +486,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                                 <td>
                                   {interazione.ore}h {interazione.minuti}m
                                 </td>
-                                <td className="max-w-[120px] truncate">
+                                <td className="max-w-[280px] break-words whitespace-normal align-top">
                                   {interazione.note || "-"}
                                 </td>
                                 <td className="hidden md:table-cell">
@@ -564,7 +564,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                             <td>
                               {t.ore}h {t.minuti}m
                             </td>
-                            <td className="max-w-[120px] truncate">{t.note || "-"}</td>
+                            <td className="max-w-[280px] break-words whitespace-normal align-top">{t.note || "-"}</td>
                             <td className="hidden md:table-cell">
                               <button
                                 type="button"

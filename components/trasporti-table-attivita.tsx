@@ -68,7 +68,7 @@ export default function TrasportiTableAttivita({
                   <td>{t.mezzi_trasportato?.nome ?? "—"}</td>
                   <td>{formatTime(t.ore, t.minuti)}</td>
                   <td>{new Date(t.created_at).toLocaleDateString("it-IT")}</td>
-                  <td className="max-w-xs truncate">{t.note || ""}</td>
+                  <td className="max-w-[280px] break-words whitespace-normal align-top">{t.note || ""}</td>
                   <td>
                     <div className="flex gap-2">
                       <ModificaTrasportoModal
