@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import { notFound } from "next/navigation";
+import { useMemo } from "react";
 import useSWR, { useSWRConfig } from "swr";
-import AttivitaInfoCard from "@/components/attivita-info-card";
 import AttivitaDetailClient from "@/app/admin/attivita/[slug]/attivita-detail-client";
+import AttivitaInfoCard from "@/components/attivita-info-card";
 import { fetcher } from "@/lib/api-fetcher";
 
 type AttivitaBySlug = {
@@ -13,6 +13,7 @@ type AttivitaBySlug = {
     date: string;
     user_id: string;
     external_id: string;
+    is_checked: boolean;
     created_at: string;
     last_update_at: string;
     created_by: string;
@@ -34,6 +35,7 @@ type InterazioniResponse = {
     created_at: string;
     user: { id: string; name: string };
     mezzi: { id: number; nome: string } | null;
+    attrezzature: { id: number; nome: string } | null;
     cantieri: { id: number; nome: string };
     attivita: { id: number; date: string };
   }>;
@@ -71,13 +73,12 @@ type TrasportiResponse = {
 
 type UsersResponse = { users: Array<{ id: string; name: string }> };
 type MezziResponse = { mezzi: Array<{ id: number; nome: string }> };
+type AttrezzatureResponse = {
+  attrezzature: Array<{ id: number; nome: string }>;
+};
 type CantieriResponse = { cantieri: Array<{ id: number; nome: string }> };
 
-export default function AttivitaDetailPageClient({
-  slug,
-}: {
-  slug: string;
-}) {
+export default function AttivitaDetailPageClient({ slug }: { slug: string }) {
   const { mutate } = useSWRConfig();
   const { data: attivitaData, error: attivitaError } = useSWR<AttivitaBySlug>(
     slug ? `/api/attivita/${slug}` : null,
@@ -137,16 +138,21 @@ export default function AttivitaDetailPageClient({
     { revalidateOnFocus: false },
   );
 
+  const { data: attrezzatureData } = useSWR<AttrezzatureResponse>(
+    "/api/attrezzature?limit=500",
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
   const interazioni = interazioniData?.interazioni ?? [];
   const assenze = assenzeData?.assenze ?? [];
   const trasporti = trasportiData?.trasporti ?? [];
 
   const totalHoursFormatted = useMemo(() => {
-    const totalMilliseconds = [
-      ...interazioni,
-      ...assenze,
-      ...trasporti,
-    ].reduce((sum, e) => sum + Number(e.tempo_totale), 0);
+    const totalMilliseconds = [...interazioni, ...assenze, ...trasporti].reduce(
+      (sum, e) => sum + Number(e.tempo_totale),
+      0,
+    );
     const totalMinutes = Math.floor(totalMilliseconds / (1000 * 60));
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
@@ -167,6 +173,7 @@ export default function AttivitaDetailPageClient({
 
   const users = usersData?.users ?? [];
   const mezzi = mezziData?.mezzi ?? [];
+  const attrezzature = attrezzatureData?.attrezzature ?? [];
   const mezziCamion = mezziCamionData?.mezzi ?? [];
   const mezziEscavatore = mezziEscavatoreData?.mezzi ?? [];
   const cantieri = cantieriData?.cantieri ?? [];
@@ -183,6 +190,7 @@ export default function AttivitaDetailPageClient({
       <AttivitaInfoCard
         attivita={attivitaForCard}
         onAttivitaUpdated={() => mutate(`/api/attivita/${slug}`)}
+        showCheckAction
       />
 
       <div className="stats shadow w-full mb-8">
@@ -211,6 +219,7 @@ export default function AttivitaDetailPageClient({
         trasporti={trasporti}
         users={users}
         mezzi={mezzi}
+        attrezzature={attrezzature}
         cantieri={cantieri}
         mezziCamion={mezziCamion}
         mezziEscavatore={mezziEscavatore}

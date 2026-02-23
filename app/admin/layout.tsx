@@ -49,6 +49,9 @@ export default function DashboardLayout({
           <NavigationItem href="/admin/mezzi" iconName="forklift">
             Mezzi
           </NavigationItem>
+          <NavigationItem href="/admin/attrezzature" iconName="wrench">
+            Attrezzature
+          </NavigationItem>
           <NavigationItem href="/admin/utenti" iconName="users">
             Utenti
           </NavigationItem>

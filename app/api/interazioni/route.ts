@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { markAttivitaUncheckedIfNonAdmin } from "@/lib/attivita-check";
 import prisma from "@/lib/prisma";
 
 const DEFAULT_LIMIT = 10;
@@ -64,6 +65,7 @@ export async function GET(request: NextRequest) {
         include: {
           user: { select: { id: true, name: true } },
           mezzi: { select: { id: true, nome: true } },
+          attrezzature: { select: { id: true, nome: true } },
           cantieri: { select: { id: true, nome: true } },
           attivita: { select: { id: true, date: true, external_id: true } },
           user_interazione_created_byTouser: { select: { id: true, name: true } },
@@ -106,7 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { ore, minuti, user_id, mezzi_id, cantieri_id, attivita_id, note } = body;
+    const { ore, minuti, user_id, mezzi_id, attrezzature_id, cantieri_id, attivita_id, note } = body;
 
     if (typeof ore !== "number" || ore < 0) {
       return NextResponse.json(
@@ -150,6 +152,7 @@ export async function POST(request: NextRequest) {
         note: typeof note === "string" ? note : null,
         user_id,
         mezzi_id: mezzi_id != null ? Number(mezzi_id) : null,
+        attrezzature_id: attrezzature_id != null ? Number(attrezzature_id) : null,
         cantieri_id,
         attivita_id,
         external_id: randomUUID(),
@@ -161,10 +164,13 @@ export async function POST(request: NextRequest) {
       include: {
         user: { select: { id: true, name: true } },
         mezzi: { select: { id: true, nome: true } },
+        attrezzature: { select: { id: true, nome: true } },
         cantieri: { select: { id: true, nome: true } },
         attivita: { select: { id: true, date: true, external_id: true } },
       },
     });
+
+    await markAttivitaUncheckedIfNonAdmin(prisma, attivita_id, session);
 
     return NextResponse.json(
       { interazione: serializeInterazione(interazione) },

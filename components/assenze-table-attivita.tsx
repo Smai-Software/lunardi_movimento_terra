@@ -43,7 +43,6 @@ export default function AssenzeTableAttivita({
             <tr>
               <th>Tipo</th>
               <th>Tempo</th>
-              <th>Data creazione</th>
               <th>Note</th>
               <th>Azioni</th>
             </tr>
@@ -52,7 +51,7 @@ export default function AssenzeTableAttivita({
             {assenze.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={5}
                   className="text-center text-base-content/60 py-8"
                 >
                   Nessuna assenza trovata.
@@ -65,9 +64,6 @@ export default function AssenzeTableAttivita({
                     {ASSENZA_TIPO_LABELS[assenza.tipo] ?? assenza.tipo}
                   </td>
                   <td>{formatTime(assenza.ore, assenza.minuti)}</td>
-                  <td>
-                    {new Date(assenza.created_at).toLocaleDateString("it-IT")}
-                  </td>
                   <td className="max-w-[280px] break-words whitespace-normal align-top">
                     {assenza.note || ""}
                   </td>

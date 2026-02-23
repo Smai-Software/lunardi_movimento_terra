@@ -31,6 +31,7 @@ type InterazioneRow = {
   created_at: string;
   user: { id: string; name: string };
   mezzi: { id: number; nome: string } | null;
+  attrezzature?: { id: number; nome: string } | null;
   cantieri: { id: number; nome: string };
   attivita: { id: number; date: string; external_id: string };
   user_interazione_created_byTouser: { id: string; name: string };
@@ -40,6 +41,7 @@ type InterazioniTableProps = {
   interazioni: InterazioneRow[];
   users: Array<{ id: string; name: string }>;
   mezzi: Array<{ id: number; nome: string }>;
+  attrezzature: Array<{ id: number; nome: string }>;
   cantieri: Array<{ id: number; nome: string }>;
   attivita: Array<{ id: number; date: string }>;
   onSuccess?: () => void;
@@ -268,6 +270,7 @@ export default function InterazioniTable({
   interazioni,
   users,
   mezzi,
+  attrezzature,
   cantieri,
   attivita,
   onSuccess,
@@ -476,6 +479,7 @@ export default function InterazioniTable({
                   sortDir={sortDir}
                   onSort={handleSort}
                 />
+                <th>Attrezzatura</th>
                 <SortHeader
                   label="Attività"
                   column="attivita"
@@ -498,7 +502,7 @@ export default function InterazioniTable({
               {paginated.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center text-base-content/60 py-8"
                   >
                     Nessuna interazione trovata.
@@ -509,6 +513,7 @@ export default function InterazioniTable({
                   <tr key={i.id}>
                     <td>{i.user.name}</td>
                     <td>{i.mezzi?.nome || "Nessuno"}</td>
+                    <td>{i.attrezzature?.nome ?? "Nessuna"}</td>
                     <td>
                       <Link
                         href={`/admin/attivita/${i.attivita.id}`}
@@ -524,6 +529,7 @@ export default function InterazioniTable({
                         <ModificaInterazioneModal
                           interazione={i}
                           mezzi={mezzi}
+                          attrezzature={attrezzature}
                           cantieri={cantieri}
                           attivita={attivita}
                           onSuccess={onSuccess}

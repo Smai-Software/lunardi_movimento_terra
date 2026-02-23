@@ -8,6 +8,7 @@ type AggiungiInterazioneModalProps = {
   userId: string;
   cantieri: Array<{ id: number; nome: string }>;
   mezzi: Array<{ id: number; nome: string }>;
+  attrezzature: Array<{ id: number; nome: string }>;
   onSuccess?: () => void;
 };
 
@@ -16,11 +17,13 @@ export default function AggiungiInterazioneModal({
   userId,
   cantieri,
   mezzi,
+  attrezzature,
   onSuccess,
 }: AggiungiInterazioneModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedCantiereId, setSelectedCantiereId] = useState("");
   const [selectedMezzoId, setSelectedMezzoId] = useState("");
+  const [selectedAttrezzaturaId, setSelectedAttrezzaturaId] = useState("");
   const [selectedOre, setSelectedOre] = useState(0);
   const [selectedMinuti, setSelectedMinuti] = useState(0);
   const [note, setNote] = useState("");
@@ -30,6 +33,7 @@ export default function AggiungiInterazioneModal({
   const openModal = () => {
     setSelectedCantiereId("");
     setSelectedMezzoId("");
+    setSelectedAttrezzaturaId("");
     setSelectedOre(0);
     setSelectedMinuti(0);
     setNote("");
@@ -40,6 +44,7 @@ export default function AggiungiInterazioneModal({
   const handleClose = () => {
     setSelectedCantiereId("");
     setSelectedMezzoId("");
+    setSelectedAttrezzaturaId("");
     setSelectedOre(0);
     setSelectedMinuti(0);
     setNote("");
@@ -65,6 +70,7 @@ export default function AggiungiInterazioneModal({
           user_id: userId,
           cantieri_id: cantiereId,
           mezzi_id: selectedMezzoId ? Number(selectedMezzoId) : null,
+          attrezzature_id: selectedAttrezzaturaId ? Number(selectedAttrezzaturaId) : null,
           ore: selectedOre,
           minuti: selectedMinuti,
           note: note.trim() || null,
@@ -135,6 +141,29 @@ export default function AggiungiInterazioneModal({
               {mezzi.map((mezzo) => (
                 <option key={mezzo.id} value={mezzo.id}>
                   {mezzo.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label
+              className="block font-medium mb-1 text-sm"
+              htmlFor="attrezzature-interazione"
+            >
+              Attrezzatura
+            </label>
+            <select
+              id="attrezzature-interazione"
+              className="select select-bordered w-full"
+              name="attrezzature_id"
+              value={selectedAttrezzaturaId}
+              onChange={(e) => setSelectedAttrezzaturaId(e.target.value)}
+            >
+              <option value="">Nessuna attrezzatura</option>
+              {attrezzature.map((att) => (
+                <option key={att.id} value={att.id}>
+                  {att.nome}
                 </option>
               ))}
             </select>

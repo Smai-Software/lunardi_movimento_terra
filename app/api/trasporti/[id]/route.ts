@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { markAttivitaUncheckedIfNonAdmin } from "@/lib/attivita-check";
 import prisma from "@/lib/prisma";
 
 function serializeTrasporto(tr: { tempo_totale: bigint } & Record<string, unknown>) {
@@ -233,6 +234,9 @@ export async function PUT(
       },
     });
 
+    const attivitaId = updateData.attivita_id ?? trasporto.attivita.id;
+    await markAttivitaUncheckedIfNonAdmin(prisma, attivitaId, session);
+
     return NextResponse.json({
       trasporto: serializeTrasporto(trasporto),
     });
@@ -286,6 +290,8 @@ export async function DELETE(
     await prisma.trasporti.delete({
       where: { id: trasportoId },
     });
+
+    await markAttivitaUncheckedIfNonAdmin(prisma, existing.attivita_id, session);
 
     return NextResponse.json({ success: true });
   } catch (error) {

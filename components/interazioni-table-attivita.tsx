@@ -11,6 +11,7 @@ type InterazioneRow = {
   created_at: string;
   cantieri: { id: number; nome: string };
   mezzi: { id: number; nome: string } | null;
+  attrezzature?: { id: number; nome: string } | null;
   attivita: { id: number; date: string };
   user: { id: string; name: string };
 };
@@ -18,6 +19,7 @@ type InterazioneRow = {
 type InterazioniTableAttivitaProps = {
   interazioni: InterazioneRow[];
   mezzi: Array<{ id: number; nome: string }>;
+  attrezzature?: Array<{ id: number; nome: string }>;
   cantieri: Array<{ id: number; nome: string }>;
   onSuccess?: () => void;
 };
@@ -25,6 +27,7 @@ type InterazioniTableAttivitaProps = {
 export default function InterazioniTableAttivita({
   interazioni,
   mezzi,
+  attrezzature,
   cantieri,
   onSuccess,
 }: InterazioniTableAttivitaProps) {
@@ -40,8 +43,8 @@ export default function InterazioniTableAttivita({
             <tr>
               <th>Cantiere</th>
               <th>Mezzo</th>
+              <th>Attrezzatura</th>
               <th>Tempo</th>
-              <th>Data creazione</th>
               <th>Note</th>
               <th>Azioni</th>
             </tr>
@@ -63,12 +66,8 @@ export default function InterazioniTableAttivita({
                     {interazione.cantieri.nome || "N/A"}
                   </td>
                   <td>{interazione.mezzi?.nome || "Nessuno"}</td>
+                  <td>{interazione.attrezzature?.nome ?? "Nessuna"}</td>
                   <td>{formatTime(interazione.ore, interazione.minuti)}</td>
-                  <td>
-                    {new Date(interazione.created_at).toLocaleDateString(
-                      "it-IT",
-                    )}
-                  </td>
                   <td className="max-w-[280px] break-words whitespace-normal align-top">
                     {interazione.note || ""}
                   </td>
@@ -77,6 +76,7 @@ export default function InterazioniTableAttivita({
                       <ModificaInterazioneModal
                         interazione={interazione}
                         mezzi={mezzi}
+                        attrezzature={attrezzature ?? []}
                         cantieri={cantieri}
                         attivita={[
                           {

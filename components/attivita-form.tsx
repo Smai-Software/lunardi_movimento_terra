@@ -25,6 +25,7 @@ type Mezzo = {
 
 type Interazione = {
   mezziId: number | null;
+  attrezzaturaId: number | null;
   ore: number;
   minuti: number;
   note: string;
@@ -84,6 +85,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
   const [loadingUsers, setLoadingUsers] = useState(!usersProp);
   const [availableCantieri, setAvailableCantieri] = useState<Cantiere[]>([]);
   const [availableMezzi, setAvailableMezzi] = useState<Mezzo[]>([]);
+  const [availableAttrezzature, setAvailableAttrezzature] = useState<Array<{ id: number; nome: string }>>([]);
   const [availableMezziCamion, setAvailableMezziCamion] = useState<Mezzo[]>([]);
   const [availableMezziEscavatore, setAvailableMezziEscavatore] = useState<Mezzo[]>([]);
 
@@ -116,7 +118,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
     setLoadingMezzi(true);
 
     try {
-      const [cantieriRes, mezziRes, mezziCamionRes, mezziEscavatoreRes] = await Promise.all([
+      const [cantieriRes, mezziRes, mezziCamionRes, mezziEscavatoreRes, attrezzatureRes] = await Promise.all([
         fetch(`/api/cantieri?userId=${selectedUserId}&limit=500`),
         fetch(`/api/mezzi?userId=${selectedUserId}&limit=500`),
         fetch(
@@ -125,12 +127,14 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
         fetch(
           `/api/mezzi?userId=${selectedUserId}&limit=500&has_license_escavatore=true`,
         ),
+        fetch("/api/attrezzature?limit=500"),
       ]);
 
       const cantieriData = await cantieriRes.json().catch(() => ({}));
       const mezziData = await mezziRes.json().catch(() => ({}));
       const mezziCamionData = await mezziCamionRes.json().catch(() => ({}));
       const mezziEscavatoreData = await mezziEscavatoreRes.json().catch(() => ({}));
+      const attrezzatureData = await attrezzatureRes.json().catch(() => ({}));
 
       if (cantieriRes.ok && Array.isArray(cantieriData.cantieri)) {
         setAvailableCantieri(cantieriData.cantieri);
@@ -165,6 +169,10 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
             "Errore nel caricamento dei mezzi escavatore",
         );
       }
+
+      if (attrezzatureRes.ok && Array.isArray(attrezzatureData.attrezzature)) {
+        setAvailableAttrezzature(attrezzatureData.attrezzature);
+      }
     } catch {
       toast.error("Errore nel caricamento delle risorse");
     } finally {
@@ -180,6 +188,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
     } else {
       setAvailableCantieri([]);
       setAvailableMezzi([]);
+      setAvailableAttrezzature([]);
       setAvailableMezziCamion([]);
       setAvailableMezziEscavatore([]);
     }
@@ -188,6 +197,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
   const addInterazione = (
     cantiereId: number,
     mezziId: number | null,
+    attrezzaturaId: number | null,
     ore: number,
     minuti: number,
     note: string,
@@ -199,6 +209,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
 
     const newInterazione: Interazione = {
       mezziId,
+      attrezzaturaId,
       ore,
       minuti,
       note,
@@ -301,6 +312,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
       cantiere.interazioni.map((interazione) => ({
         cantieri_id: cantiere.cantiereId,
         mezzi_id: interazione.mezziId,
+        attrezzature_id: interazione.attrezzaturaId,
         ore: interazione.ore,
         minuti: interazione.minuti,
         note: interazione.note,
@@ -433,6 +445,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                   <AggiungiInterazioneModalForm
                     availableCantieri={availableCantieri}
                     availableMezzi={availableMezzi}
+                    availableAttrezzature={availableAttrezzature}
                     loadingCantieri={loadingCantieri}
                     loadingMezzi={loadingMezzi}
                     onAddInterazione={addInterazione}
@@ -447,6 +460,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                           <th className="md:hidden"></th>
                           <th>Cantiere</th>
                           <th>Mezzo</th>
+                          <th>Attrezzatura</th>
                           <th>Tempo</th>
                           <th>Note</th>
                           <th className="hidden md:table-cell">Azioni</th>
@@ -482,6 +496,13 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                                         (m) => m.id === interazione.mezziId,
                                       )?.nome || "N/A"
                                     : "Nessuno"}
+                                </td>
+                                <td>
+                                  {interazione.attrezzaturaId
+                                    ? availableAttrezzature.find(
+                                        (a) => a.id === interazione.attrezzaturaId,
+                                      )?.nome ?? "N/A"
+                                    : "Nessuna"}
                                 </td>
                                 <td>
                                   {interazione.ore}h {interazione.minuti}m

@@ -44,6 +44,8 @@ model User {
   trasporti                         trasporti[]
   trasporti_created_byTouser        trasporti[] @relation("trasporto_created_byTouser")
   trasporti_last_update_byTouser    trasporti[] @relation("trasporto_last_update_byTouser")
+  attrezzature_attrezzature_created_byTouser attrezzature[] @relation("attrezzature_created_byTouser")
+  attrezzature_attrezzature_last_update_byTouser attrezzature[] @relation("attrezzature_last_update_byTouser")
   sessions                         Session[]
 
   @@map("user")
@@ -118,6 +120,22 @@ model mezzi {
   @@index([last_update_by], map: "last_update_by")
 }
 
+model attrezzature {
+  id                                       Int      @id @default(autoincrement())
+  nome                                     String   @db.Text
+  external_id                              String   @unique(map: "attrezzature_external_id") @db.Char(36)
+  created_by                               String
+  created_at                               DateTime @default(now()) @db.DateTime(0)
+  last_update_by                           String
+  last_update_at                           DateTime @default(now()) @db.DateTime(0)
+  user_attrezzature_created_byTouser      User     @relation("attrezzature_created_byTouser", fields: [created_by], references: [id], onUpdate: Restrict, map: "attrezzature_ibfk_1")
+  user_attrezzature_last_update_byTouser  User     @relation("attrezzature_last_update_byTouser", fields: [last_update_by], references: [id], onUpdate: Restrict, map: "attrezzature_ibfk_2")
+  interazioni                              interazioni[]
+
+  @@index([created_by], map: "attrezzature_created_by")
+  @@index([last_update_by], map: "attrezzature_last_update_by")
+}
+
 model cantieri {
   id                                  Int      @id @default(autoincrement())
   nome                                String   @db.Text
@@ -176,6 +194,7 @@ model interazioni {
   note                            String?   @db.Text
   user_id                         String
   mezzi_id                        Int?
+  attrezzature_id                 Int?
   cantieri_id                     Int
   attivita_id                     Int
   external_id                     String   @unique(map: "interazione_external_id") @db.Char(36)
@@ -185,6 +204,7 @@ model interazioni {
   last_update_at                  DateTime @default(now()) @db.DateTime(0)
   user                            User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
   mezzi                           mezzi?   @relation(fields: [mezzi_id], references: [id], onDelete: Restrict)
+  attrezzature                    attrezzature? @relation(fields: [attrezzature_id], references: [id], onDelete: Restrict)
   cantieri                        cantieri @relation(fields: [cantieri_id], references: [id], onDelete: Cascade)
   attivita                        attivita @relation(fields: [attivita_id], references: [id], onDelete: Cascade)
   user_interazione_created_byTouser User   @relation("interazione_created_byTouser", fields: [created_by], references: [id], onUpdate: Restrict, map: "interazione_ibfk_1")
@@ -192,6 +212,7 @@ model interazioni {
 
   @@index([user_id], map: "interazione_user_id")
   @@index([mezzi_id], map: "interazione_mezzi_id")
+  @@index([attrezzature_id], map: "interazione_attrezzature_id")
   @@index([cantieri_id], map: "interazione_cantieri_id")
   @@index([attivita_id], map: "interazione_attivita_id")
   @@index([created_by], map: "interazione_created_by")
@@ -207,6 +228,7 @@ model attivita {
   created_at                      DateTime @default(now()) @db.DateTime(0)
   last_update_by                  String
   last_update_at                  DateTime @default(now()) @db.DateTime(0)
+  is_checked                      Boolean  @default(true)
   user                            User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
   interazioni                     interazioni[]
   assenze                         assenze[]

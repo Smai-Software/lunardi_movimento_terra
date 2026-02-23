@@ -39,6 +39,7 @@ type AttivitaDetailClientProps = {
     user: { id: string; name: string };
     cantieri: { id: number; nome: string };
     mezzi: { id: number; nome: string } | null;
+    attrezzature: { id: number; nome: string } | null;
     attivita: { id: number; date: string };
   }>;
   assenze: Array<{
@@ -65,6 +66,7 @@ type AttivitaDetailClientProps = {
   }>;
   users: Array<{ id: string; name: string }>;
   mezzi: Array<{ id: number; nome: string }>;
+  attrezzature: Array<{ id: number; nome: string }>;
   cantieri: Array<{ id: number; nome: string }>;
   mezziCamion: Array<{ id: number; nome: string }>;
   mezziEscavatore: Array<{ id: number; nome: string }>;
@@ -79,6 +81,7 @@ export default function AttivitaDetailClient({
   assenze,
   trasporti,
   mezzi,
+  attrezzature,
   cantieri,
   mezziCamion,
   mezziEscavatore,
@@ -96,6 +99,7 @@ export default function AttivitaDetailClient({
           userId={attivita.user_id}
           cantieri={cantieri}
           mezzi={mezzi}
+          attrezzature={attrezzature}
           onSuccess={onInterazioniChange}
         />
       </div>
@@ -103,6 +107,7 @@ export default function AttivitaDetailClient({
       <InterazioniTableAttivita
         interazioni={interazioni}
         mezzi={mezzi}
+        attrezzature={attrezzature}
         cantieri={cantieri}
         onSuccess={onInterazioniChange}
       />

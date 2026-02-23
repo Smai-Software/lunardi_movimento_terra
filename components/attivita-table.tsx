@@ -29,6 +29,7 @@ interface AttivitaItem {
   date: string;
   user_id: string;
   external_id: string;
+  is_checked: boolean;
   interazioniCount: number;
   trasportiCount: number;
   assenzeCount: number;
@@ -338,6 +339,9 @@ export default function AttivitaTable() {
           <table className="table w-full">
             <thead className="bg-base-200">
               <tr>
+                <th className="w-8" title="Registrata">
+                  ✓
+                </th>
                 <SortHeader
                   label="Data"
                   column="date"
@@ -362,20 +366,20 @@ export default function AttivitaTable() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8">
+                  <td colSpan={8} className="text-center py-8">
                     <span className="loading loading-spinner loading-lg" />
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-error">
+                  <td colSpan={8} className="text-center py-8 text-error">
                     Errore nel caricamento dei dati
                   </td>
                 </tr>
               ) : attivita.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center text-base-content/60 py-8"
                   >
                     Nessuna attività trovata.
@@ -384,6 +388,15 @@ export default function AttivitaTable() {
               ) : (
                 attivita.map((a) => (
                   <tr key={a.id}>
+                    <td className="align-middle">
+                      <span
+                        className={`inline-block w-3 h-3 rounded-full ${
+                          a.is_checked ? "bg-green-500" : "bg-orange-500"
+                        }`}
+                        title={a.is_checked ? "Registrata" : "Non registrata"}
+                        aria-hidden
+                      />
+                    </td>
                     <td>
                       {new Date(a.date).toLocaleDateString("it-IT")}
                     </td>

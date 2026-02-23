@@ -69,6 +69,9 @@ type TrasportiResponse = {
 
 type MezziResponse = { mezzi: Array<{ id: number; nome: string }> };
 type CantieriResponse = { cantieri: Array<{ id: number; nome: string }> };
+type AttrezzatureResponse = {
+  attrezzature: Array<{ id: number; nome: string }>;
+};
 
 export default function UserAttivitaDetailPageClient({
   slug,
@@ -133,6 +136,11 @@ export default function UserAttivitaDetailPageClient({
     { revalidateOnFocus: false },
   );
 
+  const { data: attrezzatureData } = useSWR<AttrezzatureResponse>(
+    "/api/attrezzature?limit=500",
+    fetcher,
+    { revalidateOnFocus: false },
+  );
 
   const interazioni = interazioniData?.interazioni ?? [];
   const assenze = assenzeData?.assenze ?? [];
@@ -170,6 +178,7 @@ export default function UserAttivitaDetailPageClient({
   const mezziCamion = mezziCamionData?.mezzi ?? [];
   const mezziEscavatore = mezziEscavatoreData?.mezzi ?? [];
   const cantieri = cantieriData?.cantieri ?? [];
+  const attrezzature = attrezzatureData?.attrezzature ?? [];
 
   const attivitaForCard = {
     ...attivita,
@@ -217,6 +226,7 @@ export default function UserAttivitaDetailPageClient({
             interazioni={interazioni}
             mezzi={mezzi}
             cantieri={cantieri}
+            attrezzature={attrezzature}
             onSuccess={() => {
               if (attivitaId)
                 mutate(`/api/interazioni?attivitaId=${attivitaId}&limit=500`);

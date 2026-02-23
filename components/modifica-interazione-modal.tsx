@@ -17,6 +17,10 @@ type ModificaInterazioneModalProps = {
       id: number;
       nome: string;
     } | null;
+    attrezzature?: {
+      id: number;
+      nome: string;
+    } | null;
     cantieri: { id: number; nome: string };
     attivita: {
       id: number;
@@ -24,6 +28,7 @@ type ModificaInterazioneModalProps = {
     };
   };
   mezzi: Array<{ id: number; nome: string }>;
+  attrezzature?: Array<{ id: number; nome: string }>;
   cantieri: Array<{ id: number; nome: string }>;
   attivita: Array<{ id: number; date: string }>;
   onSuccess?: () => void;
@@ -32,6 +37,7 @@ type ModificaInterazioneModalProps = {
 export default function ModificaInterazioneModal({
   interazione,
   mezzi,
+  attrezzature,
   cantieri,
   attivita,
   onSuccess,
@@ -43,6 +49,9 @@ export default function ModificaInterazioneModal({
   const [mezziId, setMezziId] = useState<number | null>(
     interazione.mezzi?.id ?? null,
   );
+  const [attrezzatureId, setAttrezzatureId] = useState<number | null>(
+    interazione.attrezzature?.id ?? null,
+  );
   const [cantieriId, setCantieriId] = useState(interazione.cantieri.id);
   const [attivitaId, setAttivitaId] = useState(interazione.attivita.id);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,6 +62,7 @@ export default function ModificaInterazioneModal({
     setMinuti(interazione.minuti);
     setNote(interazione.note ?? "");
     setMezziId(interazione.mezzi?.id ?? null);
+    setAttrezzatureId(interazione.attrezzature?.id ?? null);
     setCantieriId(interazione.cantieri.id);
     setAttivitaId(interazione.attivita.id);
     setError(null);
@@ -76,6 +86,7 @@ export default function ModificaInterazioneModal({
           ore,
           minuti,
           mezzi_id: mezziId,
+          attrezzature_id: attrezzatureId,
           cantieri_id: cantieriId,
           attivita_id: attivitaId,
           note: note.trim() || null,
@@ -164,6 +175,31 @@ export default function ModificaInterazioneModal({
               {mezzi.map((mezzo) => (
                 <option key={mezzo.id} value={mezzo.id}>
                   {mezzo.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label
+              className="block font-medium mb-1 text-sm"
+              htmlFor={`attrezzature-interazione-${interazione.id}`}
+            >
+              Attrezzatura
+            </label>
+            <select
+              id={`attrezzature-interazione-${interazione.id}`}
+              className="select select-bordered w-full"
+              name="attrezzature_id"
+              value={attrezzatureId ?? ""}
+              onChange={(e) =>
+                setAttrezzatureId(e.target.value ? Number(e.target.value) : null)
+              }
+            >
+              <option value="">Nessuna attrezzatura</option>
+              {(attrezzature ?? []).map((att) => (
+                <option key={att.id} value={att.id}>
+                  {att.nome}
                 </option>
               ))}
             </select>

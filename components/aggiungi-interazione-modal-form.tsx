@@ -13,14 +13,21 @@ type Mezzo = {
   nome: string;
 };
 
+type Attrezzatura = {
+  id: number;
+  nome: string;
+};
+
 type AggiungiInterazioneModalFormProps = {
   availableCantieri: Cantiere[];
   availableMezzi: Mezzo[];
+  availableAttrezzature: Attrezzatura[];
   loadingCantieri: boolean;
   loadingMezzi: boolean;
   onAddInterazione: (
     cantiereId: number,
     mezzoId: number | null,
+    attrezzaturaId: number | null,
     ore: number,
     minuti: number,
     note: string,
@@ -30,6 +37,7 @@ type AggiungiInterazioneModalFormProps = {
 export default function AggiungiInterazioneModalForm({
   availableCantieri,
   availableMezzi,
+  availableAttrezzature,
   loadingCantieri,
   loadingMezzi,
   onAddInterazione,
@@ -37,6 +45,7 @@ export default function AggiungiInterazioneModalForm({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [currentCantiereId, setCurrentCantiereId] = useState("");
   const [currentMezzoId, setCurrentMezzoId] = useState("");
+  const [currentAttrezzaturaId, setCurrentAttrezzaturaId] = useState("");
   const [currentOre, setCurrentOre] = useState(0);
   const [currentMinuti, setCurrentMinuti] = useState(0);
   const [currentNote, setCurrentNote] = useState("");
@@ -46,9 +55,9 @@ export default function AggiungiInterazioneModalForm({
   };
 
   const handleClose = () => {
-    // Reset all fields
     setCurrentCantiereId("");
     setCurrentMezzoId("");
+    setCurrentAttrezzaturaId("");
     setCurrentOre(0);
     setCurrentMinuti(0);
     setCurrentNote("");
@@ -67,17 +76,19 @@ export default function AggiungiInterazioneModalForm({
 
     const cantiereId = parseInt(currentCantiereId, 10);
     const mezziId = currentMezzoId ? parseInt(currentMezzoId, 10) : null;
+    const attrezzaturaId = currentAttrezzaturaId ? parseInt(currentAttrezzaturaId, 10) : null;
 
     onAddInterazione(
       cantiereId,
       mezziId,
+      attrezzaturaId,
       currentOre,
       currentMinuti,
       currentNote,
     );
 
-    // Reset all fields except cantiere, then close
     setCurrentMezzoId("");
+    setCurrentAttrezzaturaId("");
     setCurrentOre(0);
     setCurrentMinuti(0);
     setCurrentNote("");
@@ -134,6 +145,25 @@ export default function AggiungiInterazioneModalForm({
                 {availableMezzi.map((mezzo) => (
                   <option key={mezzo.id} value={mezzo.id}>
                     {mezzo.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-control flex flex-col">
+              <label htmlFor="attrezzatura-select" className="label">
+                <span className="label-text">Attrezzatura (opzionale)</span>
+              </label>
+              <select
+                id="attrezzatura-select"
+                className="select select-bordered w-full"
+                value={currentAttrezzaturaId}
+                onChange={(e) => setCurrentAttrezzaturaId(e.target.value)}
+              >
+                <option value="">Nessuna</option>
+                {availableAttrezzature.map((att) => (
+                  <option key={att.id} value={att.id}>
+                    {att.nome}
                   </option>
                 ))}
               </select>

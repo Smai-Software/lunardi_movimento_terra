@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { markAttivitaUncheckedIfNonAdmin } from "@/lib/attivita-check";
 import prisma from "@/lib/prisma";
 
 function serializeInterazione(inter: { tempo_totale: bigint } & Record<string, unknown>) {
@@ -44,6 +45,7 @@ export async function GET(
       include: {
         user: { select: { id: true, name: true } },
         mezzi: { select: { id: true, nome: true } },
+        attrezzature: { select: { id: true, nome: true } },
         cantieri: { select: { id: true, nome: true } },
         attivita: { select: { id: true, date: true, external_id: true } },
         user_interazione_created_byTouser: { select: { id: true, name: true } },
@@ -110,7 +112,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { ore, minuti, mezzi_id, cantieri_id, attivita_id, note } = body;
+    const { ore, minuti, mezzi_id, attrezzature_id, cantieri_id, attivita_id, note } = body;
 
     const finalOre = ore !== undefined ? Number(ore) : existing.ore;
     const finalMinuti = minuti !== undefined ? Number(minuti) : existing.minuti;
@@ -148,6 +150,7 @@ export async function PUT(
       last_update_by: string;
       note?: string | null;
       mezzi_id?: number | null;
+      attrezzature_id?: number | null;
       cantieri_id?: number;
       attivita_id?: number;
     } = {
@@ -160,6 +163,7 @@ export async function PUT(
 
     if (note !== undefined) updateData.note = typeof note === "string" ? note : null;
     if (mezzi_id !== undefined) updateData.mezzi_id = mezzi_id != null ? Number(mezzi_id) : null;
+    if (attrezzature_id !== undefined) updateData.attrezzature_id = attrezzature_id != null ? Number(attrezzature_id) : null;
     if (cantieri_id !== undefined) updateData.cantieri_id = Number(cantieri_id);
     if (attivita_id !== undefined) updateData.attivita_id = Number(attivita_id);
 
@@ -169,10 +173,14 @@ export async function PUT(
       include: {
         user: { select: { id: true, name: true } },
         mezzi: { select: { id: true, nome: true } },
+        attrezzature: { select: { id: true, nome: true } },
         cantieri: { select: { id: true, nome: true } },
         attivita: { select: { id: true, date: true, external_id: true } },
       },
     });
+
+    const attivitaId = updateData.attivita_id ?? interazione.attivita.id;
+    await markAttivitaUncheckedIfNonAdmin(prisma, attivitaId, session);
 
     return NextResponse.json({
       interazione: serializeInterazione(interazione),
@@ -227,6 +235,8 @@ export async function DELETE(
     await prisma.interazioni.delete({
       where: { id: interazioneId },
     });
+
+    await markAttivitaUncheckedIfNonAdmin(prisma, existing.attivita_id, session);
 
     return NextResponse.json({ success: true });
   } catch (error) {

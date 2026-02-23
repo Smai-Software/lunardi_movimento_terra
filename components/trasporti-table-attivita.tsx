@@ -47,7 +47,6 @@ export default function TrasportiTableAttivita({
               <th>Mezzo</th>
               <th>Mezzo trasportato</th>
               <th>Tempo</th>
-              <th>Data creazione</th>
               <th>Note</th>
               <th>Azioni</th>
             </tr>
@@ -55,7 +54,7 @@ export default function TrasportiTableAttivita({
           <tbody>
             {trasporti.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center text-base-content/60 py-8">
+                <td colSpan={7} className="text-center text-base-content/60 py-8">
                   Nessun trasporto trovato.
                 </td>
               </tr>
@@ -67,7 +66,6 @@ export default function TrasportiTableAttivita({
                   <td>{t.mezzi.nome}</td>
                   <td>{t.mezzi_trasportato?.nome ?? "—"}</td>
                   <td>{formatTime(t.ore, t.minuti)}</td>
-                  <td>{new Date(t.created_at).toLocaleDateString("it-IT")}</td>
                   <td className="max-w-[280px] break-words whitespace-normal align-top">{t.note || ""}</td>
                   <td>
                     <div className="flex gap-2">

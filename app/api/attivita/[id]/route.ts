@@ -224,6 +224,7 @@ export async function PUT(
     const hasAssenze = assenze && Array.isArray(assenze);
     const hasTrasporti = trasporti && Array.isArray(trasporti);
 
+    const isChecked = session.user.role === "admin";
     await prisma.$transaction(async (tx) => {
       await tx.attivita.update({
         where: { id: attivitaId },
@@ -232,6 +233,7 @@ export async function PUT(
           user_id,
           last_update_at: new Date(),
           last_update_by: userId,
+          ...(isChecked ? {} : { is_checked: false }),
         },
       });
 
@@ -245,6 +247,7 @@ export async function PUT(
               (inter: {
                 cantieri_id: number;
                 mezzi_id?: number | null;
+                attrezzature_id?: number | null;
                 ore: number;
                 minuti: number;
                 note?: string;
@@ -260,6 +263,7 @@ export async function PUT(
                   tempo_totale: BigInt((ore * 60 + minuti) * 60000),
                   user_id,
                   mezzi_id: inter.mezzi_id ?? null,
+                  attrezzature_id: inter.attrezzature_id ?? null,
                   cantieri_id: inter.cantieri_id,
                   attivita_id: attivitaId,
                   external_id: randomUUID(),

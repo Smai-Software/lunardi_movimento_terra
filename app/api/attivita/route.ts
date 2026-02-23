@@ -241,6 +241,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user.id as string;
+    const isChecked = session.user.role === "admin";
     const hasInterazioni = interazioni && Array.isArray(interazioni) && interazioni.length > 0;
     const hasAssenze = assenze && Array.isArray(assenze) && assenze.length > 0;
     const hasTrasporti = trasporti && Array.isArray(trasporti) && trasporti.length > 0;
@@ -256,6 +257,7 @@ export async function POST(request: NextRequest) {
             created_by: userId,
             last_update_by: userId,
             external_id: randomUUID(),
+            is_checked: isChecked,
           },
         });
 
@@ -265,6 +267,7 @@ export async function POST(request: NextRequest) {
               (inter: {
                 cantieri_id: number;
                 mezzi_id?: number | null;
+                attrezzature_id?: number | null;
                 ore: number;
                 minuti: number;
                 note?: string;
@@ -280,6 +283,7 @@ export async function POST(request: NextRequest) {
                   tempo_totale: BigInt((ore * 60 + minuti) * 60000),
                   user_id,
                   mezzi_id: inter.mezzi_id ?? null,
+                  attrezzature_id: inter.attrezzature_id ?? null,
                   cantieri_id: inter.cantieri_id,
                   attivita_id: attivita.id,
                   external_id: randomUUID(),
@@ -434,6 +438,7 @@ export async function POST(request: NextRequest) {
         created_by: userId,
         last_update_by: userId,
         external_id: randomUUID(),
+        is_checked: isChecked,
       },
       include: {
         user: { select: { id: true, name: true } },

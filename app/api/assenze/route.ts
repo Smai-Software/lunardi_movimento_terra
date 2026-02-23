@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import type { assenza_tipo } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
+import { markAttivitaUncheckedIfNonAdmin } from "@/lib/attivita-check";
 import prisma from "@/lib/prisma";
 
 const DEFAULT_LIMIT = 10;
@@ -178,6 +179,8 @@ export async function POST(request: NextRequest) {
         attivita: { select: { id: true, date: true, external_id: true } },
       },
     });
+
+    await markAttivitaUncheckedIfNonAdmin(prisma, attivita_id, session);
 
     return NextResponse.json(
       { assenza: serializeAssenza(assenza) },
