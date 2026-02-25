@@ -12,6 +12,7 @@ type ModificaTrasportoModalProps = {
     user: { id: string; name: string };
     mezzi: { id: number; nome: string };
     mezzi_trasportato?: { id: number; nome: string } | null;
+    attrezzature?: { id: number; nome: string } | null;
     cantieri_partenza: { id: number; nome: string };
     cantieri_arrivo: { id: number; nome: string };
     attivita: { id: number; date: string };
@@ -20,6 +21,7 @@ type ModificaTrasportoModalProps = {
   mezzi: Array<{ id: number; nome: string }>;
   mezziCamion: Array<{ id: number; nome: string }>;
   mezziEscavatore: Array<{ id: number; nome: string }>;
+  attrezzature: Array<{ id: number; nome: string }>;
   onSuccess?: () => void;
 };
 
@@ -29,6 +31,7 @@ export default function ModificaTrasportoModal({
   mezzi,
   mezziCamion,
   mezziEscavatore,
+  attrezzature,
   onSuccess,
 }: ModificaTrasportoModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -40,6 +43,9 @@ export default function ModificaTrasportoModal({
   const [mezziId, setMezziId] = useState(trasporto.mezzi.id);
   const [mezziTrasportatoId, setMezziTrasportatoId] = useState<number | null>(
     trasporto.mezzi_trasportato?.id ?? null,
+  );
+  const [attrezzaturaId, setAttrezzaturaId] = useState<number | null>(
+    trasporto.attrezzature?.id ?? null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +79,7 @@ export default function ModificaTrasportoModal({
     setArrivoId(trasporto.cantieri_arrivo.id);
     setMezziId(trasporto.mezzi.id);
     setMezziTrasportatoId(trasporto.mezzi_trasportato?.id ?? null);
+    setAttrezzaturaId(trasporto.attrezzature?.id ?? null);
     setError(null);
     dialogRef.current?.showModal();
   };
@@ -95,6 +102,7 @@ export default function ModificaTrasportoModal({
           cantieri_arrivo_id: arrivoId,
           mezzi_id: mezziId,
           mezzi_trasportato_id: mezziTrasportatoId ?? null,
+          attrezzature_id: attrezzaturaId,
           ore,
           minuti,
           note: note.trim() || null,
@@ -203,6 +211,26 @@ export default function ModificaTrasportoModal({
               {mezziEscavatoreOptions.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mb-4">
+            <label className="block font-medium mb-1 text-sm" htmlFor="mod-trasporto-attrezzatura">
+              Attrezzatura (opzionale)
+            </label>
+            <select
+              id="mod-trasporto-attrezzatura"
+              className="select select-bordered w-full"
+              value={attrezzaturaId ?? ""}
+              onChange={(e) =>
+                setAttrezzaturaId(e.target.value ? Number(e.target.value) : null)
+              }
+            >
+              <option value="">Nessuna</option>
+              {(attrezzature ?? []).map((att) => (
+                <option key={att.id} value={att.id}>
+                  {att.nome}
                 </option>
               ))}
             </select>

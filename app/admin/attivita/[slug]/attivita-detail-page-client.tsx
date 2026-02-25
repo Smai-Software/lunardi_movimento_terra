@@ -65,6 +65,8 @@ type TrasportiResponse = {
     created_at: string;
     user: { id: string; name: string };
     mezzi: { id: number; nome: string };
+    mezzi_trasportato?: { id: number; nome: string } | null;
+    attrezzature?: { id: number; nome: string } | null;
     cantieri_partenza: { id: number; nome: string };
     cantieri_arrivo: { id: number; nome: string };
     attivita: { id: number; date: string };

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import type { assenza_tipo } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
 import { markAttivitaUncheckedIfNonAdmin } from "@/lib/attivita-check";
+import { checkAttivitaDateRangeForUser } from "@/lib/attivita-date-range-guard";
 import prisma from "@/lib/prisma";
 
 const DEFAULT_LIMIT = 10;
@@ -136,6 +137,19 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    const attivita = await prisma.attivita.findUnique({
+      where: { id: attivita_id },
+      select: { date: true },
+    });
+    if (!attivita) {
+      return NextResponse.json(
+        { error: "Attività non trovata" },
+        { status: 404 },
+      );
+    }
+    const dateRangeError = checkAttivitaDateRangeForUser(session, attivita.date);
+    if (dateRangeError) return dateRangeError;
 
     const finalOre = ore !== undefined && ore !== null ? Number(ore) : 8;
     const finalMinuti =

@@ -14,10 +14,16 @@ type Mezzo = {
   nome: string;
 };
 
+type Attrezzatura = {
+  id: number;
+  nome: string;
+};
+
 type AggiungiTrasportoModalFormProps = {
   availableCantieri: Cantiere[];
   availableMezziCamion: Mezzo[];
   availableMezziEscavatore: Mezzo[];
+  availableAttrezzature: Attrezzatura[];
   loadingCantieri: boolean;
   loadingMezzi: boolean;
   onAddTrasporto: (
@@ -28,6 +34,7 @@ type AggiungiTrasportoModalFormProps = {
     minuti: number,
     note: string,
     mezziTrasportatoId: number | null,
+    attrezzaturaId: number | null,
   ) => void;
 };
 
@@ -35,6 +42,7 @@ export default function AggiungiTrasportoModalForm({
   availableCantieri,
   availableMezziCamion,
   availableMezziEscavatore,
+  availableAttrezzature,
   loadingCantieri,
   loadingMezzi,
   onAddTrasporto,
@@ -44,6 +52,7 @@ export default function AggiungiTrasportoModalForm({
   const [currentArrivoId, setCurrentArrivoId] = useState("");
   const [currentMezzoId, setCurrentMezzoId] = useState("");
   const [currentMezzoTrasportatoId, setCurrentMezzoTrasportatoId] = useState("");
+  const [currentAttrezzaturaId, setCurrentAttrezzaturaId] = useState("");
   const [currentOre, setCurrentOre] = useState(0);
   const [currentMinuti, setCurrentMinuti] = useState(0);
   const [currentNote, setCurrentNote] = useState("");
@@ -57,6 +66,7 @@ export default function AggiungiTrasportoModalForm({
     setCurrentArrivoId("");
     setCurrentMezzoId("");
     setCurrentMezzoTrasportatoId("");
+    setCurrentAttrezzaturaId("");
     setCurrentOre(0);
     setCurrentMinuti(0);
     setCurrentNote("");
@@ -81,6 +91,9 @@ export default function AggiungiTrasportoModalForm({
     const mezzoTrasportatoId = currentMezzoTrasportatoId
       ? parseInt(currentMezzoTrasportatoId, 10)
       : null;
+    const attrezzaturaId = currentAttrezzaturaId
+      ? parseInt(currentAttrezzaturaId, 10)
+      : null;
     onAddTrasporto(
       partenzaId,
       arrivoId,
@@ -89,6 +102,7 @@ export default function AggiungiTrasportoModalForm({
       currentMinuti,
       currentNote,
       mezzoTrasportatoId,
+      attrezzaturaId,
     );
     handleClose();
   };
@@ -185,6 +199,25 @@ export default function AggiungiTrasportoModalForm({
                 {availableMezziEscavatore.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-control flex flex-col">
+              <label htmlFor="trasporto-attrezzatura" className="label">
+                <span className="label-text">Attrezzatura (opzionale)</span>
+              </label>
+              <select
+                id="trasporto-attrezzatura"
+                className="select select-bordered w-full"
+                value={currentAttrezzaturaId}
+                onChange={(e) => setCurrentAttrezzaturaId(e.target.value)}
+              >
+                <option value="">Nessuna</option>
+                {availableAttrezzature.map((att) => (
+                  <option key={att.id} value={att.id}>
+                    {att.nome}
                   </option>
                 ))}
               </select>

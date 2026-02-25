@@ -52,11 +52,15 @@ export default function ModificaAttivitaModal({
     e.preventDefault();
     if (restrictDateRange) {
       if (selectedDate > getTodayLocalDateString()) {
-        toast.error("La data non può essere futura");
+        toast.error(
+          "Operazione non consentita: puoi modificare/eliminare solo attività degli ultimi 7 giorni. Contatta l'amministrazione.",
+        );
         return;
       }
       if (selectedDate < getMinDateString()) {
-        toast.error("La data non può essere più di 7 giorni indietro");
+        toast.error(
+          "Operazione non consentita: puoi modificare/eliminare solo attività degli ultimi 7 giorni. Contatta l'amministrazione.",
+        );
         return;
       }
     }

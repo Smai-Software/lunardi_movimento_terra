@@ -44,34 +44,32 @@ interface CantieriResponse {
 }
 
 function CantieriFilterDrawer({
-  drawerId,
+  isOpen,
+  onClose,
   filterStatus,
   setFilterStatus,
   setPage,
 }: {
-  drawerId: string;
+  isOpen: boolean;
+  onClose: () => void;
   filterStatus: string;
   setFilterStatus: (val: string | null, options?: { history: "push" }) => void;
   setPage: (val: number, options?: { history: "push" }) => void;
 }) {
+  if (!isOpen) return null;
+
   return (
-    <div className="drawer-side z-50">
+    <div className="fixed inset-0 z-[70]">
       <button
         type="button"
-        className="drawer-overlay"
-        onClick={() => {
-          const checkbox = document.getElementById(drawerId) as HTMLInputElement;
-          if (checkbox) checkbox.checked = false;
-        }}
+        className="fixed inset-0 bg-black/30"
+        onClick={onClose}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            const checkbox = document.getElementById(drawerId) as HTMLInputElement;
-            if (checkbox) checkbox.checked = false;
-          }
+          if (e.key === "Enter" || e.key === " ") onClose();
         }}
         aria-label="Chiudi filtro"
       />
-      <div className="menu p-4 w-80 min-h-full bg-base-100 text-black">
+      <div className="menu fixed right-0 top-0 h-full w-80 p-4 bg-base-100 text-black shadow-xl overflow-y-auto">
         <h2 className="text-lg font-bold mb-4">Filtra cantieri</h2>
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-2">Stato Cantiere</h3>
@@ -196,7 +194,7 @@ export default function CantieriTable() {
     "filterStatus",
     parseAsString.withDefault("all"),
   );
-  const drawerId = "cantieri-filter-drawer";
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const openParam =
     filterStatus === "open" ? "true" : filterStatus === "closed" ? "false" : "";
@@ -238,33 +236,36 @@ export default function CantieriTable() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4">
-        <div className="grow">
-          <div className="join w-full max-w-md">
-            <input
-              type="text"
-              placeholder="Cerca per nome o descrizione"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="input input-bordered grow join-item"
-            />
-            <button type="button" className="btn join-item">
-              <Search />
-            </button>
+      <div className="relative">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="grow">
+            <div className="join w-full max-w-md">
+              <input
+                type="text"
+                placeholder="Cerca per nome o descrizione"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                className="input input-bordered grow join-item"
+              />
+              <button type="button" className="btn join-item">
+                <Search />
+              </button>
+            </div>
           </div>
+          <button
+            type="button"
+            className="btn btn-outline relative"
+            onClick={() => setIsFilterOpen(true)}
+          >
+            Filtra
+            {activeFilterCount > 0 ? (
+              <span className="badge badge-secondary badge-sm absolute -top-2 -right-2">
+                {activeFilterCount}
+              </span>
+            ) : null}
+          </button>
         </div>
-        <label htmlFor={drawerId} className="btn btn-outline relative">
-          Filtra
-          {activeFilterCount > 0 ? (
-            <span className="badge badge-secondary badge-sm absolute -top-2 -right-2">
-              {activeFilterCount}
-            </span>
-          ) : null}
-        </label>
-      </div>
 
-      <div className="drawer drawer-end z-50">
-        <input id={drawerId} type="checkbox" className="drawer-toggle" />
         <div className="overflow-x-auto rounded-lg shadow content-visibility-auto">
           <table className="table w-full">
             <thead className="bg-base-200">
@@ -368,8 +369,10 @@ export default function CantieriTable() {
             </tbody>
           </table>
         </div>
+
         <CantieriFilterDrawer
-          drawerId={drawerId}
+          isOpen={isFilterOpen}
+          onClose={() => setIsFilterOpen(false)}
           filterStatus={filterStatus}
           setFilterStatus={setFilterStatus}
           setPage={setPage}

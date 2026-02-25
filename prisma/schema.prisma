@@ -131,6 +131,7 @@ model attrezzature {
   user_attrezzature_created_byTouser      User     @relation("attrezzature_created_byTouser", fields: [created_by], references: [id], onUpdate: Restrict, map: "attrezzature_ibfk_1")
   user_attrezzature_last_update_byTouser  User     @relation("attrezzature_last_update_byTouser", fields: [last_update_by], references: [id], onUpdate: Restrict, map: "attrezzature_ibfk_2")
   interazioni                              interazioni[]
+  trasporti                                trasporti[]
 
   @@index([created_by], map: "attrezzature_created_by")
   @@index([last_update_by], map: "attrezzature_last_update_by")
@@ -285,6 +286,7 @@ model trasporti {
   attivita_id                          Int
   mezzi_id                             Int
   mezzi_trasportato_id                 Int?
+  attrezzature_id                     Int?
   cantieri_partenza_id                 Int
   cantieri_arrivo_id                   Int
   external_id                          String   @unique(map: "trasporto_external_id") @db.Char(36)
@@ -296,11 +298,13 @@ model trasporti {
   attivita                             attivita @relation(fields: [attivita_id], references: [id], onDelete: Cascade)
   mezzi                                mezzi    @relation(fields: [mezzi_id], references: [id], onDelete: Restrict)
   mezzi_trasportato                    mezzi?   @relation("MezzoTrasportato", fields: [mezzi_trasportato_id], references: [id], onDelete: Restrict)
+  attrezzature                         attrezzature? @relation(fields: [attrezzature_id], references: [id], onDelete: Restrict)
   cantieri_partenza                    cantieri @relation("trasporto_cantieri_partenza", fields: [cantieri_partenza_id], references: [id], onDelete: Cascade)
   cantieri_arrivo                      cantieri @relation("trasporto_cantieri_arrivo", fields: [cantieri_arrivo_id], references: [id], onDelete: Cascade)
   user_trasporto_created_byTouser     User     @relation("trasporto_created_byTouser", fields: [created_by], references: [id], onUpdate: Restrict, map: "trasporto_ibfk_1")
   user_trasporto_last_update_byTouser  User     @relation("trasporto_last_update_byTouser", fields: [last_update_by], references: [id], onUpdate: Restrict, map: "trasporto_ibfk_2")
 
+  @@index([attrezzature_id], map: "trasporto_attrezzature_id")
   @@index([user_id], map: "trasporto_user_id")
   @@index([attivita_id], map: "trasporto_attivita_id")
   @@index([mezzi_id], map: "trasporto_mezzi_id")

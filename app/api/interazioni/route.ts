@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { markAttivitaUncheckedIfNonAdmin } from "@/lib/attivita-check";
+import { checkAttivitaDateRangeForUser } from "@/lib/attivita-date-range-guard";
 import prisma from "@/lib/prisma";
 
 const DEFAULT_LIMIT = 10;
@@ -140,6 +141,19 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    const attivita = await prisma.attivita.findUnique({
+      where: { id: attivita_id },
+      select: { date: true },
+    });
+    if (!attivita) {
+      return NextResponse.json(
+        { error: "Attività non trovata" },
+        { status: 404 },
+      );
+    }
+    const dateRangeError = checkAttivitaDateRangeForUser(session, attivita.date);
+    if (dateRangeError) return dateRangeError;
 
     const tempo_totale = BigInt((ore * 60 + minuti) * 60000);
     const userId = session.user.id as string;

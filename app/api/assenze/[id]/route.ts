@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import type { assenza_tipo } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
 import { markAttivitaUncheckedIfNonAdmin } from "@/lib/attivita-check";
+import { checkAttivitaDateRangeForUser } from "@/lib/attivita-date-range-guard";
 import prisma from "@/lib/prisma";
 
 const VALID_TIPI = [
@@ -108,7 +109,13 @@ export async function PUT(
 
     const existing = await prisma.assenze.findUnique({
       where: { id: assenzaId },
-      select: { ore: true, minuti: true, tipo: true },
+      select: {
+        ore: true,
+        minuti: true,
+        tipo: true,
+        attivita_id: true,
+        attivita: { select: { date: true } },
+      },
     });
 
     if (!existing) {
@@ -141,6 +148,23 @@ export async function PUT(
         { status: 400 },
       );
     }
+
+    const finalAttivitaId = attivita_id !== undefined ? Number(attivita_id) : existing.attivita_id;
+    const attivitaToValidate =
+      attivita_id !== undefined && attivita_id !== existing.attivita_id
+        ? await prisma.attivita.findUnique({
+            where: { id: finalAttivitaId },
+            select: { date: true },
+          })
+        : existing.attivita;
+    if (!attivitaToValidate) {
+      return NextResponse.json(
+        { error: "Attività non trovata" },
+        { status: 404 },
+      );
+    }
+    const dateRangeError = checkAttivitaDateRangeForUser(session, attivitaToValidate.date);
+    if (dateRangeError) return dateRangeError;
 
     const tempo_totale = BigInt((finalOre * 60 + finalMinuti) * 60000);
     const userId = session.user.id as string;
@@ -219,6 +243,7 @@ export async function DELETE(
 
     const existing = await prisma.assenze.findUnique({
       where: { id: assenzaId },
+      include: { attivita: { select: { date: true } } },
     });
 
     if (!existing) {
@@ -227,6 +252,9 @@ export async function DELETE(
         { status: 404 },
       );
     }
+
+    const dateRangeError = checkAttivitaDateRangeForUser(session, existing.attivita.date);
+    if (dateRangeError) return dateRangeError;
 
     await prisma.assenze.delete({
       where: { id: assenzaId },

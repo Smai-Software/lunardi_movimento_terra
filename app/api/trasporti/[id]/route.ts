@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { markAttivitaUncheckedIfNonAdmin } from "@/lib/attivita-check";
+import { checkAttivitaDateRangeForUser } from "@/lib/attivita-date-range-guard";
 import prisma from "@/lib/prisma";
 
 function serializeTrasporto(tr: { tempo_totale: bigint } & Record<string, unknown>) {
@@ -69,6 +70,7 @@ export async function GET(
         user: { select: { id: true, name: true } },
         mezzi: { select: { id: true, nome: true } },
         mezzi_trasportato: { select: { id: true, nome: true } },
+        attrezzature: { select: { id: true, nome: true } },
         cantieri_partenza: { select: { id: true, nome: true } },
         cantieri_arrivo: { select: { id: true, nome: true } },
         attivita: { select: { id: true, date: true, external_id: true } },
@@ -129,10 +131,13 @@ export async function PUT(
         ore: true,
         minuti: true,
         user_id: true,
+        attivita_id: true,
         cantieri_partenza_id: true,
         cantieri_arrivo_id: true,
         mezzi_id: true,
         mezzi_trasportato_id: true,
+        attrezzature_id: true,
+        attivita: { select: { date: true } },
       },
     });
 
@@ -151,6 +156,7 @@ export async function PUT(
       cantieri_arrivo_id,
       mezzi_id,
       mezzi_trasportato_id,
+      attrezzature_id,
       attivita_id,
       note,
     } = body;
@@ -168,6 +174,12 @@ export async function PUT(
           ? Number(mezzi_trasportato_id)
           : null
         : existing.mezzi_trasportato_id;
+    const finalAttrezzatura =
+      attrezzature_id !== undefined
+        ? attrezzature_id != null
+          ? Number(attrezzature_id)
+          : null
+        : existing.attrezzature_id;
 
     if (finalOre < 0) {
       return NextResponse.json(
@@ -191,6 +203,23 @@ export async function PUT(
       return NextResponse.json({ error: check.error }, { status: 400 });
     }
 
+    const finalAttivitaId = attivita_id !== undefined ? Number(attivita_id) : existing.attivita_id;
+    const attivitaToValidate =
+      attivita_id !== undefined && attivita_id !== existing.attivita_id
+        ? await prisma.attivita.findUnique({
+            where: { id: finalAttivitaId },
+            select: { date: true },
+          })
+        : existing.attivita;
+    if (!attivitaToValidate) {
+      return NextResponse.json(
+        { error: "Attività non trovata" },
+        { status: 404 },
+      );
+    }
+    const dateRangeError = checkAttivitaDateRangeForUser(session, attivitaToValidate.date);
+    if (dateRangeError) return dateRangeError;
+
     const tempo_totale = BigInt((finalOre * 60 + finalMinuti) * 60000);
     const userId = session.user.id as string;
 
@@ -204,6 +233,7 @@ export async function PUT(
       cantieri_arrivo_id: number;
       mezzi_id: number;
       mezzi_trasportato_id: number | null;
+      attrezzature_id: number | null;
       note?: string | null;
       attivita_id?: number;
     } = {
@@ -216,6 +246,7 @@ export async function PUT(
       cantieri_arrivo_id: finalArrivo,
       mezzi_id: finalMezzo,
       mezzi_trasportato_id: finalMezzoTrasportato,
+      attrezzature_id: finalAttrezzatura,
     };
 
     if (note !== undefined) updateData.note = typeof note === "string" ? note : null;
@@ -228,6 +259,7 @@ export async function PUT(
         user: { select: { id: true, name: true } },
         mezzi: { select: { id: true, nome: true } },
         mezzi_trasportato: { select: { id: true, nome: true } },
+        attrezzature: { select: { id: true, nome: true } },
         cantieri_partenza: { select: { id: true, nome: true } },
         cantieri_arrivo: { select: { id: true, nome: true } },
         attivita: { select: { id: true, date: true, external_id: true } },
@@ -278,6 +310,7 @@ export async function DELETE(
 
     const existing = await prisma.trasporti.findUnique({
       where: { id: trasportoId },
+      include: { attivita: { select: { date: true } } },
     });
 
     if (!existing) {
@@ -286,6 +319,9 @@ export async function DELETE(
         { status: 404 },
       );
     }
+
+    const dateRangeError = checkAttivitaDateRangeForUser(session, existing.attivita.date);
+    if (dateRangeError) return dateRangeError;
 
     await prisma.trasporti.delete({
       where: { id: trasportoId },

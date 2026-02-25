@@ -13,6 +13,7 @@ type TrasportoRow = {
   cantieri_arrivo: { id: number; nome: string };
   mezzi: { id: number; nome: string };
   mezzi_trasportato?: { id: number; nome: string } | null;
+  attrezzature?: { id: number; nome: string } | null;
   attivita: { id: number; date: string };
   user: { id: string; name: string };
 };
@@ -23,6 +24,7 @@ type TrasportiTableAttivitaProps = {
   mezzi: Array<{ id: number; nome: string }>;
   mezziCamion: Array<{ id: number; nome: string }>;
   mezziEscavatore: Array<{ id: number; nome: string }>;
+  attrezzature: Array<{ id: number; nome: string }>;
   onSuccess?: () => void;
 };
 
@@ -32,6 +34,7 @@ export default function TrasportiTableAttivita({
   mezzi,
   mezziCamion,
   mezziEscavatore,
+  attrezzature,
   onSuccess,
 }: TrasportiTableAttivitaProps) {
   const formatTime = (ore: number, minuti: number) => `${ore}h ${minuti}m`;
@@ -46,6 +49,7 @@ export default function TrasportiTableAttivita({
               <th>Arrivo</th>
               <th>Mezzo</th>
               <th>Mezzo trasportato</th>
+              <th>Attrezzatura</th>
               <th>Tempo</th>
               <th>Note</th>
               <th>Azioni</th>
@@ -54,7 +58,7 @@ export default function TrasportiTableAttivita({
           <tbody>
             {trasporti.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center text-base-content/60 py-8">
+                <td colSpan={8} className="text-center text-base-content/60 py-8">
                   Nessun trasporto trovato.
                 </td>
               </tr>
@@ -65,6 +69,7 @@ export default function TrasportiTableAttivita({
                   <td>{t.cantieri_arrivo.nome}</td>
                   <td>{t.mezzi.nome}</td>
                   <td>{t.mezzi_trasportato?.nome ?? "—"}</td>
+                  <td>{t.attrezzature?.nome ?? "—"}</td>
                   <td>{formatTime(t.ore, t.minuti)}</td>
                   <td className="max-w-[280px] break-words whitespace-normal align-top">{t.note || ""}</td>
                   <td>
@@ -75,6 +80,7 @@ export default function TrasportiTableAttivita({
                         mezzi={mezzi}
                         mezziCamion={mezziCamion}
                         mezziEscavatore={mezziEscavatore}
+                        attrezzature={attrezzature}
                         onSuccess={onSuccess}
                       />
                       <EliminaTrasportoModal

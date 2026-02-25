@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { markAttivitaUncheckedIfNonAdmin } from "@/lib/attivita-check";
+import { checkAttivitaDateRangeForUser } from "@/lib/attivita-date-range-guard";
 import prisma from "@/lib/prisma";
 
 const DEFAULT_LIMIT = 10;
@@ -100,6 +101,7 @@ export async function GET(request: NextRequest) {
           user: { select: { id: true, name: true } },
           mezzi: { select: { id: true, nome: true } },
           mezzi_trasportato: { select: { id: true, nome: true } },
+          attrezzature: { select: { id: true, nome: true } },
           cantieri_partenza: { select: { id: true, nome: true } },
           cantieri_arrivo: { select: { id: true, nome: true } },
           attivita: { select: { id: true, date: true, external_id: true } },
@@ -149,6 +151,7 @@ export async function POST(request: NextRequest) {
       user_id,
       mezzi_id,
       mezzi_trasportato_id,
+      attrezzature_id,
       cantieri_partenza_id,
       cantieri_arrivo_id,
       attivita_id,
@@ -198,6 +201,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const attivita = await prisma.attivita.findUnique({
+      where: { id: attivita_id },
+      select: { date: true },
+    });
+    if (!attivita) {
+      return NextResponse.json(
+        { error: "Attività non trovata" },
+        { status: 404 },
+      );
+    }
+    const dateRangeError = checkAttivitaDateRangeForUser(session, attivita.date);
+    if (dateRangeError) return dateRangeError;
+
     const check = await checkUserAssignments(
       user_id,
       cantieri_partenza_id,
@@ -223,6 +239,10 @@ export async function POST(request: NextRequest) {
           mezzi_trasportato_id != null && typeof mezzi_trasportato_id === "number"
             ? mezzi_trasportato_id
             : null,
+        attrezzature_id:
+          attrezzature_id != null && typeof attrezzature_id === "number"
+            ? attrezzature_id
+            : null,
         cantieri_partenza_id,
         cantieri_arrivo_id,
         attivita_id,
@@ -236,6 +256,7 @@ export async function POST(request: NextRequest) {
         user: { select: { id: true, name: true } },
         mezzi: { select: { id: true, nome: true } },
         mezzi_trasportato: { select: { id: true, nome: true } },
+        attrezzature: { select: { id: true, nome: true } },
         cantieri_partenza: { select: { id: true, nome: true } },
         cantieri_arrivo: { select: { id: true, nome: true } },
         attivita: { select: { id: true, date: true, external_id: true } },

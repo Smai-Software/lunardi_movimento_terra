@@ -51,6 +51,7 @@ type Trasporto = {
   cantieriArrivoId: number;
   mezziId: number;
   mezziTrasportatoId: number | null;
+  attrezzaturaId: number | null;
   ore: number;
   minuti: number;
   note: string;
@@ -249,6 +250,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
     minuti: number,
     note: string,
     mezziTrasportatoId?: number | null,
+    attrezzaturaId?: number | null,
   ) => {
     setTrasporti((prev) => [
       ...prev,
@@ -258,6 +260,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
         cantieriArrivoId,
         mezziId,
         mezziTrasportatoId: mezziTrasportatoId ?? null,
+        attrezzaturaId: attrezzaturaId ?? null,
         ore,
         minuti,
         note,
@@ -291,11 +294,15 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
       return;
     }
     if (selectedDate > getTodayLocalDateString()) {
-      toast.error("La data non può essere futura");
+      toast.error(
+        "Operazione non consentita: puoi modificare/eliminare solo attività degli ultimi 7 giorni. Contatta l'amministrazione.",
+      );
       return;
     }
     if (selectedDate < getMinDateString()) {
-      toast.error("La data non può essere più di 7 giorni indietro");
+      toast.error(
+        "Operazione non consentita: puoi modificare/eliminare solo attività degli ultimi 7 giorni. Contatta l'amministrazione.",
+      );
       return;
     }
 
@@ -321,6 +328,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
       cantieri_arrivo_id: t.cantieriArrivoId,
       mezzi_id: t.mezziId,
       mezzi_trasportato_id: t.mezziTrasportatoId ?? null,
+      attrezzature_id: t.attrezzaturaId ?? null,
       ore: t.ore,
       minuti: t.minuti,
       note: t.note,
@@ -490,6 +498,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
                   availableCantieri={availableCantieri}
                   availableMezziCamion={availableMezziCamion}
                   availableMezziEscavatore={availableMezziEscavatore}
+                  availableAttrezzature={availableAttrezzature}
                   loadingCantieri={loadingCantieri}
                   loadingMezzi={loadingMezzi}
                   onAddTrasporto={addTrasporto}
@@ -504,6 +513,7 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
                         <th>Partenza</th>
                         <th>Arrivo</th>
                         <th>Mezzo</th>
+                        <th>Attrezzatura</th>
                         <th>Tempo</th>
                         <th>Azioni</th>
                       </tr>
@@ -519,6 +529,11 @@ function UserAttivitaForm({ userId }: UserAttivitaFormProps) {
                           </td>
                           <td>
                             {availableMezzi.find((m) => m.id === t.mezziId)?.nome ?? "—"}
+                          </td>
+                          <td>
+                            {t.attrezzaturaId != null
+                              ? availableAttrezzature.find((a) => a.id === t.attrezzaturaId)?.nome ?? "—"
+                              : "—"}
                           </td>
                           <td>
                             {t.ore}h {t.minuti}m

@@ -1,12 +1,15 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 import Link from "next/link";
 import { parseAsInteger, useQueryState } from "nuqs";
-import { useMemo } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/api-fetcher";
-import { subDays } from "date-fns";
 
 type UserAttivitaTableProps = {
   userId: string;
@@ -32,34 +35,24 @@ interface AttivitaResponse {
   totalPages: number;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 7;
 
 export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
 
-  const endDate = new Date();
-  const startDate = subDays(endDate, 7);
-  const dateFrom = startDate.toISOString().split("T")[0];
-  const dateTo = endDate.toISOString().split("T")[0];
+  const apiUrl = userId
+    ? `/api/attivita?userId=${userId}&page=${page}&limit=${PAGE_SIZE}&sortBy=date&sortOrder=desc`
+    : null;
 
   const { data, error, isLoading } = useSWR<AttivitaResponse>(
-    userId
-      ? `/api/attivita?userId=${userId}&dateFrom=${dateFrom}&dateTo=${dateTo}&limit=500`
-      : null,
+    apiUrl,
     fetcher,
     { revalidateOnFocus: false },
   );
 
   const attivita = data?.attivita ?? [];
-  const pageCount = Math.max(1, Math.ceil(attivita.length / PAGE_SIZE));
-  const paginated = useMemo(
-    () => attivita.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [page, attivita],
-  );
-
-  const handlePage = (newPage: number) => {
-    setPage(newPage, { history: "push" });
-  };
+  const totalPages = data?.totalPages ?? 0;
+  const total = data?.total ?? 0;
 
   if (isLoading) {
     return (
@@ -80,7 +73,7 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
   return (
     <div className="max-w-4xl mx-auto">
       <p className="text-sm text-base-content/70">
-        Visualizza le tue attività inserite negli ultimi 7 giorni
+        Visualizza le tue attività
       </p>
       <div className="overflow-x-auto rounded-lg shadow mt-2 content-visibility-auto">
         <table className="table w-full">
@@ -95,17 +88,17 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
             </tr>
           </thead>
           <tbody>
-            {paginated.length === 0 ? (
+            {attivita.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
                   className="text-center text-base-content/60 py-8"
                 >
-                  Nessuna attività trovata negli ultimi 7 giorni.
+                  Nessuna attività trovata.
                 </td>
               </tr>
             ) : (
-              paginated.map((a) => (
+              attivita.map((a) => (
                 <tr key={a.id}>
                   <td>{new Date(a.date).toLocaleDateString("it-IT")}</td>
                   <td className="hidden md:table-cell">{a.interazioniCount}</td>
@@ -136,27 +129,51 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
         </table>
       </div>
 
-      {pageCount > 1 ? (
+      {totalPages > 1 ? (
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-base-content/70">
-            Pagina {page} di {pageCount}
+            Pagina {page} di {totalPages}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             <button
               type="button"
               className="btn btn-sm btn-ghost"
-              onClick={() => handlePage(page - 1)}
+              onClick={() => setPage(1, { history: "push" })}
               disabled={page === 1}
+              title="Prima pagina"
             >
-              Indietro
+              <ChevronsLeft className="size-4" />
             </button>
             <button
               type="button"
               className="btn btn-sm btn-ghost"
-              onClick={() => handlePage(page + 1)}
-              disabled={page === pageCount}
+              onClick={() =>
+                setPage(Math.max(1, page - 1), { history: "push" })
+              }
+              disabled={page === 1}
+              title="Pagina precedente"
             >
-              Avanti
+              <ChevronLeft className="size-4" />
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() =>
+                setPage(Math.min(totalPages, page + 1), { history: "push" })
+              }
+              disabled={page === totalPages}
+              title="Pagina successiva"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => setPage(totalPages, { history: "push" })}
+              disabled={page === totalPages}
+              title="Ultima pagina"
+            >
+              <ChevronsRight className="size-4" />
             </button>
           </div>
         </div>

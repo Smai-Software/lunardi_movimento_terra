@@ -51,6 +51,7 @@ type Trasporto = {
   cantieriArrivoId: number;
   mezziId: number;
   mezziTrasportatoId: number | null;
+  attrezzaturaId: number | null;
   ore: number;
   minuti: number;
   note: string;
@@ -274,6 +275,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
     minuti: number,
     note: string,
     mezziTrasportatoId?: number | null,
+    attrezzaturaId?: number | null,
   ) => {
     setTrasporti((prev) => [
       ...prev,
@@ -283,6 +285,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
         cantieriArrivoId,
         mezziId,
         mezziTrasportatoId: mezziTrasportatoId ?? null,
+        attrezzaturaId: attrezzaturaId ?? null,
         ore,
         minuti,
         note,
@@ -330,6 +333,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
       cantieri_arrivo_id: t.cantieriArrivoId,
       mezzi_id: t.mezziId,
       mezzi_trasportato_id: t.mezziTrasportatoId ?? null,
+      attrezzature_id: t.attrezzaturaId ?? null,
       ore: t.ore,
       minuti: t.minuti,
       note: t.note,
@@ -541,6 +545,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                     availableCantieri={availableCantieri}
                     availableMezziCamion={availableMezziCamion}
                     availableMezziEscavatore={availableMezziEscavatore}
+                    availableAttrezzature={availableAttrezzature}
                     loadingCantieri={loadingCantieri}
                     loadingMezzi={loadingMezzi}
                     onAddTrasporto={addTrasporto}
@@ -556,6 +561,7 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                           <th>Partenza</th>
                           <th>Arrivo</th>
                           <th>Mezzo</th>
+                          <th>Attrezzatura</th>
                           <th>Tempo</th>
                           <th>Note</th>
                           <th className="hidden md:table-cell">Azioni</th>
@@ -581,6 +587,11 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                             </td>
                             <td>
                               {availableMezzi.find((m) => m.id === t.mezziId)?.nome ?? "—"}
+                            </td>
+                            <td>
+                              {t.attrezzaturaId != null
+                                ? availableAttrezzature.find((a) => a.id === t.attrezzaturaId)?.nome ?? "—"
+                                : "—"}
                             </td>
                             <td>
                               {t.ore}h {t.minuti}m

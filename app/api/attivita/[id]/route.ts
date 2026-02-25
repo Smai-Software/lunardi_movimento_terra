@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import type { assenza_tipo } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
+import { checkAttivitaDateRangeForUser } from "@/lib/attivita-date-range-guard";
 import prisma from "@/lib/prisma";
 
 function serializeAttivita(attivita: {
@@ -193,31 +194,8 @@ export async function PUT(
       );
     }
 
-    const toLocalDateString = (d: Date) => {
-      const y = d.getFullYear();
-      const m = d.getMonth() + 1;
-      const day = d.getDate();
-      return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    };
-
-    if (session.user.role === "user") {
-      const todayStr = toLocalDateString(new Date());
-      if (toLocalDateString(parsedDate) > todayStr) {
-        return NextResponse.json(
-          { error: "La data non può essere futura" },
-          { status: 400 },
-        );
-      }
-      const minDate = new Date();
-      minDate.setDate(minDate.getDate() - 7);
-      const minDateStr = toLocalDateString(minDate);
-      if (toLocalDateString(parsedDate) < minDateStr) {
-        return NextResponse.json(
-          { error: "La data non può essere più di 7 giorni indietro" },
-          { status: 400 },
-        );
-      }
-    }
+    const dateRangeError = checkAttivitaDateRangeForUser(session, parsedDate);
+    if (dateRangeError) return dateRangeError;
 
     const userId = session.user.id as string;
     const hasInterazioni = interazioni && Array.isArray(interazioni);
@@ -338,6 +316,8 @@ export async function PUT(
             cantieri_partenza_id: number;
             cantieri_arrivo_id: number;
             mezzi_id: number;
+            mezzi_trasportato_id?: number | null;
+            attrezzature_id?: number | null;
             ore: number;
             minuti: number;
             note?: string;
@@ -360,6 +340,8 @@ export async function PUT(
               cantieri_partenza_id: number;
               cantieri_arrivo_id: number;
               mezzi_id: number;
+              mezzi_trasportato_id?: number | null;
+              attrezzature_id?: number | null;
               ore: number;
               minuti: number;
               note?: string;
@@ -373,6 +355,14 @@ export async function PUT(
                 user_id,
                 attivita_id: attivitaId,
                 mezzi_id: Number(tr.mezzi_id),
+                mezzi_trasportato_id:
+                  tr.mezzi_trasportato_id != null && typeof tr.mezzi_trasportato_id === "number"
+                    ? tr.mezzi_trasportato_id
+                    : null,
+                attrezzature_id:
+                  tr.attrezzature_id != null && typeof tr.attrezzature_id === "number"
+                    ? tr.attrezzature_id
+                    : null,
                 cantieri_partenza_id: Number(tr.cantieri_partenza_id),
                 cantieri_arrivo_id: Number(tr.cantieri_arrivo_id),
                 external_id: randomUUID(),
@@ -447,6 +437,9 @@ export async function DELETE(
         { status: 404 },
       );
     }
+
+    const dateRangeError = checkAttivitaDateRangeForUser(session, existing.date);
+    if (dateRangeError) return dateRangeError;
 
     await prisma.attivita.delete({
       where: { id: attivitaId },

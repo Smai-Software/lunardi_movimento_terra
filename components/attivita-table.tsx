@@ -51,17 +51,21 @@ interface UsersResponse {
 }
 
 function AttivitaFilterDrawer({
-  drawerId,
+  isOpen,
+  onClose,
   filterUser,
   setFilterUser,
   filterDateFrom,
   setFilterDateFrom,
   filterDateTo,
   setFilterDateTo,
+  filterChecked,
+  setFilterChecked,
   users,
   setPage,
 }: {
-  drawerId: string;
+  isOpen: boolean;
+  onClose: () => void;
   filterUser: string;
   setFilterUser: (val: string | null, options?: { history: "push" }) => void;
   filterDateFrom: string;
@@ -71,27 +75,30 @@ function AttivitaFilterDrawer({
   ) => void;
   filterDateTo: string;
   setFilterDateTo: (val: string | null, options?: { history: "push" }) => void;
+  filterChecked: "all" | "checked" | "notChecked";
+  setFilterChecked: (
+    val: "all" | "checked" | "notChecked",
+    options?: { history: "push" },
+  ) => void;
   users: { id: string; name: string }[];
   setPage: (val: number, options?: { history: "push" }) => void;
 }) {
+  if (!isOpen) return null;
+
   return (
-    <div className="drawer-side z-50">
+    <div className="fixed inset-0 z-[70]">
       <button
         type="button"
-        className="drawer-overlay"
-        onClick={() => {
-          const checkbox = document.getElementById(drawerId) as HTMLInputElement;
-          if (checkbox) checkbox.checked = false;
-        }}
+        className="fixed inset-0 bg-black/30"
+        onClick={onClose}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
-            const checkbox = document.getElementById(drawerId) as HTMLInputElement;
-            if (checkbox) checkbox.checked = false;
+            onClose();
           }
         }}
         aria-label="Chiudi filtro"
       />
-      <div className="menu p-4 w-80 min-h-full bg-base-100 text-black">
+      <div className="menu fixed right-0 top-0 h-full w-80 p-4 bg-base-100 text-black shadow-xl overflow-y-auto">
         <h2 className="text-lg font-bold mb-4">Filtra attività</h2>
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-2">Utente</h3>
@@ -128,6 +135,54 @@ function AttivitaFilterDrawer({
                 </label>
               </div>
             ))}
+          </div>
+        </div>
+        <div className="mb-6">
+          <h3 className="text-md font-semibold mb-2">Stato registrazione</h3>
+          <div className="form-control mb-2">
+            <label className="label cursor-pointer">
+              <input
+                type="radio"
+                name="checked-filter"
+                className="radio radio-sm"
+                checked={filterChecked === "all"}
+                onChange={() => {
+                  setFilterChecked("all", { history: "push" });
+                  setPage(1, { history: "push" });
+                }}
+              />
+              <span className="label-text">Tutte</span>
+            </label>
+          </div>
+          <div className="form-control mb-2">
+            <label className="label cursor-pointer">
+              <input
+                type="radio"
+                name="checked-filter"
+                className="radio radio-sm"
+                checked={filterChecked === "checked"}
+                onChange={() => {
+                  setFilterChecked("checked", { history: "push" });
+                  setPage(1, { history: "push" });
+                }}
+              />
+              <span className="label-text">Registrate</span>
+            </label>
+          </div>
+          <div className="form-control mb-2">
+            <label className="label cursor-pointer">
+              <input
+                type="radio"
+                name="checked-filter"
+                className="radio radio-sm"
+                checked={filterChecked === "notChecked"}
+                onChange={() => {
+                  setFilterChecked("notChecked", { history: "push" });
+                  setPage(1, { history: "push" });
+                }}
+              />
+              <span className="label-text">Non registrate</span>
+            </label>
           </div>
         </div>
         <div className="mb-6">
@@ -246,11 +301,15 @@ export default function AttivitaTable() {
     "filterDateTo",
     parseAsString.withDefault(""),
   );
+  const [filterChecked, setFilterChecked] = useQueryState(
+    "filterChecked",
+    parseAsStringLiteral(["all", "checked", "notChecked"]).withDefault("all"),
+  );
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedAttivitaForEdit, setSelectedAttivitaForEdit] =
     useState<AttivitaItem | null>(null);
   const [selectedAttivitaForDelete, setSelectedAttivitaForDelete] =
     useState<AttivitaItem | null>(null);
-  const drawerId = "attivita-filter-drawer";
 
   const apiUrl = useMemo(() => {
     const params = new URLSearchParams();
@@ -262,6 +321,8 @@ export default function AttivitaTable() {
     if (filterUser !== "all") params.set("userId", filterUser);
     if (filterDateFrom) params.set("dateFrom", filterDateFrom);
     if (filterDateTo) params.set("dateTo", filterDateTo);
+    if (filterChecked === "checked") params.set("isChecked", "true");
+    if (filterChecked === "notChecked") params.set("isChecked", "false");
     return `/api/attivita?${params.toString()}`;
   }, [
     page,
@@ -271,6 +332,7 @@ export default function AttivitaTable() {
     filterUser,
     filterDateFrom,
     filterDateTo,
+    filterChecked,
   ]);
 
   const { data, error, isLoading } = useSWR<AttivitaResponse>(apiUrl, fetcher, {
@@ -288,8 +350,9 @@ export default function AttivitaTable() {
     if (filterUser !== "all") count++;
     if (filterDateFrom) count++;
     if (filterDateTo) count++;
+    if (filterChecked !== "all") count++;
     return count;
-  }, [filterUser, filterDateFrom, filterDateTo]);
+  }, [filterUser, filterDateFrom, filterDateTo, filterChecked]);
 
   const handleSort = (col: "date" | "user") => {
     if (sortBy === col) {
@@ -308,33 +371,36 @@ export default function AttivitaTable() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4">
-        <div className="grow">
-          <div className="join w-full max-w-md">
-            <input
-              type="text"
-              placeholder="Cerca per utente o data"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="input input-bordered grow join-item"
-            />
-            <button type="button" className="btn join-item">
-              <Search />
-            </button>
+      <div className="relative">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="grow">
+            <div className="join w-full max-w-md">
+              <input
+                type="text"
+                placeholder="Cerca per utente o data"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                className="input input-bordered grow join-item"
+              />
+              <button type="button" className="btn join-item">
+                <Search />
+              </button>
+            </div>
           </div>
+          <button
+            type="button"
+            className="btn btn-outline relative"
+            onClick={() => setIsFilterOpen(true)}
+          >
+            Filtra
+            {activeFilterCount > 0 ? (
+              <span className="badge badge-secondary badge-sm absolute -top-2 -right-2">
+                {activeFilterCount}
+              </span>
+            ) : null}
+          </button>
         </div>
-        <label htmlFor={drawerId} className="btn btn-outline relative">
-          Filtra
-          {activeFilterCount > 0 ? (
-            <span className="badge badge-secondary badge-sm absolute -top-2 -right-2">
-              {activeFilterCount}
-            </span>
-          ) : null}
-        </label>
-      </div>
 
-      <div className="drawer drawer-end z-50">
-        <input id={drawerId} type="checkbox" className="drawer-toggle" />
         <div className="overflow-x-auto rounded-lg shadow content-visibility-auto">
           <table className="table w-full">
             <thead className="bg-base-200">
@@ -429,14 +495,18 @@ export default function AttivitaTable() {
             </tbody>
           </table>
         </div>
+
         <AttivitaFilterDrawer
-          drawerId={drawerId}
+          isOpen={isFilterOpen}
+          onClose={() => setIsFilterOpen(false)}
           filterUser={filterUser}
           setFilterUser={setFilterUser}
           filterDateFrom={filterDateFrom}
           setFilterDateFrom={setFilterDateFrom}
           filterDateTo={filterDateTo}
           setFilterDateTo={setFilterDateTo}
+          filterChecked={filterChecked}
+          setFilterChecked={setFilterChecked}
           users={users}
           setPage={setPage}
         />

@@ -55,6 +55,8 @@ type TrasportiResponse = {
     created_at: string;
     user: { id: string; name: string };
     mezzi: { id: number; nome: string };
+    mezzi_trasportato?: { id: number; nome: string } | null;
+    attrezzature?: { id: number; nome: string } | null;
     cantieri_partenza: { id: number; nome: string };
     cantieri_arrivo: { id: number; nome: string };
     attivita: { id: number; date: string };
@@ -272,6 +274,7 @@ export default function CantiereDetailPageClient({ slug }: { slug: string }) {
           mezzi={mezzi}
           mezziCamion={mezziCamion}
           mezziEscavatore={mezziEscavatore}
+          attrezzature={attrezzature}
           onSuccess={() => {
             mutate(`/api/trasporti?cantiereId=${cantiereId}&limit=500`);
             mutate(`/api/cantieri/${slug}`);

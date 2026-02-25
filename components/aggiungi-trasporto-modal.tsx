@@ -9,6 +9,7 @@ type AggiungiTrasportoModalProps = {
   cantieri: Array<{ id: number; nome: string }>;
   mezziCamion: Array<{ id: number; nome: string }>;
   mezziEscavatore: Array<{ id: number; nome: string }>;
+  attrezzature: Array<{ id: number; nome: string }>;
   onSuccess?: () => void;
 };
 
@@ -18,6 +19,7 @@ export default function AggiungiTrasportoModal({
   cantieri,
   mezziCamion,
   mezziEscavatore,
+  attrezzature,
   onSuccess,
 }: AggiungiTrasportoModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -25,6 +27,7 @@ export default function AggiungiTrasportoModal({
   const [arrivoId, setArrivoId] = useState("");
   const [mezziId, setMezziId] = useState("");
   const [mezziTrasportatoId, setMezziTrasportatoId] = useState("");
+  const [attrezzaturaId, setAttrezzaturaId] = useState("");
   const [ore, setOre] = useState(0);
   const [minuti, setMinuti] = useState(0);
   const [note, setNote] = useState("");
@@ -36,6 +39,7 @@ export default function AggiungiTrasportoModal({
     setArrivoId("");
     setMezziId("");
     setMezziTrasportatoId("");
+    setAttrezzaturaId("");
     setOre(0);
     setMinuti(0);
     setNote("");
@@ -48,6 +52,7 @@ export default function AggiungiTrasportoModal({
     setArrivoId("");
     setMezziId("");
     setMezziTrasportatoId("");
+    setAttrezzaturaId("");
     setOre(0);
     setMinuti(0);
     setNote("");
@@ -77,6 +82,7 @@ export default function AggiungiTrasportoModal({
           cantieri_arrivo_id: arrivo,
           mezzi_id: mezzo,
           mezzi_trasportato_id: mezziTrasportatoId ? Number(mezziTrasportatoId) : null,
+          attrezzature_id: attrezzaturaId ? Number(attrezzaturaId) : null,
           ore,
           minuti,
           note: note.trim() || null,
@@ -176,6 +182,24 @@ export default function AggiungiTrasportoModal({
               {mezziEscavatore.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mb-4">
+            <label className="block font-medium mb-1 text-sm" htmlFor="trasporto-attrezzatura">
+              Attrezzatura (opzionale)
+            </label>
+            <select
+              id="trasporto-attrezzatura"
+              className="select select-bordered w-full"
+              value={attrezzaturaId}
+              onChange={(e) => setAttrezzaturaId(e.target.value)}
+            >
+              <option value="">Nessuna</option>
+              {attrezzature.map((att) => (
+                <option key={att.id} value={att.id}>
+                  {att.nome}
                 </option>
               ))}
             </select>
