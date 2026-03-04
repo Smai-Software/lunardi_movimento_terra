@@ -9,6 +9,8 @@ type ModificaAttivitaModalProps = {
     id: number;
     date: string;
     user_id: string;
+    ore_effettive?: number;
+    minuti_effettivi?: number;
   };
   onSuccess?: () => void;
   /** Quando true (dashboard user), limita la data a max 7 giorni indietro e non futura */
@@ -22,12 +24,16 @@ export default function ModificaAttivitaModal({
 }: ModificaAttivitaModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedDate, setSelectedDate] = useState(attivita.date);
+  const [oreEffettive, setOreEffettive] = useState(attivita.ore_effettive ?? 0);
+  const [minutiEffettivi, setMinutiEffettivi] = useState(attivita.minuti_effettivi ?? 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { mutate } = useSWRConfig();
 
   const openModal = () => {
     setSelectedDate(attivita.date);
+    setOreEffettive(attivita.ore_effettive ?? 0);
+    setMinutiEffettivi(attivita.minuti_effettivi ?? 0);
     setError(null);
     dialogRef.current?.showModal();
   };
@@ -73,6 +79,8 @@ export default function ModificaAttivitaModal({
         body: JSON.stringify({
           date: selectedDate,
           user_id: attivita.user_id,
+          ore_effettive: oreEffettive,
+          minuti_effettivi: minutiEffettivi,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -97,11 +105,11 @@ export default function ModificaAttivitaModal({
         className="btn btn-outline btn-sm"
         onClick={openModal}
       >
-        Modifica data
+        Modifica
       </button>
       <dialog ref={dialogRef} className="modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg mb-2">Modifica data</h3>
+          <h3 className="font-bold text-lg mb-2">Modifica attività</h3>
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label
@@ -120,6 +128,38 @@ export default function ModificaAttivitaModal({
                 max={restrictDateRange ? getTodayLocalDateString() : undefined}
                 required
               />
+            </div>
+            <div className="border-t border-gray-200 pt-4">
+              <h2 className="text-sm mb-1">Ore effettive</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <select
+                  id={`ore-effettive-${attivita.id}`}
+                  className="select select-bordered w-full"
+                  value={oreEffettive}
+                  onChange={(e) => setOreEffettive(parseInt(e.target.value, 10) || 0)}
+                >
+                  {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                    <option key={`ore-${hour}`} value={hour}>
+                      {hour}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <select
+                  id={`minuti-effettivi-${attivita.id}`}
+                  className="select select-bordered w-full"
+                  value={minutiEffettivi}
+                  onChange={(e) => setMinutiEffettivi(parseInt(e.target.value, 10) || 0)}
+                >
+                  <option value={0}>00</option>
+                  <option value={15}>15</option>
+                  <option value={30}>30</option>
+                  <option value={45}>45</option>
+                </select>
+              </div>
             </div>
             {error && (
               <div className="alert alert-error mb-4">

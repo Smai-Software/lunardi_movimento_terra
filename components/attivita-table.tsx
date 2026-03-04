@@ -30,6 +30,8 @@ interface AttivitaItem {
   user_id: string;
   external_id: string;
   is_checked: boolean;
+  ore_effettive?: number;
+  minuti_effettivi?: number;
   interazioniCount: number;
   trasportiCount: number;
   assenzeCount: number;
@@ -426,26 +428,27 @@ export default function AttivitaTable() {
                 <th># Trasporti</th>
                 <th># Assenze</th>
                 <th>Totale ore</th>
+                <th>Ore effettive</th>
                 <th />
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-8">
+                  <td colSpan={9} className="text-center py-8">
                     <span className="loading loading-spinner loading-lg" />
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-error">
+                  <td colSpan={9} className="text-center py-8 text-error">
                     Errore nel caricamento dei dati
                   </td>
                 </tr>
               ) : attivita.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="text-center text-base-content/60 py-8"
                   >
                     Nessuna attività trovata.
@@ -479,6 +482,9 @@ export default function AttivitaTable() {
                         const minutes = totalMinutes % 60;
                         return `${hours}h ${minutes}m`;
                       })()}
+                    </td>
+                    <td>
+                      {`${a.ore_effettive ?? 0}h ${String(a.minuti_effettivi ?? 0).padStart(2, "0")}m`}
                     </td>
                     <td>
                       <Link
@@ -568,6 +574,8 @@ export default function AttivitaTable() {
               .toISOString()
               .split("T")[0],
             user_id: selectedAttivitaForEdit.user_id,
+            ore_effettive: selectedAttivitaForEdit.ore_effettive,
+            minuti_effettivi: selectedAttivitaForEdit.minuti_effettivi,
           }}
         />
       ) : null}

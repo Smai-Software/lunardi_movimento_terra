@@ -78,6 +78,8 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
   const [cantieri, setCantieri] = useState<CantiereWithInterazioni[]>([]);
   const [assenze, setAssenze] = useState<Assenza[]>([]);
   const [trasporti, setTrasporti] = useState<Trasporto[]>([]);
+  const [oreEffettive, setOreEffettive] = useState(0);
+  const [minutiEffettivi, setMinutiEffettivi] = useState(0);
 
   // Available options (users from API when not passed)
   const [users, setUsers] = useState<Array<{ id: string; name: string }>>(
@@ -351,6 +353,8 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
           interazioni: hasInterazioni ? allInterazioni : [],
           assenze: hasAssenze ? allAssenze : [],
           trasporti: hasTrasporti ? allTrasporti : [],
+          ore_effettive: oreEffettive,
+          minuti_effettivi: minutiEffettivi,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -680,6 +684,39 @@ function AttivitaForm({ users: usersProp }: AttivitaFormProps) {
                   </div>
                 </div>
               )}
+
+              <div className="border-t border-gray-200 pt-4">
+                <h2 className="text-lg font-semibold">Ore effettive</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4 max-w-xs">
+                <div className="form-control">
+                  <select
+                    id="ora-effettiva-ore"
+                    className="select select-bordered w-full"
+                    value={oreEffettive}
+                    onChange={(e) => setOreEffettive(parseInt(e.target.value, 10) || 0)}
+                  >
+                    {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                      <option key={`ore-eff-${hour}`} value={hour}>
+                        {hour}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-control">
+                  <select
+                    id="ora-effettiva-minuti"
+                    className="select select-bordered w-full"
+                    value={minutiEffettivi}
+                    onChange={(e) => setMinutiEffettivi(parseInt(e.target.value, 10) || 0)}
+                  >
+                    <option value={0}>00</option>
+                    <option value={15}>15</option>
+                    <option value={30}>30</option>
+                    <option value={45}>45</option>
+                  </select>
+                </div>
+              </div>
             </div>
           )}
 

@@ -41,6 +41,8 @@ export async function GET(request: NextRequest) {
           external_id: true,
           created_at: true,
           last_update_at: true,
+          ore_effettive: true,
+          minuti_effettivi: true,
           user: { select: { id: true, name: true } },
           user_attivita_created_byTouser: { select: { id: true, name: true } },
           user_attivita_last_update_byTouser: { select: { id: true, name: true } },

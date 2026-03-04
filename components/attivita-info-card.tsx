@@ -12,6 +12,8 @@ type AttivitaInfoCardProps = {
     user_id: string;
     user: { id: string; name: string };
     is_checked?: boolean;
+    ore_effettive?: number;
+    minuti_effettivi?: number;
   };
   onAttivitaUpdated?: () => void;
   /** Quando true (dashboard user), in "Modifica data" limita a max 7 giorni indietro e non futura */
@@ -83,6 +85,8 @@ export default function AttivitaInfoCard({
             id: attivita.id,
             date: new Date(attivita.date).toISOString().split("T")[0],
             user_id: attivita.user_id,
+            ore_effettive: attivita.ore_effettive,
+            minuti_effettivi: attivita.minuti_effettivi,
           }}
           onSuccess={onAttivitaUpdated}
           restrictDateRange={restrictDateRange}

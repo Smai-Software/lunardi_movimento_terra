@@ -18,6 +18,9 @@ function serializeAttivita(attivita: {
 }) {
   const { interazioni, assenze, trasporti, ...rest } = attivita;
   const result = { ...rest } as Record<string, unknown>;
+  if (typeof result.tempo_totale_effettivo === "bigint") {
+    result.tempo_totale_effettivo = result.tempo_totale_effettivo.toString();
+  }
   if (Array.isArray(interazioni)) {
     result.interazioni = interazioni.map((i) => ({
       ...i,
@@ -37,6 +40,23 @@ function serializeAttivita(attivita: {
     }));
   }
   return result;
+}
+
+function parseOraEffettiva(ore: unknown, minuti: unknown): {
+  ore_effettive: number;
+  minuti_effettivi: number;
+  tempo_totale_effettivo: bigint;
+} {
+  const o = Number(ore);
+  const m = Number(minuti);
+  const ore_effettive = Number.isNaN(o) || o < 0 ? 0 : o;
+  const minuti_effettivi = Number.isNaN(m)
+    ? 0
+    : Math.min(59, Math.max(0, m));
+  const tempo_totale_effettivo = BigInt(
+    (ore_effettive * 60 + minuti_effettivi) * 60000,
+  );
+  return { ore_effettive, minuti_effettivi, tempo_totale_effettivo };
 }
 
 // GET /api/attivita - Lista attivita con paginazione, filtro e ordinamento
@@ -199,7 +219,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { date, user_id, interazioni, assenze, trasporti } = body;
+    const { date, user_id, interazioni, assenze, trasporti, ore_effettive: oreEff, minuti_effettivi: minEff } = body;
+    const { ore_effettive, minuti_effettivi, tempo_totale_effettivo } = parseOraEffettiva(oreEff, minEff);
 
     if (!date || typeof date !== "string") {
       return NextResponse.json(
@@ -243,6 +264,9 @@ export async function POST(request: NextRequest) {
             last_update_by: userId,
             external_id: randomUUID(),
             is_checked: isChecked,
+            ore_effettive,
+            minuti_effettivi,
+            tempo_totale_effettivo,
           },
         });
 
@@ -429,6 +453,9 @@ export async function POST(request: NextRequest) {
         last_update_by: userId,
         external_id: randomUUID(),
         is_checked: isChecked,
+        ore_effettive,
+        minuti_effettivi,
+        tempo_totale_effettivo,
       },
       include: {
         user: { select: { id: true, name: true } },

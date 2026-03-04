@@ -230,6 +230,9 @@ model attivita {
   last_update_by                  String
   last_update_at                  DateTime @default(now()) @db.DateTime(0)
   is_checked                      Boolean  @default(true)
+  ore_effettive                   Int      @default(0)
+  minuti_effettivi                Int      @default(0)
+  tempo_totale_effettivo          BigInt   @default(0)
   user                            User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
   interazioni                     interazioni[]
   assenze                         assenze[]

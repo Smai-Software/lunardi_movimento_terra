@@ -12,6 +12,9 @@ function serializeAttivita(attivita: {
 }) {
   const { interazioni, assenze, trasporti, ...rest } = attivita;
   const result = { ...rest } as Record<string, unknown>;
+  if (typeof result.tempo_totale_effettivo === "bigint") {
+    result.tempo_totale_effettivo = result.tempo_totale_effettivo.toString();
+  }
   if (Array.isArray(interazioni)) {
     result.interazioni = interazioni.map((i) => ({
       ...i,

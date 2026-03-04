@@ -58,6 +58,9 @@ export default function DashboardLayout({
           <NavigationItem href="/admin/report" iconName="fileText">
             Report
           </NavigationItem>
+          <NavigationItem href="/admin/utilita" iconName="settings">
+            Utilità
+          </NavigationItem>
         </ul>
       </div>
     </div>

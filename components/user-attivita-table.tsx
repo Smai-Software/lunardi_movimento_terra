@@ -20,6 +20,8 @@ interface AttivitaItem {
   date: string;
   user_id: string;
   external_id: string;
+  ore_effettive?: number;
+  minuti_effettivi?: number;
   interazioniCount: number;
   trasportiCount: number;
   assenzeCount: number;
@@ -84,6 +86,7 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
               <th className="hidden md:table-cell"># Trasporti</th>
               <th className="hidden md:table-cell"># Assenze</th>
               <th>Totale ore</th>
+              <th>Ore effettive</th>
               <th></th>
             </tr>
           </thead>
@@ -91,7 +94,7 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
             {attivita.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center text-base-content/60 py-8"
                 >
                   Nessuna attività trovata.
@@ -113,6 +116,9 @@ export default function UserAttivitaTable({ userId }: UserAttivitaTableProps) {
                       const minutes = totalMinutes % 60;
                       return `${hours}h ${minutes}m`;
                     })()}
+                  </td>
+                  <td>
+                    {`${a.ore_effettive ?? 0}h ${String(a.minuti_effettivi ?? 0).padStart(2, "0")}m`}
                   </td>
                   <td>
                     <Link

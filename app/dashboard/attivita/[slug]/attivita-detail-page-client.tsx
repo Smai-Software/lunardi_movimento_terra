@@ -17,6 +17,8 @@ type AttivitaBySlug = {
     date: string;
     user_id: string;
     external_id: string;
+    ore_effettive?: number;
+    minuti_effettivi?: number;
     user: { id: string; name: string };
     interazioni?: Array<{ tempo_totale: string }>;
   };
@@ -205,7 +207,13 @@ export default function UserAttivitaDetailPageClient({
       <div className="stats shadow w-full mb-8">
         <div className="stat">
           <div className="stat-title">Ore totali</div>
-          <div className="stat-value text-primary">{totalHoursFormatted}</div>
+          <div className="stat-value">{totalHoursFormatted}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-title">Ore effettive</div>
+          <div className="stat-value">
+            {`${attivita.ore_effettive ?? 0}h ${String(attivita.minuti_effettivi ?? 0).padStart(2, "0")}m`}
+          </div>
         </div>
         <div className="stat">
           <div className="stat-title">Interazioni</div>
