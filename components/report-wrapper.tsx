@@ -12,6 +12,7 @@ type ReportApiResponse = {
   user: { id: string; name: string };
   range: { startDate: string; endDate: string };
   totals: {
+    oreEffettiveMs: string;
     interazioniMs: string;
     trasportiMs: string;
     assenzeMs: string;
@@ -174,19 +175,15 @@ export default function ReportWrapper() {
             <div className="stat">
               <div className="stat-title">Totale ore</div>
               <div className="stat-value text-primary">
-                {formatMsToHoursMinutes(reportData.totals.overallMs)}
+                {formatMsToHoursMinutes(
+                  (BigInt(reportData.totals.oreEffettiveMs) + BigInt(reportData.totals.assenzeMs)).toString()
+                )}
               </div>
             </div>
             <div className="stat">
-              <div className="stat-title">Interazioni</div>
+              <div className="stat-title">Totale ore effettive</div>
               <div className="stat-value">
-                {formatMsToHoursMinutes(reportData.totals.interazioniMs)}
-              </div>
-            </div>
-            <div className="stat">
-              <div className="stat-title">Trasporti</div>
-              <div className="stat-value">
-                {formatMsToHoursMinutes(reportData.totals.trasportiMs)}
+                {formatMsToHoursMinutes(reportData.totals.oreEffettiveMs)}
               </div>
             </div>
             <div className="stat">

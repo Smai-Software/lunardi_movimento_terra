@@ -98,10 +98,17 @@ export async function GET(request: NextRequest) {
       lt: endExclusive,
     };
 
-    const [user, interazioniList, trasportiList, assenzeList] = await Promise.all([
+    const [user, attivitaList, interazioniList, trasportiList, assenzeList] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: { id: true, name: true, role: true },
+      }),
+      prisma.attivita.findMany({
+        where: {
+          user_id: userId,
+          date: dateFilter,
+        },
+        select: { tempo_totale_effettivo: true },
       }),
       prisma.interazioni.findMany({
         where: {
@@ -133,6 +140,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    let oreEffettiveMs = BigInt(0);
+    for (const a of attivitaList) {
+      oreEffettiveMs += a.tempo_totale_effettivo;
+    }
     let interazioniMs = BigInt(0);
     for (const i of interazioniList) {
       interazioniMs += i.tempo_totale;
@@ -164,6 +175,7 @@ export async function GET(request: NextRequest) {
       user: { id: user.id, name: user.name },
       range: { startDate: startDateStr, endDate: endDateStr },
       totals: {
+        oreEffettiveMs: oreEffettiveMs.toString(),
         interazioniMs: interazioniMs.toString(),
         trasportiMs: trasportiMs.toString(),
         assenzeMs: assenzeMs.toString(),
