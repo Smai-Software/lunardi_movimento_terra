@@ -45,6 +45,7 @@ export default function TrasportiTableAttivita({
         <table className="table w-full">
           <thead>
             <tr>
+              <th>Utente</th>
               <th>Partenza</th>
               <th>Arrivo</th>
               <th>Mezzo</th>
@@ -58,14 +59,15 @@ export default function TrasportiTableAttivita({
           <tbody>
             {trasporti.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center text-base-content/60 py-8">
+                <td colSpan={9} className="text-center text-base-content/60 py-8">
                   Nessun trasporto trovato.
                 </td>
               </tr>
             ) : (
               trasporti.map((t) => (
                 <tr key={t.id}>
-                  <td className="font-medium">{t.cantieri_partenza.nome}</td>
+                  <td className="font-medium">{t.user.name}</td>
+                  <td>{t.cantieri_partenza.nome}</td>
                   <td>{t.cantieri_arrivo.nome}</td>
                   <td>{t.mezzi.nome}</td>
                   <td>{t.mezzi_trasportato?.nome ?? "—"}</td>
