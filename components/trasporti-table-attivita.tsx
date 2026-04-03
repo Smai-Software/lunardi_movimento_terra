@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import EliminaTrasportoModal from "@/components/elimina-trasporto-modal";
 import ModificaTrasportoModal from "@/components/modifica-trasporto-modal";
 
@@ -51,6 +52,7 @@ export default function TrasportiTableAttivita({
               <th>Mezzo</th>
               <th>Mezzo trasportato</th>
               <th>Attrezzatura</th>
+              <th>Attività</th>
               <th>Tempo</th>
               <th>Note</th>
               <th>Azioni</th>
@@ -59,7 +61,7 @@ export default function TrasportiTableAttivita({
           <tbody>
             {trasporti.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center text-base-content/60 py-8">
+                <td colSpan={10} className="text-center text-base-content/60 py-8">
                   Nessun trasporto trovato.
                 </td>
               </tr>
@@ -72,6 +74,14 @@ export default function TrasportiTableAttivita({
                   <td>{t.mezzi.nome}</td>
                   <td>{t.mezzi_trasportato?.nome ?? "—"}</td>
                   <td>{t.attrezzature?.nome ?? "—"}</td>
+                  <td>
+                    <Link
+                      href={`/admin/attivita/${t.attivita.id}`}
+                      className="block link"
+                    >
+                      {new Date(t.attivita.date).toLocaleDateString("it-IT")}
+                    </Link>
+                  </td>
                   <td>{formatTime(t.ore, t.minuti)}</td>
                   <td className="max-w-[280px] break-words whitespace-normal align-top">{t.note || ""}</td>
                   <td>
